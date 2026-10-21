@@ -3,12 +3,19 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { PlanDraftView } from '../../shared/api';
 import { addDays } from '../../shared/domain/day';
 import { diffPlans } from '../../shared/domain/diff';
-import { fill, itemLabel } from '../../shared/domain/format';
-import { checkPlan, type PlanDisagreement, resolveReads } from '../../shared/domain/plan-ingestion';
+import { dayLong, fill, itemLabel, unitText } from '../../shared/domain/format';
+import {
+  blockingWarnings,
+  checkPlan,
+  type PlanDisagreement,
+  type PlanWarning,
+  resolveReads,
+} from '../../shared/domain/plan-ingestion';
 import { tokensFor } from '../../shared/domain/tokens';
 import type { Equivalent, PlanData, TypeKey } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
-import { formatCount } from '../../shared/domain/units';
+import { formatCount, formatQty } from '../../shared/domain/units';
+import { PlanDiffCard } from '../components/PlanDiff';
 import { SeasonStart } from '../components/SeasonStart';
 import { Stepper } from '../components/Stepper';
 import { TokenRow, tokensA11y } from '../components/Token';
@@ -131,16 +138,19 @@ export default function PlanReview() {
               if (files.length) void upload(files);
             }}
           />
-          <p class="secondary muted mb-2">{planLines.planChoose}</p>
-          <p class="caption mb-4">{planLines.planPrivacy}</p>
+          {!busy && (
+            <>
+              <p class="secondary muted mb-2">{planLines.planChoose}</p>
+              <p class="caption mb-4">{planLines.planPrivacy}</p>
+            </>
+          )}
           {busy ? (
-            <p role="status" data-testid="plan-progress" class="font-semibold py-4">
-              {stage === 'preparing'
-                ? planLines.planPreparing
-                : stage === 'uploading'
-                  ? fill(planLines.planUploading, { n })
-                  : planLines.planReading}
-            </p>
+            <ReadProgress
+              stage={stage as 'preparing' | 'uploading' | 'reading'}
+              n={n}
+              startedAt={draft?.report?.started_at}
+              done={draft?.report?.models.length ?? 0}
+            />
           ) : (
             <button
               type="button"
@@ -213,6 +223,65 @@ export default function PlanReview() {
   );
 }
 
+const STEPS = [planLines.planStepPrepare, planLines.planStepUpload, planLines.planStepRead] as const;
+const clock = (ms: number) => `${Math.floor(ms / 60_000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
+
+/** What is happening right now, how long it has been, and how many of the two readers are done. */
+function ReadProgress({
+  stage,
+  n,
+  startedAt,
+  done,
+}: {
+  stage: 'preparing' | 'uploading' | 'reading';
+  n: number;
+  startedAt?: number;
+  done: number;
+}) {
+  const [now, setNow] = useState(Date.now());
+  const mounted = useRef(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const current = stage === 'preparing' ? 0 : stage === 'uploading' ? 1 : 2;
+  const elapsed = Math.max(
+    0,
+    now - (stage === 'reading' && startedAt ? Math.min(startedAt, mounted.current) : mounted.current),
+  );
+  return (
+    <div data-testid="plan-progress">
+      <div class="read-steps" aria-hidden="true">
+        {STEPS.map((label, i) => (
+          <div key={label} class="read-step" data-state={i < current ? 'done' : i === current ? 'active' : 'idle'}>
+            {label}
+          </div>
+        ))}
+      </div>
+      <p role="status" class="font-semibold mt-4">
+        {stage === 'preparing'
+          ? planLines.planPreparing
+          : stage === 'uploading'
+            ? fill(planLines.planUploading, { n })
+            : planLines.planReading}
+      </p>
+      {stage === 'reading' && (
+        <>
+          <p class="secondary muted mt-1">
+            {done > 0 ? fill(planLines.planReadersDone, { n: done }) : planLines.planReadersNone}
+            <span class="num faint" aria-hidden="true">
+              {' · '}
+              {clock(elapsed)}
+            </span>
+          </p>
+          <p class="caption mt-3">{elapsed > 150_000 ? planLines.planReadLong : planLines.planReadHint}</p>
+          <p class="caption">{planLines.planReadLeave}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function choiceText(value: unknown): string {
   if (value == null) return '—';
   if (typeof value === 'number') return formatCount(value);
@@ -227,15 +296,78 @@ function choiceText(value: unknown): string {
     return (value as { items: { text: string }[] }).items.map((i) => i.text).join(' · ');
   return '—';
 }
-function disagreementLabel(d: PlanDisagreement): string {
-  if (d.path[0] === 'slots' && d.path[2] === 'target')
-    return `${d.label.split(' · ')[0]} · ${typeLabels[d.path[3] as TypeKey].emoji}`;
+type Kind = 'same' | 'missing' | 'food' | 'target' | 'other';
+const portionOf = (e: Equivalent) => `${formatQty(e.qty)} ${unitText(e.unit, e.qty)}`.trim();
+function kindOf(d: PlanDisagreement): Kind {
+  if (d.path[0] === 'equivalents') {
+    if (d.a == null || d.b == null) return 'missing';
+    return choiceText(d.a) === choiceText(d.b) ? 'same' : 'food';
+  }
+  if (d.path[0] === 'slots' && d.path[2] === 'example') return 'same';
+  return d.path[0] === 'slots' && (d.path[2] === 'time' || d.path[2] === 'target') ? 'target' : 'other';
+}
+/** Readings that agree on what a person sees, or that one reader simply missed, start decided. */
+function defaultChoices(disagreements: PlanDisagreement[]): Record<string, 'a' | 'b'> {
+  const out: Record<string, 'a' | 'b'> = {};
+  for (const d of disagreements) {
+    const kind = kindOf(d);
+    if (kind === 'same' || kind === 'missing') out[d.id] = d.a != null ? 'a' : 'b';
+  }
+  return out;
+}
+function disagreementLabel(d: PlanDisagreement, plan: PlanData): string {
+  if (d.path[0] === 'slots' && typeof d.path[1] === 'number') {
+    const slot = plan.slots[d.path[1]];
+    const name = slot ? `${slot.label}${slot.time ? ` ${slot.time}` : ''}` : d.label.split(' · ')[0]!;
+    if (d.path[2] === 'time') return `${name} · ${planLines.planSlotTime}`;
+    if (d.path[2] === 'target') {
+      const meta = typeLabels[d.path[3] as TypeKey];
+      return `${name} · ${meta.emoji} ${meta.label}`;
+    }
+    return name;
+  }
   return labels.planFields[d.label as keyof typeof labels.planFields] ?? d.label;
+}
+function warningText(w: PlanWarning, plan: PlanData): string {
+  const slot = plan.slots.find((s) => w.field === s.key || w.field.startsWith(`${s.key}.`));
+  const name = slot ? `${slot.label}${slot.time ? ` ${slot.time}` : ''}` : '';
+  const meta = typeLabels[w.field.split('.').pop() as TypeKey];
+  if (w.code === 'target') return `${name} · ${meta?.emoji ?? ''} ${planLines.planWarnTarget}`;
+  if (w.code === 'equivalent') return `${name} · ${meta?.emoji ?? ''} ${planLines.planWarnEquivalent}`;
+  if (w.code === 'time') return `${name}: ${planLines.planWarnTime}`;
+  if (w.code === 'sametime') return `${name}: ${planLines.planWarnSame}`;
+  if (w.code === 'date')
+    return `${labels.planFields[w.field as keyof typeof labels.planFields] ?? w.field}: ${planLines.planWarnDate}`;
+  return w.field;
+}
+const isoDay = (value: string) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? dayLong(value) : value);
+
+function Choices({
+  d,
+  value,
+  onPick,
+  render,
+}: {
+  d: PlanDisagreement;
+  value?: 'a' | 'b';
+  onPick: (key: 'a' | 'b') => void;
+  render: (value: unknown) => string;
+}) {
+  return (
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      {(['a', 'b'] as const).map((key) => (
+        <button key={key} type="button" class="choice" aria-pressed={value === key} onClick={() => onPick(key)}>
+          <span class="caption">{key === 'a' ? planLines.planChoiceA : planLines.planChoiceB}</span>
+          {render(d[key])}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n: number, startsOn: string) => void }) {
   const report = draft.report!;
-  const [choices, setChoices] = useState<Record<string, 'a' | 'b'>>({});
+  const [choices, setChoices] = useState<Record<string, 'a' | 'b'>>(() => defaultChoices(report.disagreements));
   const [edits, setEdits] = useState<Record<string, number>>({});
   const [start, setStart] = useState(() =>
     liveLogs.value.some((l) => l.day === today.value) ? addDays(today.value, 1) : today.value,
@@ -262,10 +394,26 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
   const warnings = [...report.warnings, ...checkPlan(plan)].filter(
     (w, i, all) => all.findIndex((v) => v.code === w.code && v.field === w.field) === i,
   );
+  const blocking = blockingWarnings(warnings);
+  const skipped = warnings.filter((w) => w.code === 'example');
+  const kinds = report.disagreements.map((d) => [d, kindOf(d)] as const);
+  const same = kinds.filter(([, k]) => k === 'same').map(([d]) => d);
+  const missing = kinds.filter(([, k]) => k === 'missing').map(([d]) => d);
+  const open = kinds.filter(([, k]) => k !== 'same' && k !== 'missing').map(([d]) => d);
+  const undecided = open.filter((d) => !choices[d.id]);
+  const pick = (id: string, key: 'a' | 'b') => {
+    setChoices({ ...choices, [id]: key });
+    setWarningsAck(false);
+  };
   const canConfirm =
     report.disagreements.every((d) => choices[d.id]) &&
     (!report.single_read || singleAck) &&
-    (!warnings.length || warningsAck);
+    (!blocking.length || warningsAck);
+  const blockers = [
+    undecided.length ? fill(planLines.planBlockLeft, { n: undecided.length }) : '',
+    blocking.length && !warningsAck ? planLines.planBlockWarn : '',
+    report.single_read && !singleAck ? planLines.planBlockSingle : '',
+  ].filter(Boolean);
   const save = async () => {
     if (!canConfirm || saving) return;
     setSaving(true);
@@ -298,61 +446,110 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
   };
   return (
     <div data-testid="plan-review">
-      <div class="mb-3 flex flex-wrap gap-2">
-        {report.files.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            class="btn btn-soft"
-            onClick={() => void downloadPlanFile(draft.draft_id!, i).catch(() => setError(lines.planOffline))}
-          >
-            {buttons.original}
-            {report.files.length > 1 ? ` ${i + 1}` : ''}
-          </button>
-        ))}
-      </div>
-      {report.single_read && <p class="secondary muted mb-3">{planLines.planSingleRead}</p>}
-      {(plan.issued_on || plan.next_appointment) && (
-        <section class="card mb-4 p-4 secondary">
-          {plan.issued_on && (
-            <p>
-              {labels.planFields.issued_on}: {plan.issued_on}
-            </p>
-          )}
-          {plan.next_appointment && (
-            <p class="mt-2">
-              {labels.planFields.next_appointment}: {plan.next_appointment}
-            </p>
-          )}
-        </section>
-      )}
-      {report.disagreements.length > 0 && (
-        <section class="card mb-4 p-4">
-          <h2 class="font-bold mb-2">{titles.disagreements}</h2>
-          {report.disagreements.map((d) => (
-            <div key={d.id} class="border-line border-t py-3" data-testid="plan-disagreement">
-              <p class="font-semibold">{disagreementLabel(d)}</p>
-              <div class="grid grid-cols-2 gap-2 mt-2">
-                {(['a', 'b'] as const).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    class="chip text-left whitespace-normal"
-                    aria-pressed={choices[d.id] === key}
-                    onClick={() => {
-                      setChoices({ ...choices, [d.id]: key });
-                      setWarningsAck(false);
-                    }}
-                  >
-                    <span class="caption block">{key === 'a' ? planLines.planChoiceA : planLines.planChoiceB}</span>
-                    {choiceText(d[key])}
-                  </button>
-                ))}
-              </div>
-            </div>
+      <section class="card mb-4 p-4">
+        <p class="font-bold">
+          {fill(planLines.planSummary, { slots: plan.slots.length, foods: plan.equivalents.length })}
+        </p>
+        <p class="secondary muted mt-1">
+          {report.single_read ? planLines.planSingleRead : report.disagreements.length === 0 && planLines.planAgree}
+        </p>
+        {(plan.issued_on || plan.next_appointment) && (
+          <p class="caption mt-2">
+            {[
+              plan.issued_on && `${labels.planFields.issued_on}: ${isoDay(plan.issued_on)}`,
+              plan.next_appointment && `${labels.planFields.next_appointment}: ${isoDay(plan.next_appointment)}`,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
+        <div class="mt-3 flex flex-wrap gap-2">
+          {report.files.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              class="btn btn-soft"
+              onClick={() => void downloadPlanFile(draft.draft_id!, i).catch(() => setError(lines.planOffline))}
+            >
+              {buttons.original}
+              {report.files.length > 1 ? ` ${i + 1}` : ''}
+            </button>
           ))}
+        </div>
+      </section>
+      {report.disagreements.length > 0 && (
+        <section class="card mb-4 p-4" data-testid="plan-disagreements">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="font-bold">{titles.disagreements}</h2>
+            <span class={`badge ${undecided.length ? 'accent' : 'leaf'}`} aria-live="polite">
+              {undecided.length ? fill(planLines.planCompareLeft, { n: undecided.length }) : planLines.planCompareDone}
+            </span>
+          </div>
+          {open.length > 0 && <p class="secondary muted mt-1">{planLines.planCompareIntro}</p>}
+          {(
+            [
+              ['target', planLines.planSectionTargets],
+              ['food', planLines.planSectionFoods],
+              ['other', planLines.planSectionOther],
+            ] as const
+          ).map(([kind, title]) => {
+            const rows = open.filter((d) => kindOf(d) === kind);
+            return (
+              rows.length > 0 && (
+                <div key={kind} class="mt-4">
+                  <p class="kicker">{title}</p>
+                  {rows.map((d) => (
+                    <div key={d.id} class="border-line border-t py-3" data-testid="plan-disagreement">
+                      <p class="font-semibold">{disagreementLabel(d, draft.plan!)}</p>
+                      <Choices
+                        d={d}
+                        value={choices[d.id]}
+                        onPick={(key) => pick(d.id, key)}
+                        render={kind === 'food' ? (v) => portionOf(v as Equivalent) : choiceText}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )
+            );
+          })}
+          {missing.length > 0 && (
+            <details class="mt-4">
+              <summary class="press min-h-11 cursor-pointer font-semibold">
+                {planLines.planSectionMissing} · {missing.length}
+              </summary>
+              <p class="caption mb-1">{planLines.planMissingHint}</p>
+              {missing.map((d) => {
+                const keep = (d.a != null ? 'a' : 'b') as 'a' | 'b';
+                const included = choices[d.id] === keep;
+                return (
+                  <div key={d.id} class="border-line flex items-center justify-between gap-3 border-t py-2">
+                    <span class="min-w-0">
+                      <span aria-hidden="true">{typeLabels[(d[keep] as Equivalent).type].emoji}</span>{' '}
+                      {itemLabel(
+                        (d[keep] as Equivalent).food,
+                        (d[keep] as Equivalent).qty,
+                        (d[keep] as Equivalent).unit,
+                        false,
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      class="chip shrink-0"
+                      aria-pressed={included}
+                      onClick={() => pick(d.id, included ? (keep === 'a' ? 'b' : 'a') : keep)}
+                    >
+                      {included ? planLines.planIncluded : planLines.planExcluded}
+                    </button>
+                  </div>
+                );
+              })}
+            </details>
+          )}
+          {same.length > 0 && <p class="caption mt-3">{fill(planLines.planAutoResolved, { n: same.length })}</p>}
         </section>
       )}
+      <PlanDiffCard diff={diff} first={!activePlan.value} />
       <section class="card mb-4 p-4" aria-label={titles.slots}>
         {plan.slots.map((s) => (
           <details key={s.key} class="border-line border-b py-3 last:border-b-0">
@@ -378,34 +575,6 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
           </details>
         ))}
       </section>
-      <section class="card mb-4 p-4">
-        <h2 class="font-bold">{titles.differences}</h2>
-        {!diff.slots.length && <p class="secondary muted mt-2">{planLines.planUnchanged}</p>}
-        {diff.slots.map((s) => (
-          <p key={s.key} class="secondary mt-2">
-            {s.label} · {s.added ? `${planLines.planSlotAdded} · ` : s.removed ? `${planLines.planSlotRemoved} · ` : ''}
-            {Object.entries(s.deltas)
-              .map(([t, n]) => `${n > 0 ? '+' : ''}${formatCount(n)} ${typeLabels[t as TypeKey].emoji}`)
-              .join(' · ')}
-            {s.time_changed && (
-              <span class="caption block">
-                {s.before_time ?? '—'} → {s.after_time ?? '—'}
-              </span>
-            )}
-          </p>
-        ))}
-        <details class="mt-3">
-          <summary class="press min-h-11 cursor-pointer caption">
-            {fill(planLines.planEquivalentChanges, { n: diff.equivalents.length })}
-          </summary>
-          {diff.equivalents.map((e) => (
-            <p key={e.id} class="secondary muted py-1">
-              {e.before ? itemLabel(e.before.food, e.before.qty, e.before.unit, false) : '—'} →{' '}
-              {e.after ? itemLabel(e.after.food, e.after.qty, e.after.unit, false) : '—'}
-            </p>
-          ))}
-        </details>
-      </section>
       {(plan.notes.length > 0 || plan.fluids_ml || plan.exercise) && (
         <section class="card mb-4 p-4">
           <h2 class="font-bold">{titles.notes}</h2>
@@ -424,18 +593,45 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
           <p class="secondary mt-2">{plan.free_foods.join(', ')}</p>
         </details>
       )}
-      {warnings.length > 0 && (
+      {blocking.length > 0 && (
         <section class="card mb-4 p-4">
-          {warnings.map((w) => (
-            <p key={`${w.code}:${w.field}`} class="caption mb-2">
-              {fill(planLines.planWarning, { field: w.field })}
-            </p>
-          ))}
-          <label class="press flex min-h-12 items-center gap-3">
+          <h2 class="font-bold">{planLines.planCheckTitle}</h2>
+          <ul class="secondary mt-2">
+            {blocking
+              .filter((w) => w.code !== 'portion')
+              .map((w) => (
+                <li key={`${w.code}:${w.field}`} class="py-1">
+                  {warningText(w, plan)}
+                </li>
+              ))}
+            {blocking.some((w) => w.code === 'portion') && (
+              <li class="py-1">
+                {fill(planLines.planWarnPortions, {
+                  foods: blocking
+                    .filter((w) => w.code === 'portion')
+                    .map((w) => w.field)
+                    .join(', '),
+                })}
+              </li>
+            )}
+          </ul>
+          <label class="press mt-2 flex min-h-12 items-center gap-3">
             <input type="checkbox" checked={warningsAck} onChange={(e) => setWarningsAck(e.currentTarget.checked)} />
             {planLines.planWarningsAck}
           </label>
         </section>
+      )}
+      {skipped.length > 0 && (
+        <details class="card mb-4 p-4">
+          <summary class="press min-h-11 cursor-pointer font-semibold">
+            {planLines.planExamplesSkipped} · {skipped.length}
+          </summary>
+          {skipped.map((w) => (
+            <p key={w.field} class="caption py-1">
+              {w.field}
+            </p>
+          ))}
+        </details>
       )}
       {report.single_read && (
         <label class="press flex min-h-12 items-center gap-3 mb-3">
@@ -477,6 +673,13 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
         <p class="secondary muted mb-3" role="status">
           {error}
         </p>
+      )}
+      {blockers.length > 0 && (
+        <ul class="secondary muted mb-3" role="status" data-testid="plan-blockers">
+          {blockers.map((b) => (
+            <li key={b}>{b}</li>
+          ))}
+        </ul>
       )}
       <button
         type="button"

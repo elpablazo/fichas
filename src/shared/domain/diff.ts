@@ -20,6 +20,8 @@ export function diffPlans(previous: PlanData | null, next: PlanData) {
         time_changed: a?.time !== b?.time,
         before_time: a?.time ?? null,
         after_time: b?.time ?? null,
+        before: a?.target ?? {},
+        after: b?.target ?? {},
         deltas,
       };
     })

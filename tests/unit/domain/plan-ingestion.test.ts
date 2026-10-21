@@ -113,6 +113,14 @@ describe('plan review', () => {
     expect(resolved).toEqual(b);
     expect(a.slots[2]?.target.carb_sg).toBe(2);
   });
+  it('ignores note-only differences but keeps a doubt marker as a disagreement', () => {
+    const a = expandRead(planRead());
+    const b = structuredClone(a);
+    b.equivalents[0]!.note = 'menos de 90 kcal';
+    expect(compareReads(a, b)).toEqual([]);
+    b.equivalents[0]!.note = 'uncertain text';
+    expect(compareReads(a, b).map((d) => d.id)).toEqual(['equivalents.0']);
+  });
   it('diff identifies changed cells, removed slots and food portions', () => {
     const next = structuredClone(seedPlan);
     next.slots[2]!.target.carb_sg = 3;
@@ -120,6 +128,8 @@ describe('plan review', () => {
     next.equivalents[0]!.qty = 0.5;
     const diff = diffPlans(seedPlan, next);
     expect(diff.slots.find((s) => s.key === 'comida')?.deltas).toEqual({ carb_sg: 1 });
+    const lunch = diff.slots.find((s) => s.key === 'comida')!;
+    expect(lunch.after.carb_sg).toBe((lunch.before.carb_sg ?? 0) + 1);
     expect(diff.slots.find((s) => s.key === 'cena')?.removed).toBe(true);
     expect(diff.equivalents).toHaveLength(1);
   });
