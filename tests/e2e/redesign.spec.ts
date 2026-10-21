@@ -27,12 +27,20 @@ async function rows<T>(page: Page, table: string): Promise<T[]> {
 }
 
 /** The server's copy (other tests open fresh devices, so local-only writes must reach it first). */
+/** Every synced row, following the pull's pages (a long local suite has more than one). */
 async function server(request: APIRequestContext) {
-  const body = await (await request.get('/api/sync?since=0')).json();
-  return body.changes as {
-    settings: { key: string; value: string }[];
-    weighins: { id: string; deleted_at: number | null }[];
+  const all = {
+    settings: [] as { key: string; value: string }[],
+    weighins: [] as { id: string; deleted_at: number | null }[],
   };
+  let since = 0;
+  for (;;) {
+    const body = await (await request.get(`/api/sync?since=${since}`)).json();
+    all.settings.push(...(body.changes.settings ?? []));
+    all.weighins.push(...(body.changes.weighins ?? []));
+    if (!body.more) return all;
+    since = body.rev;
+  }
 }
 
 function item(id: string, qty: number): LogItem {
