@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.wrangler/
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+private/
+*.pdf
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+.DS_Store
+*.local
+.playwright/
+# Local handoff archives may include personal plans or credentials.
+arch.zip
