@@ -1,0 +1,3 @@
+#!/bin/sh
+# Never record credentials or personal source files in a local commit.
+exec node --import tsx scripts/check-secrets.ts
