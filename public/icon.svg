@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Fichas</title>
+  <rect width="512" height="512" rx="112" fill="#E4007C"/>
+  <g stroke="#E4007C" stroke-width="12" stroke-linejoin="round" fill="#fff">
+    <path d="M116 316v28a140 54 0 0 0 280 0v-28"/>
+    <ellipse cx="256" cy="316" rx="140" ry="54"/>
+    <path d="M116 246v28a140 54 0 0 0 280 0v-28"/>
+    <ellipse cx="256" cy="246" rx="140" ry="54"/>
+    <path d="M116 176v28a140 54 0 0 0 280 0v-28"/>
+    <ellipse cx="256" cy="176" rx="140" ry="54"/>
+  </g>
+</svg>
