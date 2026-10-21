@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { ConfirmBody } from '../../shared/api';
 import { addDays, appDay } from '../../shared/domain/day';
-import { checkPlan, type PlanReport } from '../../shared/domain/plan-ingestion';
+import { blockingWarnings, checkPlan, type PlanReport } from '../../shared/domain/plan-ingestion';
 import { PlanV1 } from '../../shared/domain/plan-schema';
 import { currentRev, REV_BUMP, REV_NOW } from '../lib/db';
 import { type AppEnv, apiError } from '../lib/http';
@@ -177,7 +177,7 @@ plans.post('/:id/confirm', async (c) => {
     report.state !== 'ready' ||
     report.disagreements.some((d) => !input.resolutions[d.id]) ||
     (report.single_read && !input.single_read_ack) ||
-    ((report.warnings.length || checkPlan(input.plan).length) && !input.warnings_ack)
+    (blockingWarnings([...report.warnings, ...checkPlan(input.plan)]).length > 0 && !input.warnings_ack)
   )
     return apiError(c, 409, 'review_required', 'Resolve the review first.');
   const plan = PlanV1.parse(input.plan);

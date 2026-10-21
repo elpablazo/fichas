@@ -108,10 +108,11 @@ test('resume a draft; resolve each disagreement before confirmation', async ({ c
   await page.goto('/historia/plan/nuevo');
   await page.getByTestId('plan-review').waitFor();
   await expect(page.getByTestId('confirm-plan')).toBeDisabled();
+  await expect(page.getByTestId('plan-blockers')).toContainText('Faltan 1 por decidir');
   await page.getByTestId('plan-disagreement').getByRole('button').last().click();
   await page.getByRole('checkbox', { name: 'Revisé las porciones señaladas.' }).check();
   await expect(page.getByTestId('confirm-plan')).toBeEnabled();
-  await expect(page.getByTestId('plan-review')).toContainText('+1 🫓');
+  await expect(page.getByTestId('plan-review')).toContainText('2 → 3');
   const confirm = page.waitForRequest('**/api/plans/mock-draft/confirm');
   await page.getByTestId('confirm-plan').click();
   const request = await confirm;

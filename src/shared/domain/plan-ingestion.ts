@@ -10,9 +10,12 @@ import { TYPE_KEYS } from './types';
 import { unitsOfItems } from './units';
 
 export interface PlanWarning {
-  code: 'target' | 'equivalent' | 'example' | 'time' | 'portion' | 'date';
+  code: 'target' | 'equivalent' | 'example' | 'time' | 'sametime' | 'portion' | 'date';
   field: string;
 }
+/** Example dishes are only suggestions: an unreadable one never blocks saving the plan. */
+export const blockingWarnings = (warnings: PlanWarning[]) => warnings.filter((w) => w.code !== 'example');
+
 export interface PlanDisagreement {
   id: string;
   path: (string | number)[];
@@ -73,9 +76,7 @@ export function expandRead(read: PlanRead): PlanData {
       const ref = REFERENCE_PORTIONS[canonical];
       const prior = equivalents.get(id);
       const conflict = prior && (prior.qty !== row.qty || prior.unit !== row.unit);
-      const unclear =
-        /uncertain|ilegib|illegib|dudoso|no claro/i.test(row.note ?? '') ||
-        (row.type === 'fruit' && /^frescos?$/i.test(food));
+      const unclear = UNCLEAR_NOTE.test(row.note ?? '') || (row.type === 'fruit' && /^frescos?$/i.test(food));
       const uniqueId = conflict ? `${id}_variant_${equivalents.size}` : id;
       if (conflict) prior.flag = 'check_portion';
       equivalents.set(uniqueId, {
@@ -147,7 +148,11 @@ export function checkPlan(plan: PlanData): PlanWarning[] {
     )
       warnings.push({ code: 'date', field: key });
   }
+  const seen = new Set<string>();
   for (const slot of plan.slots) {
+    // Two meals at one hour usually means a misread time, not a plan.
+    if (slot.time && seen.has(slot.time)) warnings.push({ code: 'sametime', field: slot.key });
+    if (slot.time) seen.add(slot.time);
     if (slot.time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(slot.time)) warnings.push({ code: 'time', field: slot.key });
     for (const [type, n] of Object.entries(slot.target) as [TypeKey, number][]) {
       if (n > 12 || Math.abs(n * 2 - Math.round(n * 2)) > 1e-6)
@@ -171,6 +176,7 @@ export function checkPlan(plan: PlanData): PlanWarning[] {
   return warnings;
 }
 
+const UNCLEAR_NOTE = /uncertain|ilegib|illegib|dudoso|no claro/i;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export function compareReads(a: PlanData, b: PlanData): PlanDisagreement[] {
   const out: PlanDisagreement[] = [];
@@ -198,7 +204,14 @@ export function compareReads(a: PlanData, b: PlanData): PlanDisagreement[] {
     const i = a.equivalents.findIndex((e) => e.id === id);
     const av = i >= 0 ? a.equivalents[i]! : null;
     const bv = b.equivalents.find((e) => e.id === id) ?? null;
-    if (!av || !bv || Math.abs(av.qty - bv.qty) > 0.00011 || av.unit !== bv.unit || av.note !== bv.note)
+    // Notes are never shown; only a doubt marker matters, and it already raises a portion flag.
+    if (
+      !av ||
+      !bv ||
+      Math.abs(av.qty - bv.qty) > 0.00011 ||
+      av.unit !== bv.unit ||
+      UNCLEAR_NOTE.test(av.note ?? '') !== UNCLEAR_NOTE.test(bv.note ?? '')
+    )
       add(['equivalents', i >= 0 ? i : next++], av?.food ?? bv!.food, av, bv);
   }
   for (const key of ['issued_on', 'next_appointment', 'fluids_ml', 'exercise', 'notes', 'free_foods'] as const)

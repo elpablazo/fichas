@@ -805,6 +805,122 @@
     background: linear-gradient(to bottom, transparent, var(--surface) 18px);
   }
 
+  /* ---------- Plan review ---------- */
+  .diff-slot {
+    padding: 14px 0 6px;
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+  }
+  .diff-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+  }
+  .diff-type {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .diff-emoji {
+    display: inline-block;
+    width: 1.4em;
+  }
+  .diff-vals {
+    font-size: 17px;
+    text-align: right;
+  }
+  .diff-delta {
+    min-width: 44px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+    background: var(--surface-2);
+    color: var(--ink-2);
+  }
+  .diff-delta.up {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+  .diff-food {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 15px;
+    border-bottom: 1px solid var(--line);
+  }
+  .choice {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-height: 56px;
+    padding: 10px 14px;
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1.5px var(--line-2);
+    text-align: left;
+    font-size: 16px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    transition:
+      background-color var(--d2) ease,
+      box-shadow var(--d2) ease;
+  }
+  .choice[aria-pressed="true"] {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  .read-steps {
+    display: flex;
+    gap: 8px;
+  }
+  .read-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+  .read-step::before {
+    content: "";
+    height: 6px;
+    border-radius: 999px;
+    background: var(--surface-3);
+  }
+  .read-step[data-state="done"]::before {
+    background: var(--accent);
+  }
+  .read-step[data-state="active"] {
+    color: var(--ink);
+  }
+  .read-step[data-state="active"]::before {
+    background: linear-gradient(90deg, var(--accent-soft), var(--accent), var(--accent-soft));
+    background-size: 200% 100%;
+    animation: read-sweep 1.6s linear infinite;
+  }
+  @keyframes read-sweep {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .read-step[data-state="active"]::before {
+      animation: none;
+      background: var(--accent);
+    }
+  }
+
   /* ---------- Misc ---------- */
   .highlight {
     background: color-mix(in srgb, var(--gold) 28%, transparent);

@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { checkPlan, compareReads, expandRead } from '../../shared/domain/plan-ingestion';
+import { checkPlan, compareReads, expandRead, type PlanReport } from '../../shared/domain/plan-ingestion';
 import { PlanParseV1 } from '../../shared/plan-read-schema';
 import { REV_BUMP, REV_NOW } from './db';
 import { runPlanReader } from './plan-ai';
@@ -25,19 +25,42 @@ async function perform(env: Env, job: Job): Promise<void> {
     objects.map(async (o, i) => ({ type: report.files[i]!.type, base64: await o!.text() })),
   );
   const models = [env.MODEL_PLAN_A, env.MODEL_PLAN_B];
+  // Readers finish minutes apart; publish each one so the screen can show real progress.
+  const finished: PlanReport['models'] = [];
+  const announce = async (model: string, ok: boolean, ms: number) => {
+    finished.push({ model, ok, ms });
+    try {
+      await env.DB.prepare(`UPDATE plans SET parse_report=?,updated_at=?
+        WHERE id=? AND status='draft' AND json_extract(parse_report,'$.started_at')=?`)
+        .bind(JSON.stringify({ ...report, models: [...finished] }), Date.now(), row.id, job.token)
+        .run();
+    } catch {
+      // Progress is cosmetic; the final write below is authoritative.
+    }
+  };
+  const read = async (model: string) => {
+    const key = await sha256Hex(JSON.stringify(['plan', model, PLAN_PROMPT_VERSION, row.source_sha256]));
+    const cached = await env.DB.prepare('SELECT output FROM ai_cache WHERE key=?')
+      .bind(key)
+      .first<{ output: string }>();
+    if (cached) return { read: PlanParseV1.parse(JSON.parse(cached.output)), ms: 0 };
+    const result = await runPlanReader(env, model, sources, job.origin);
+    // Persist each independent read immediately; an interrupted job reuses completed reads.
+    await env.DB.prepare('INSERT OR REPLACE INTO ai_cache (key,job,model,output,created_at) VALUES (?,?,?,?,?)')
+      .bind(key, 'plan', model, JSON.stringify(result.read), Date.now())
+      .run();
+    return result;
+  };
   const results = await Promise.allSettled(
     models.map(async (model) => {
-      const key = await sha256Hex(JSON.stringify(['plan', model, PLAN_PROMPT_VERSION, row.source_sha256]));
-      const cached = await env.DB.prepare('SELECT output FROM ai_cache WHERE key=?')
-        .bind(key)
-        .first<{ output: string }>();
-      if (cached) return { read: PlanParseV1.parse(JSON.parse(cached.output)), ms: 0 };
-      const result = await runPlanReader(env, model, sources, job.origin);
-      // Persist each independent read immediately; an interrupted job reuses completed reads.
-      await env.DB.prepare('INSERT OR REPLACE INTO ai_cache (key,job,model,output,created_at) VALUES (?,?,?,?,?)')
-        .bind(key, 'plan', model, JSON.stringify(result.read), Date.now())
-        .run();
-      return result;
+      try {
+        const result = await read(model);
+        await announce(model, true, result.ms);
+        return result;
+      } catch (error) {
+        await announce(model, false, 0);
+        throw error;
+      }
     }),
   );
   const valid = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
