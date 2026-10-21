@@ -100,9 +100,25 @@ test('progress and stamps persist after undo; favorites and only unlocked styles
 }, info) => {
   const page = await newPage(context, dayFor(info, 62), '17:20');
   await openToday(page);
+  const xpCount = () =>
+    page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          const r = indexedDB.open('fichas');
+          r.onsuccess = () => {
+            const q = r.result.transaction('achievements').objectStore('achievements').getAll();
+            q.onsuccess = () => {
+              resolve(q.result.filter((a: { key: string }) => a.key.startsWith('xp_')).length);
+              r.result.close();
+            };
+          };
+        }),
+    );
+  const before = await xpCount();
   await page.getByTestId('now-describe').click();
   await describeAndLog(page, LUNCH);
-  await page.waitForTimeout(1400); // rewards are persisted after the immediate food feedback
+  // Rewards are persisted shortly after the immediate food feedback; undo must not take them back.
+  await expect.poll(xpCount, { timeout: 10_000 }).toBeGreaterThan(before);
   await page.getByRole('button', { name: 'Deshacer' }).click();
   await page.getByRole('button', { name: 'Jardín', exact: true }).click();
   await expect(page.getByTestId('garden')).toBeVisible();

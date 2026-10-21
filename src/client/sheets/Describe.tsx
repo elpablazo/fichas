@@ -16,8 +16,8 @@ import {
   WifiOff,
   X,
 } from 'lucide-preact';
-import type { ComponentChildren } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import type { ComponentChildren, VNode } from 'preact';
+import { useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { Classified } from '../../shared/ai-schema';
 import { dayLong } from '../../shared/domain/format';
 import { mainType, stepOf, withQty } from '../../shared/domain/items';
@@ -28,7 +28,7 @@ import type { LogItem, PlanData, RecipeRow, TypeKey } from '../../shared/domain/
 import { logMeal, logPendingDescription, planDish, skipSlot } from '../actions';
 import { classifyRemote, parsePhoto, parseRemote } from '../ai';
 import { DayMeter } from '../components/DayMeter';
-import { Sheet } from '../components/Sheet';
+import { Sheet, SheetLeaving } from '../components/Sheet';
 import { a11y, buttons, dates, describeCopy, labels, lines, pools, typeLabels } from '../copy/es-MX';
 import { preparePhoto } from '../media/photo';
 import { useDictation } from '../media/speech';
@@ -111,6 +111,8 @@ export default function Describe(props: Props) {
   const generation = useRef(0);
   const started = useRef(performance.now());
   const previewed = useRef(false);
+  const leaving = useContext(SheetLeaving);
+  const frozen = useRef<VNode | null>(null);
   /** The meal-AI request for the current text, so "Anotar" waits for it instead of asking twice. */
   const inflight = useRef<{ key: string; promise: Promise<ParseResult | null> } | null>(null);
 
@@ -279,6 +281,9 @@ export default function Describe(props: Props) {
     if (photoText !== null && photoText !== text) setText(photoText);
   }, [photoText]);
 
+  // Sliding out after "Anotar": keep the last frame. Recomputing would count the new meal twice in the preview
+  // and spend the first frames after the tap that belong to the logged moment on Hoy.
+  if (leaving && frozen.current) return frozen.current;
   if (!plan || !data) return null;
   const slotLabel = slotOptions.find((s) => s.key === slot)?.label ?? '';
   /** The meal's plain name for sentences ("tu colación"); the chip keeps its time when the name repeats. */
@@ -353,7 +358,8 @@ export default function Describe(props: Props) {
       items: list,
       source,
       recipe_id: pinned?.recipeId ?? null,
-      anchor,
+      // The sheet's button is sliding away; the burst belongs where the logged moment shows (the now card).
+      anchor: pastDay ? anchor : null,
       day: pastDay,
     });
     closeSheet();
@@ -432,7 +438,7 @@ export default function Describe(props: Props) {
       </button>
     ) : undefined;
 
-  return (
+  frozen.current = (
     <Sheet
       label={mode === 'check' ? describeCopy.titleCheck : describeCopy.titleLog}
       onClose={closeSheet}
@@ -687,6 +693,7 @@ export default function Describe(props: Props) {
       )}
     </Sheet>
   );
+  return frozen.current;
 }
 
 function Thinking() {

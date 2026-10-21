@@ -159,10 +159,13 @@ export async function logMeal(input: LogInput): Promise<LogRow | null> {
     tick(Math.max(1, Math.min(units, 6)));
     if (row.slot !== 'extra' && row.kind === 'meal' && day === today.value) startCelebration(row.slot);
     markUx('log:anim-start');
-    requestAnimationFrame(() => playTokens(Math.max(1, units), row.status === 'on'));
+    // Sound and sparkles start one frame later, so the frame that shows the logged meal paints first
+    // (the sparkle reads layout; the synth builds audio nodes).
+    const later = (fn: () => void) => requestAnimationFrame(() => requestAnimationFrame(fn));
+    later(() => playTokens(Math.max(1, units), row.status === 'on'));
     if (row.status === 'on') {
       const types = TYPE_KEYS.filter((t) => (row.raw_units[t] ?? 0) > 0);
-      requestAnimationFrame(() => sparkle(input.anchor ?? document.querySelector('[data-card]'), types));
+      later(() => sparkle(input.anchor ?? document.querySelector('[data-card]'), types));
     }
   }
   await writeRows(writes);

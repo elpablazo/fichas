@@ -1,7 +1,7 @@
 // Hoy, top to bottom: the week, "¿cómo voy?" (Tu día), the one meal that matters now, then the day's meals.
 // One thing at a time: before a meal the app helps decide; after it, it asks what was eaten.
 import { Bell, FileUp, Moon, Undo2, X } from 'lucide-preact';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { daysBetween, localParts } from '../../shared/domain/day';
 import { logMeal, planDish, skipSlot, unplanDish } from '../actions';
 import { DayCard } from '../components/DayCard';
@@ -49,20 +49,22 @@ export function Today() {
     !!activePlan.value?.starts_on &&
     daysBetween(activePlan.value.starts_on, vm.day) >= 14;
   const priming = isToday && !renewal && !hasGameCard.value && canPrime.value;
-  useLayoutEffect(() => {
-    if (!vm || !isToday || !layoutReady || !bannerRef.current) return;
-    try {
-      localStorage.setItem(
-        LAYOUT_KEY,
-        JSON.stringify({
-          day: vm.day,
-          planId: vm.planId,
-          bannerHeight: bannerRef.current.getBoundingClientRect().height,
-        }),
-      );
-    } catch {
-      // Like the Today snapshot, this is only a startup optimization.
-    }
+  // Measured after paint: a layout read before it would delay the frame that shows a fresh log.
+  useEffect(() => {
+    if (!vm || !isToday || !layoutReady) return;
+    const id = requestAnimationFrame(() => {
+      const banner = bannerRef.current;
+      if (!banner) return;
+      try {
+        localStorage.setItem(
+          LAYOUT_KEY,
+          JSON.stringify({ day: vm.day, planId: vm.planId, bannerHeight: banner.getBoundingClientRect().height }),
+        );
+      } catch {
+        // Like the Today snapshot, this is only a startup optimization.
+      }
+    });
+    return () => cancelAnimationFrame(id);
   });
   if (!vm) return <TodaySkeleton />;
   const nowVM = vm.now;
