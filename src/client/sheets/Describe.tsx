@@ -294,7 +294,8 @@ export default function Describe(props: Props) {
   const items = withEdits(base, edits, data);
   // Phrases still waiting for portions (shown with JEV's groups while the meal AI works).
   const open = fromAi || pinned ? [] : phrases;
-  const counting = remoteState === 'waiting' && open.length > 0;
+  // Pending phrases are about to be counted (or are): the preview is partial until then.
+  const counting = open.length > 0 && (remoteState === 'idle' || remoteState === 'waiting');
   const shown = items.length > 0 || open.length > 0;
   if (items.length && !previewed.current) {
     previewed.current = true;
