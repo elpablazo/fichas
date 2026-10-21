@@ -80,7 +80,8 @@ test('recap and nutritionist report generate PNGs offline; sharing cancellation 
   await page.goto('/historia');
   await page.getByRole('button', { name: 'Resumen', exact: true }).waitFor();
   await context.setOffline(true);
-  for (const name of ['Resumen', 'Para tu nutri']) {
+  // Since 1.1.1 "Para tu nutri" opens the meals export (no image); the season recap is the shareable PNG.
+  for (const name of ['Resumen']) {
     await page.getByRole('button', { name, exact: true }).click();
     await expect(page.getByTestId('story-share')).toBeEnabled();
     await page.getByTestId('story-share').click();

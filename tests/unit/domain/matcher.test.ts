@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localChips, matchText, parseItems } from '../../../src/shared/domain/matcher';
+import { knownText, localChips, matchText, parseItems, unknownPhrases } from '../../../src/shared/domain/matcher';
 import type { Units } from '../../../src/shared/domain/types';
 import { unitsOfItems } from '../../../src/shared/domain/units';
 import { plan } from '../helpers';
@@ -109,5 +109,21 @@ describe('matchText (local fast path)', () => {
   it('prefers the longest food name (mantequilla de maní → crema de cacahuate)', () => {
     const r = matchText('2 cucharaditas de mantequilla de maní', plan, []);
     expect(r?.items[0]?.equivalent_id).toBe('fat_cp.crema_de_cacahuate');
+  });
+});
+
+describe('unknownPhrases', () => {
+  it('returns only the phrases the plan table cannot place, for live categorization', () => {
+    expect(unknownPhrases('2 tortillas, huevo con chilaquiles y un agua de jamaica', plan)).toEqual([
+      'chilaquiles',
+      'un agua de jamaica',
+    ]);
+    expect(unknownPhrases('3 tacos al pastor + 1 coca', plan)).toEqual(['3 tacos al pastor']);
+    expect(unknownPhrases('2 tortillas y 120 g pollo', plan)).toEqual([]);
+  });
+
+  it('keeps only fully known phrases for the instant rows ("3 tacos de pollo" is not "30 g pollo")', () => {
+    expect(knownText('3 tacos de pollo y 1 manzana', plan)).toBe('1 manzana');
+    expect(knownText('2 tortillas, huevo con chilaquiles', plan)).toBe('2 tortillas, huevo');
   });
 });

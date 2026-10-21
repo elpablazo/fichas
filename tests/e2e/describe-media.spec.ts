@@ -61,7 +61,7 @@ const speechMock = `(() => {
 
 test('dictation produces editable text and never submits or logs automatically', async ({ context }, info) => {
   const day = dayFor(info, 70);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await page.addInitScript(speechMock);
   await openToday(page);
   let calls = 0;
@@ -81,7 +81,6 @@ test('dictation produces editable text and never submits or logs automatically',
   expect(await logs(page, day)).toHaveLength(0);
   await page.getByTestId('dictate').click();
   await page.getByTestId('describe-input').fill('3 tortillas de maíz');
-  await page.getByTestId('describe-submit').click();
   await expect(page.getByTestId('preview')).toContainText('3 tortillas');
   expect(await logs(page, day)).toHaveLength(0);
   expect(calls).toBe(0);
@@ -93,7 +92,7 @@ test('dictation produces editable text and never submits or logs automatically',
 
 test('unsupported dictation keeps the keyboard path usable', async ({ context }, info) => {
   const day = dayFor(info, 71);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await page.addInitScript(`window.SpeechRecognition = undefined; window.webkitSpeechRecognition = undefined;`);
   await openToday(page);
   await page.getByTestId('describe-open').click();
@@ -103,11 +102,13 @@ test('unsupported dictation keeps the keyboard path usable', async ({ context },
   await page.getByTestId('describe-input').fill('una manzana');
   await page.getByTestId('describe-input').press('Enter');
   await expect(page.getByTestId('preview')).toBeVisible();
+  await expect(page.getByTestId('describe-input')).not.toBeFocused();
+  expect(await logs(page, day)).toHaveLength(0);
 });
 
 test('photo → detected text → adjust/remove → explicit approval → D1 sync', async ({ context }, info) => {
   const day = dayFor(info, 72);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   await page.route('**/api/ai/photo?*', async (route) => {
     expect(route.request().headers()['content-type']).toBe('text/plain');
@@ -119,7 +120,7 @@ test('photo → detected text → adjust/remove → explicit approval → D1 syn
   await page.getByTestId('describe-open').click();
   await expect(page.getByTestId('photo-input')).toHaveAttribute('capture', 'environment');
   await page.getByTestId('photo-input').setInputFiles('public/icon-512.png');
-  await expect(page.getByText('Esto veo. Ajusta antes de anotar.')).toBeVisible();
+  await expect(page.getByText('Revisa lo detectado antes de anotar.')).toBeVisible();
   await expect(page.getByTestId('describe-input')).toHaveValue('2 tortillas, 120 g pollo');
   expect(await logs(page, day)).toHaveLength(0);
   await page.getByRole('button', { name: 'Más: 2 tortillas', exact: true }).click();
@@ -146,20 +147,20 @@ test('photo → detected text → adjust/remove → explicit approval → D1 syn
 
 test('discarding a photo creates no meal log', async ({ context }, info) => {
   const day = dayFor(info, 73);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   await page.route('**/api/ai/photo?*', (route) => route.fulfill({ json: meal }));
   await page.getByTestId('describe-open').click();
   await page.getByTestId('photo-input').setInputFiles('public/icon-512.png');
   await page.getByTestId('preview').waitFor();
-  await page.getByRole('button', { name: 'Descartar', exact: true }).click();
+  await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
   await expect(page.getByRole('dialog')).not.toBeVisible();
   expect(await logs(page, day)).toHaveLength(0);
 });
 
 test('editing detected text can replace ingredients before approval', async ({ context }, info) => {
   const day = dayFor(info, 74);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   await page.route('**/api/ai/photo?*', (route) => route.fulfill({ json: meal }));
   await page.getByTestId('describe-open').click();
@@ -174,7 +175,7 @@ test('editing detected text can replace ingredients before approval', async ({ c
 
 test('unclear photos and AI errors never create logs', async ({ context }, info) => {
   const day = dayFor(info, 75);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   let calls = 0;
   await page.route('**/api/ai/photo?*', (route) => {
@@ -185,7 +186,7 @@ test('unclear photos and AI errors never create logs', async ({ context }, info)
   });
   await page.getByTestId('describe-open').click();
   await page.getByTestId('photo-input').setInputFiles('public/icon-512.png');
-  await expect(page.getByText('No distingo comida. Prueba con otra foto.')).toBeVisible();
+  await expect(page.getByText('No se ve comida. Prueba con otra foto.')).toBeVisible();
   await expect(page.getByTestId('log')).not.toBeVisible();
   await page.getByTestId('photo-input').setInputFiles('public/icon-512.png');
   await expect(page.getByText('La IA no está disponible. Intenta después.')).toBeVisible();
@@ -194,7 +195,7 @@ test('unclear photos and AI errors never create logs', async ({ context }, info)
 
 test('a late photo result cannot overwrite text edited while reading', async ({ context }, info) => {
   const day = dayFor(info, 76);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   await page.route('**/api/ai/photo?*', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -206,13 +207,14 @@ test('a late photo result cannot overwrite text edited while reading', async ({ 
   await page.getByTestId('describe-input').fill('una manzana');
   await page.waitForTimeout(700);
   await expect(page.getByTestId('describe-input')).toHaveValue('una manzana');
-  await expect(page.getByTestId('preview')).not.toBeVisible();
+  await expect(page.getByTestId('preview')).toContainText('manzana');
+  await expect(page.getByTestId('preview')).not.toContainText('tortillas');
   expect(await logs(page, day)).toHaveLength(0);
 });
 
 test('denied microphone access preserves editable keyboard input', async ({ context }, info) => {
   const day = dayFor(info, 77);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await page.addInitScript(speechMock);
   await openToday(page);
   await page.getByTestId('describe-open').click();

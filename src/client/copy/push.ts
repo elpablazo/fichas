@@ -10,10 +10,10 @@ export const pushPools = {
   ],
   'push.title.plan': ['¿Plan nuevo?'],
   'push.body.plan': [
-    'Súbelo y arrancamos temporada.',
-    'Tómale foto y lo leo yo.',
+    'Súbelo y arranca la temporada.',
+    'Tómale foto y Fichas lo lee.',
     'Plan nuevo, temporada nueva.',
-    'Un toque y lo leo.',
+    'Un toque y se lee solo.',
     'Súbelo cuando puedas.',
   ],
   'push.title.test': ['Fichas'],

@@ -1,16 +1,19 @@
 // Shared logic for previews (Describe, Composer): remaining target, tokens, status line, fix hint.
 
+import { amountOf, dayStatus, type Meter } from '../../shared/domain/daystatus';
 import { fit } from '../../shared/domain/fit';
 import { fill } from '../../shared/domain/format';
 import { remainingTarget } from '../../shared/domain/log';
 import { equivalentUsage, preferredEquivalent } from '../../shared/domain/recipes';
 import { computeStatus } from '../../shared/domain/status';
+import { capitalize } from '../../shared/domain/text';
 import { tokensFor } from '../../shared/domain/tokens';
-import type { LogItem, PlanData, TypeKey, Units } from '../../shared/domain/types';
+import type { LogItem, LogRow, PlanData, TypeKey, Units } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount, unitsOfItems } from '../../shared/domain/units';
 import { targetFor } from '../actions';
-import { lines, pools, typeLabels } from '../copy/es-MX';
+import { withArticle } from '../components/DayCard';
+import { describeCopy, lines, pools, typeLabels } from '../copy/es-MX';
 import { liveLogs } from '../state/signals';
 
 export function slotRemaining(slot: string, day: string, plan: PlanData, excludeLogId?: string): Units {
@@ -88,4 +91,104 @@ export function previewModel(
     };
   }
   return { tokens, status: 'mixed', line: fill(lines.mixedLine, { slot: slotLabel }), canFit: fitOk };
+}
+
+/** What a described meal does: a verdict against its meal, where it lands in the day's tanks, and what changes
+ *  later ("La cena queda con 1 tortilla menos"). Same numbers as Today, computed with the meal added. */
+export interface Impact {
+  status: PreviewModel['status'];
+  line: string;
+  /** What a meal still has room for, when it's also over somewhere ("Le quedan 2 🥦."). */
+  sub: string | null;
+  later: string | null;
+  meters: Meter[];
+  adding: Units;
+  /** Portions that make the meal exact (check mode), with the first changed item for the hint. */
+  fix: { items: LogItem[]; changed: Set<number>; hint: string } | null;
+}
+
+function gapText(deltas: Partial<Record<TypeKey, number>>, sign: 1 | -1): string {
+  return TYPE_KEYS.map((t) => ({ t, n: (deltas[t] ?? 0) * sign }))
+    .filter((g) => g.n >= 0.5 - 1e-6)
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 2)
+    .map((g) => `${formatCount(g.n)} ${typeLabels[g.t].emoji}`)
+    .join(' y ');
+}
+
+export function impact(
+  items: LogItem[],
+  slot: string,
+  slotLabel: string,
+  target: Units,
+  plan: PlanData,
+  day: string,
+  balancing: boolean,
+): Impact {
+  const raw = unitsOfItems(items, plan);
+  const dayLogs = liveLogs.value.filter((l) => l.day === day);
+  const fake = {
+    id: 'preview',
+    day,
+    slot,
+    kind: 'meal',
+    title: '',
+    source: 'describe',
+    raw_units: raw,
+    items,
+    deleted_at: null,
+  } as unknown as LogRow;
+  const before = dayStatus(plan, dayLogs, balancing);
+  const after = dayStatus(plan, [...dayLogs, fake], balancing);
+  const adding: Units = {};
+  for (const m of after.meters) {
+    const d = m.eaten - (before.meters.find((b) => b.type === m.type)?.eaten ?? 0);
+    if (d > 1e-6) adding[m.type] = d;
+  }
+  // Meters for every type touched, so a food outside the plan (e.g. a sweet) still shows.
+  const meters = after.meters.map(
+    (m) =>
+      before.meters.find((b) => b.type === m.type) ?? { ...m, eaten: 0, expected: 0, remaining: m.planned, over: 0 },
+  );
+  const had = new Set(before.advice.map((a) => `${a.slot}:${a.type}:${a.n}`));
+  const usage = equivalentUsage(liveLogs.value);
+  const fresh = after.advice.filter((a) => a.slot !== slot && !had.has(`${a.slot}:${a.type}:${a.n}`));
+  const later = fresh.length
+    ? fresh
+        .map((a) => {
+          const e = preferredEquivalent(plan, usage, a.slot)(a.type);
+          const label = plan.slots.find((s) => s.key === a.slot)?.label ?? '';
+          return fill(describeCopy.later, {
+            slot: capitalize(withArticle(label)),
+            food: e ? amountOf(e, a.n) : `${formatCount(a.n)} ${typeLabels[a.type].emoji}`,
+          });
+        })
+        .join(' ')
+    : null;
+  const base = { later, meters, adding, fix: null, sub: null };
+  if (items.length && items.every((i) => i.free)) return { ...base, status: 'free', line: describeCopy.free };
+  if (slot === 'extra') return { ...base, status: 'extra', line: describeCopy.extra };
+  const r = computeStatus(raw, target, plan.swaps);
+  const s = slotLabel.toLowerCase();
+  if (r.status === 'on') return { ...base, status: 'on', line: fill(describeCopy.on, { slot: s }) };
+  const fitted = fitTo(items, target, plan, slot);
+  const fitOk =
+    computeStatus(unitsOfItems(fitted.items, plan), target, plan.swaps).status === 'on' &&
+    fitted.changes.length > 0 &&
+    fitted.changes.length <= 3 &&
+    !fitted.changes.some((c) => 'added' in c);
+  const changed = new Set<number>();
+  for (const c of fitted.changes) if ('item_index' in c) changed.add(c.item_index);
+  const first = fitted.changes.find((c) => 'item_index' in c);
+  const fixItem = first && 'item_index' in first ? fitted.items[first.item_index] : undefined;
+  const fix =
+    fitOk && fixItem
+      ? { items: fitted.items, changed, hint: fill(describeCopy.fitHint, { fix: fixItem.label }) }
+      : null;
+  const line =
+    r.status === 'under'
+      ? fill(describeCopy.under, { slot: s, list: gapText(r.deltas, -1) })
+      : fill(describeCopy.over, { list: `+${gapText(r.deltas, 1)}`, slot: s });
+  const sub = r.status === 'mixed' ? fill(describeCopy.underSub, { list: gapText(r.deltas, -1) }) : null;
+  return { ...base, status: r.status, line, sub, fix };
 }

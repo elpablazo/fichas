@@ -94,7 +94,7 @@ export default function Composer({ slot, day: dayProp, items: init = [], title: 
   const tabTypes: (TypeKey | 'others')[] = [...targetTypes, 'others'];
   const otherTypes = TYPE_KEYS.filter((t) => !targetTypes.includes(t));
   const shownType = tab === 'others' ? otherType : tab;
-  const slotTime = vm?.card?.key === slot ? vm.card.time : vm?.rows.find((r) => r.key === slot)?.time;
+  const slotTime = vm?.rows.find((r) => r.key === slot)?.time;
 
   return (
     <Sheet

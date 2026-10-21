@@ -194,3 +194,21 @@ The owner asked for a complete redesign (audit → design system → build) and 
 - **Relinking a pantry food.** A linked food can now change what it counts as ("Cambiar" in its sheet), so a wrong AI match no longer means deleting and re-adding the food.
 - **Balancing toasts tell the truth.** "Lo cuadramos" lines (`log.overBalanced`) appear only when cuadrar el día actually trims that type in a later meal. Off, for protein/vegetables, or with nothing left to absorb, the neutral `log.overSmall` lines are used instead.
 - **No scores in copy.** The weekly recap counts days logged ("5 días anotados"), never "5 de 7". "Mañana, borrón y cuenta nueva" implied that the day needed erasing, so it was replaced by "Lo anotado ya está en tu jardín". Level copy avoids number agreement ("Desbloqueas tres flores nuevas") and has a singular form ("Falta 1 comida").
+
+## Fichas 1.2 — "¿Cómo voy?" (2026-10-21)
+
+The owner asked to simplify Hoy around two moments (decide before a meal, record after it), to show how the day is going graphically, to integrate JEV for live feedback, and to remove first-person copy. Audit and spec: [04-today-2.md](04-today-2.md).
+
+- **Fit never adds foods to a suggestion.** The owner's "Leche + piña + chocolate" came from `fit()` padding the dish "Leche" up to the snack's target. Suggestions may change portions or drop a food; candidates that need additions are dropped (accepted menus excepted, kept as written). The fallback that returned non-fitting candidates is removed; `fromTarget` still guarantees one idea.
+- **`dayStatus` is the single source for "¿cómo voy?".** Meters, pace (net of resolved meals) and advice are derived from `balanceDay`; Today, Describe's preview and the day sheet call the same function. The snapshot moves to `v: 4`.
+- **The number on a tank is what's left of the whole day**, not of the next meal: the owner's decision ("¿otra tortilla?") is about the day. The pace notch marks the plan for resolved meals; unders still never carry into later targets (03 §3.3 unchanged).
+- **Phase by the clock.** Before a slot's learned time the now card helps decide; from that time it asks what was eaten. `currentSlot` still chooses which slot.
+- **"Me late" writes an accepted menu row** (same table as tomorrow's menu), so "Me lo comí" only ever logs a dish the owner chose; it is undoable and syncs like any menu.
+- **JEV via the official System One API.** Endpoint `POST /v1/systemone`, model `jev-latest`, typed `noul` questions (shape taken from the official `typesafe-sdk` 0.7.5 OpenAPI models; docs hosts were unreachable from the build sandbox). One request per unknown phrase (≤ 6 in parallel, Workers' connection limit), 4 s timeout, no retries, cached by normalized phrase. Groups only — portions stay with the plan table / meal AI, which already passes the parse eval. Not counted against the OpenRouter daily cap (different provider, ~US$0.0004 per phrase); limited to 300 phrases/hour per session.
+- **Meal AI runs on a 900 ms pause** instead of a "Ver porciones" tap, only when unknown phrases remain. Server cache and the 60/h limit are unchanged; "Anotar" before it answers waits for the same request.
+- **Enter hides the keyboard, never logs.** Live preview made the old Enter-to-preview redundant, and a "Listo" tap must not record a meal.
+- **No "Que cuadre" when logging.** Adjusting portions of something already eaten would falsify the record; the fit lives only in check mode ("Ajustar"), with the change spelled out first.
+- **Photo from the meal sheet now reaches Describe** (`photo` and `mode` are passed through `renderSheet`); offline descriptions keep their day (`logPendingDescription(text, slot, day)`).
+- **Copy lint bans first-person app phrases.** Owner-voice buttons stay. Unused strings from the old flow were deleted.
+- **Today word budget 20 → 25** (browser test), because the pace line is words by design.
+- **Initial JS stays within budget:** 89.3 KB of 90 KB gzip (DayMeter and NowCard are on the first paint; Describe stays lazy).

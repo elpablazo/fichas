@@ -79,70 +79,87 @@ async function rows(page: Page, table = 'logs'): Promise<LogRow[]> {
   );
 }
 
-for (const check of [false, true])
-  test(`${check ? 'A6 · check without logging' : 'A5 · describe and log'} (3 taps + input)`, async ({
-    context,
-  }, info) => {
-    const times: number[] = [];
-    const previews: number[] = [];
-    for (let i = 0; i < RUNS; i++) {
-      const day = dayFor(info, check ? 6 : 5, i);
-      const page = await newPage(context, day, '16:52');
-      await openToday(page);
-      await page.route('**/api/ai/parse', async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 120));
-        await route.fulfill({ json: meal });
-      });
-      await page.evaluate(() => {
-        const fx = { thinking: 0, tap: 0 };
-        (window as unknown as { __describe: typeof fx }).__describe = fx;
-        document.addEventListener(
-          'pointerdown',
-          () => {
-            fx.tap = performance.now();
-          },
-          true,
-        );
-        new MutationObserver(() => {
-          if (!fx.thinking && document.querySelector('[role=dialog] .anim-think')) fx.thinking = performance.now();
-        }).observe(document, { childList: true, subtree: true });
-      });
-      const taps = new Taps();
-      const start = Date.now();
-      await taps.tap(page.getByTestId('describe-open'));
-      await page.getByTestId('describe-input').fill('3 tacos de pollo de la calle');
-      const previewStart = Date.now();
-      await taps.tap(page.getByTestId('describe-submit'));
-      await page.getByTestId('preview').waitFor();
-      previews.push(Date.now() - previewStart);
-      const latency = await page.evaluate(`window.__describe.thinking - window.__describe.tap`);
-      expect(latency).toBeLessThanOrEqual(100);
-      await taps.tap(page.getByTestId(check ? 'check-only' : 'log'));
-      if (check) await expect(page.getByRole('dialog')).not.toBeVisible();
-      else await expect(toast(page)).toBeVisible();
-      times.push(Date.now() - start);
-      expect(taps.n).toBe(3);
-      const logs = (await rows(page)).filter((l) => l.day === day && !l.deleted_at);
-      expect(logs).toHaveLength(check ? 0 : 1);
-      await page.close();
-    }
-    checkBudget(check ? 'A6' : 'A5', times, 10_000, 15_000);
-    checkBudget('Preview', previews, 2500, 4500);
-  });
+const LUNCH = '3 tortillas, 120 g pollo, 1 manzana, 1 tz verdura y 2 cdta aceite';
 
-test('A7 · fit a preview (1 tap) highlights the change', async ({ context }, info) => {
+test('A5 · describe and log: the app shows it understood at once, AI fills portions (2 taps + input)', async ({
+  context,
+}, info) => {
+  const times: number[] = [];
+  const previews: number[] = [];
+  for (let i = 0; i < RUNS; i++) {
+    const day = dayFor(info, 5, i);
+    const page = await newPage(context, day, '17:20');
+    await openToday(page);
+    await page.route('**/api/ai/classify', (route) =>
+      route.fulfill({
+        json: {
+          items: [{ text: '3 tacos de pollo de la calle', food: 0.97, free: false, groups: ['carb', 'protein'] }],
+        },
+      }),
+    );
+    await page.route('**/api/ai/parse', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      await route.fulfill({ json: meal });
+    });
+    const taps = new Taps();
+    const start = Date.now();
+    await taps.tap(page.getByTestId('describe-open'));
+    await page.getByTestId('describe-input').fill('3 tacos de pollo de la calle');
+    const previewStart = Date.now();
+    // Live understanding: the phrase shows at once with its food groups, then real portions replace it.
+    const phrase = page.getByTestId('pending-phrase');
+    await expect(phrase).toBeVisible({ timeout: 300 });
+    await expect(phrase.locator('.tok-1')).toHaveCount(2);
+    await expect(page.getByTestId('preview').locator('li')).toHaveCount(5);
+    previews.push(Date.now() - previewStart);
+    await expect(page.getByTestId('status-line')).toHaveText('+1 🫓 sobre tu comida');
+    await taps.tap(page.getByTestId('log'));
+    await expect(toast(page)).toBeVisible();
+    times.push(Date.now() - start);
+    expect(taps.n).toBe(2);
+    const logs = (await rows(page)).filter((l) => l.day === day && !l.deleted_at);
+    expect(logs).toHaveLength(1);
+    expect(logs[0]?.title).toBe('Tacos de pollo');
+    await page.close();
+  }
+  checkBudget('A5', times, 10_000, 15_000);
+  checkBudget('Preview', previews, 2500, 4500);
+});
+
+test('A6 · check a craving before eating: nothing is logged; "Me late" saves it for the meal', async ({
+  context,
+}, info) => {
+  const day = dayFor(info, 6);
+  const page = await newPage(context, day, '16:30');
+  await openToday(page);
+  await page.getByTestId('craving').click();
+  await expect(page.getByRole('dialog')).toContainText('¿Qué se te antoja?');
+  await page.getByTestId('describe-input').fill(LUNCH);
+  await expect(page.getByTestId('impact')).toContainText('Así quedaría tu día');
+  await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  expect((await rows(page)).filter((l) => l.day === day && !l.deleted_at)).toHaveLength(0);
+  await page.getByTestId('craving').click();
+  await page.getByTestId('describe-input').fill(LUNCH);
+  await page.getByTestId('log').click();
+  await expect(page.getByTestId('suggestion')).toContainText('Planeado');
+  expect((await rows(page)).filter((l) => l.day === day && !l.deleted_at)).toHaveLength(0);
+});
+
+test('A7 · "Ajustar" makes a craving exact (1 tap) and highlights what changed', async ({ context }, info) => {
   const times: number[] = [];
   for (let i = 0; i < RUNS; i++) {
-    const page = await newPage(context, dayFor(info, 7, i), '16:52');
+    const page = await newPage(context, dayFor(info, 7, i), '16:30');
     await openToday(page);
-    await page.getByTestId('adjust').click();
-    await page.getByTestId('preview').waitFor();
-    await page.getByRole('button', { name: /^Más:.*tortilla/ }).click();
+    await page.getByTestId('craving').click();
+    await page.getByTestId('describe-input').fill(LUNCH);
+    await expect(page.getByTestId('status-line')).toHaveText('+1 🫓 sobre tu comida');
+    await expect(page.getByTestId('impact')).toContainText('Con 2 tortillas queda justo.');
     const taps = new Taps();
     const start = Date.now();
     await taps.tap(page.getByTestId('fit'));
-    await expect(page.getByTestId('status-line')).toHaveText(/Cabe exacto|Justo en tu plan/);
-    await expect(page.getByTestId('preview').locator('.highlight').first()).toBeVisible();
+    await expect(page.getByTestId('status-line')).toHaveText('Justo lo de tu comida');
+    await expect(page.getByTestId('preview').locator('.highlight').first()).toContainText('2 tortillas');
     times.push(Date.now() - start);
     expect(taps.n).toBe(1);
     await page.close();
@@ -152,7 +169,7 @@ test('A7 · fit a preview (1 tap) highlights the change', async ({ context }, in
 
 test('known text stays local; free food never resolves a meal', async ({ context }, info) => {
   const day = dayFor(info, 80);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   let calls = 0;
   await page.route('**/api/ai/parse', async (route) => {
@@ -161,13 +178,12 @@ test('known text stays local; free food never resolves a meal', async ({ context
   });
   await page.getByTestId('describe-open').click();
   await page.getByTestId('describe-input').fill('café negro');
-  await page.getByTestId('describe-submit').click();
-  await expect(page.getByTestId('status-line')).toContainText('Es libre');
+  await expect(page.getByTestId('status-line')).toContainText('Libre');
   await page.getByTestId('log').click();
   await expect(toast(page)).toBeVisible();
   expect(calls).toBe(0);
   expect((await rows(page)).find((l) => l.day === day)?.kind).toBe('free');
-  await expect(page.locator('[data-card] h2')).toContainText('Comida');
+  await expect(page.locator('[data-card]')).toContainText('Comida');
 });
 
 test.describe('offline deferred descriptions', () => {
@@ -175,7 +191,7 @@ test.describe('offline deferred descriptions', () => {
   test('occasion survives reopening and reconnect updates the same row in D1', async ({ context }, info) => {
     test.skip(info.project.name !== 'pixel', 'Offline SW replay is verified on Chromium');
     const day = dayFor(info, 81);
-    const page = await newPage(context, day, '16:52');
+    const page = await newPage(context, day, '17:20');
     await openToday(page);
     await page.waitForFunction(
       async () => (await navigator.serviceWorker.getRegistration())?.active?.state === 'activated',
@@ -185,8 +201,7 @@ test.describe('offline deferred descriptions', () => {
     await page.getByTestId('describe-open').click();
     const text = `una torta de la calle, ${'frijoles y verduras, '.repeat(15)}sin queso`;
     await page.getByTestId('describe-input').fill(text);
-    await page.getByTestId('describe-submit').click();
-    await page.getByTestId('pending-log').click();
+    await page.getByTestId('log').click();
     await expect(toast(page)).toContainText('Sin internet');
     const before = (await rows(page)).find((l) => l.day === day)!;
     expect(before.title).toBe(text);
@@ -239,14 +254,13 @@ test.describe('offline deferred descriptions', () => {
 
 test('undo before a deferred parse finishes cannot resurrect the meal', async ({ context }, info) => {
   const day = dayFor(info, 82);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   await openToday(page);
   await warm(page);
   await context.setOffline(true);
   await page.getByTestId('describe-open').click();
   await page.getByTestId('describe-input').fill('una torta de la calle');
-  await page.getByTestId('describe-submit').click();
-  await page.getByTestId('pending-log').click();
+  await page.getByTestId('log').click();
   await expect(toast(page)).toBeVisible();
   let release: () => void = () => {};
   const gate = new Promise<void>((resolve) => {

@@ -180,6 +180,19 @@ describe('suggest', () => {
     expect(out[0]?.recipe_id).toBe('b');
   });
 
+  it('never pads a dish with foods it does not have ("Leche" is not offered as leche + piña + chocolate)', () => {
+    const milk = recipe('r-leche', 'Leche', [item('dairy.leche_de_vaca_descremada', 1)], { colacion_1: 6 });
+    const out = suggest({
+      ...base,
+      slotKey: 'colacion_1',
+      remaining: slotTarget('colacion_1'),
+      recipes: [...seeds, milk],
+      preferred: preferred('colacion_1'),
+    });
+    expect(out.map((s) => s.title)).not.toContain('Leche');
+    for (const s of out) expect(s.changes.some((c) => 'added' in c)).toBe(false);
+  });
+
   it('builds a dish from preferred equivalents when there is nothing else', () => {
     const out = suggest({
       ...base,

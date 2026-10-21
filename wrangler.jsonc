@@ -22,7 +22,7 @@
   "triggers": { "crons": ["*/15 * * * *"] },
   "observability": { "enabled": true },
   "vars": {
-    "APP_VERSION": "1.1.1",
+    "APP_VERSION": "1.2.0",
     "TZ_DEFAULT": "America/Mexico_City",
     "BACKUPS_ENABLED": "true",
     "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
@@ -30,6 +30,9 @@
     "MODEL_PLAN_A": "anthropic/claude-sonnet-5.5",
     "MODEL_PLAN_B": "google/gemini-3.1-pro-preview",
     "MODEL_VISION": "openai/gpt-6-luna",
+    // JEV (TypeSafe System One) for live food categorization; the key is the JEV_API_KEY secret.
+    "JEV_BASE_URL": "https://api.typesafe.ai",
+    "JEV_MODEL": "jev-latest",
     "VAPID_PUBLIC_KEY": "BGnKoS4ylU-DVZeWrcJDwQhKSujFZBq14FLN4hdu9qVXlvQ3-OzGy8WlAWwBilsl-_JVseFp3tskxQCOeLO8jpg",
     "VAPID_SUBJECT": "https://fichas.toolco.workers.dev"
   }

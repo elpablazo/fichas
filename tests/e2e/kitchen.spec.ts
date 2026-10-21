@@ -234,7 +234,7 @@ test.describe('offline pantry', () => {
       await navigator.serviceWorker.ready;
     });
     await page.reload();
-    await page.getByTestId('ate').waitFor();
+    await page.locator('[data-card]').waitFor();
     await page.getByRole('button', { name: 'Cocina', exact: true }).click();
     await context.setOffline(true);
     await page.getByTestId('pantry-input').fill('pechuguita');

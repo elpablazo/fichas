@@ -89,7 +89,7 @@ test('A17 · upload → review → confirm (≤ 6 taps + review)', async ({ cont
     await page.getByTestId('plan-review').waitFor();
     await taps.tap(page.getByRole('checkbox', { name: 'Revisé las porciones señaladas.' }));
     await taps.tap(page.getByTestId('confirm-plan'));
-    await expect(page.getByTestId('ate')).toBeVisible();
+    await expect(page.locator('[data-card]')).toBeVisible();
     expect(confirmed()).toBe(true);
     times.push(Date.now() - start);
     expect(taps.n + 1, 'including OS file selection').toBeLessThanOrEqual(6);
@@ -157,7 +157,7 @@ test('confirmed changed targets automatically re-portion the suggestion and keep
   context,
 }, info) => {
   const day = dayFor(info, 93);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '16:30');
   await openToday(page);
   await page.route('**/api/sync?*', (r) => r.fulfill({ json: { rev: 999999, more: false, changes: {} } }));
   await page.evaluate(
@@ -201,8 +201,8 @@ test('confirmed changed targets automatically re-portion the suggestion and keep
     { day, data: seedPlan },
   );
   await page.reload();
+  // Before lunch the idea is the nutritionist's dish, re-portioned to the new plan's three tortillas.
   await expect(page.getByTestId('suggestion')).toContainText('3 tortillas');
-  await expect(page.locator('[data-card] .highlight')).toContainText('3 tortillas');
   await page.goto('/historia/plan/plan-2026-10-08');
   await expect(page.getByRole('heading', { name: 'Mi plan', exact: true })).toBeVisible();
   const lunch = page.locator('section[aria-label="Tus tiempos"] > div').filter({ hasText: 'Comida' });

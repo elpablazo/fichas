@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
-import { dayFor, newPage, openToday } from './helpers';
+import { dayFor, describeAndLog, newPage, openToday } from './helpers';
+
+const LUNCH = '2 tortillas, 120 g pollo, 1 manzana, 1 tz verdura y 2 cdta aceite';
 
 interface Queued {
   key: string;
@@ -31,14 +33,15 @@ async function visibility(page: Page, value: 'visible' | 'hidden') {
 
 test('failed telemetry survives reopening and is retried with the original event IDs', async ({ context }, info) => {
   const day = dayFor(info, 110);
-  const page = await newPage(context, day, '16:52');
+  const page = await newPage(context, day, '17:20');
   let failures = 0;
   await page.route('**/api/telemetry', async (route) => {
     failures++;
     await route.fulfill({ status: 503 });
   });
   await openToday(page);
-  await page.getByTestId('ate').click();
+  await page.getByTestId('now-describe').click();
+  await describeAndLog(page, LUNCH);
   await expect.poll(async () => (await queue(page)).some((q) => q.value.event.name === 'open_to_first_log')).toBe(true);
   const event = (await queue(page)).find((q) => q.value.event.name === 'open_to_first_log')!.value.event;
   await visibility(page, 'hidden');
@@ -54,6 +57,8 @@ test('failed telemetry survives reopening and is retried with the original event
     await route.continue();
   });
   await again.goto('/');
+  // Let startup record its own event first, so the flush below carries everything queued.
+  await expect.poll(async () => (await queue(again)).some((q) => q.value.event.name === 'today_painted')).toBe(true);
   await again.clock.runFor(11_000);
   await expect.poll(() => sent.includes(event.id)).toBe(true);
   await expect.poll(async () => (await queue(again)).length).toBe(0);
@@ -63,10 +68,11 @@ test('failed telemetry survives reopening and is retried with the original event
 test('returning to the app starts a new first-log measurement and excludes time in the background', async ({
   context,
 }, info) => {
-  const page = await newPage(context, dayFor(info, 111), '16:52');
+  const page = await newPage(context, dayFor(info, 111), '17:20');
   await page.route('**/api/telemetry', (route) => route.fulfill({ status: 503 }));
   await openToday(page);
-  await page.getByTestId('ate').click();
+  await page.getByTestId('now-describe').click();
+  await describeAndLog(page, LUNCH);
   await expect
     .poll(async () => (await queue(page)).filter((q) => q.value.event.name === 'open_to_first_log').length)
     .toBe(1);
@@ -74,13 +80,14 @@ test('returning to the app starts a new first-log measurement and excludes time 
   await visibility(page, 'hidden');
   await page.clock.runFor(120_000);
   await visibility(page, 'visible');
-  await page.getByTestId('ate').click();
+  await page.getByTestId('extra-row').click();
+  await describeAndLog(page, '1 manzana');
   await expect
     .poll(async () => (await queue(page)).filter((q) => q.value.event.name === 'open_to_first_log').length)
     .toBe(2);
   const latest = (await queue(page)).filter((q) => q.value.event.name === 'open_to_first_log').at(-1)!.value.event;
   expect(latest.ms).toBeLessThan(5000);
-  expect(latest.taps).toBe(1);
+  expect(latest.taps).toBe(2);
   await page.close();
 });
 

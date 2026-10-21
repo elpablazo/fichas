@@ -55,7 +55,7 @@ export default function Kitchen() {
   const day = today.value;
   const vm = todayVM.value;
   const defaultSlot =
-    vm?.card?.key ?? vm?.rows.find((r) => r.state === 'pending' || r.state === 'upcoming')?.key ?? null;
+    vm?.now?.key ?? vm?.rows.find((r) => r.state === 'pending' || r.state === 'upcoming')?.key ?? null;
   const [picked, setPicked] = useState<string | null>(kitchenSlot.value);
   const slot = picked ?? defaultSlot;
   const stock = inventory.value;

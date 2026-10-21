@@ -123,17 +123,20 @@ export function suggest(ctx: SuggestCtx): Suggestion[] {
     });
   }
 
+  // A suggestion is a real dish: fitting may change its portions or drop a food, never add one
+  // ("Leche" padded with piña and chocolate is not something anyone eats). Accepted menus are the owner's
+  // own plan, so they always stay, re-portioned when that needs no additions.
   const fitted = candidates.map((c) => {
     const res = fit(c.s.items, remaining, fitCtx);
+    const adds = res.changes.some((ch) => 'added' in ch);
     const status = computeStatus(unitsOfItems(res.items, plan), remaining, rules).status;
     return {
       c,
-      s: { ...c.s, items: res.items, changes: res.changes },
-      ok: status === 'on' && res.changes.length <= c.maxChanges,
+      s: adds ? c.s : { ...c.s, items: res.items, changes: res.changes },
+      ok: c.s.origin === 'menu' || (!adds && status === 'on' && res.changes.length <= c.maxChanges),
     };
   });
-  let pool = fitted.filter((f) => f.ok);
-  if (!pool.length) pool = fitted.filter((f) => f.c.maxChanges === 3);
+  const pool = fitted.filter((f) => f.ok);
   // Ties (e.g. the nutritionist's seed dishes) keep the plan's order: first option first.
   pool.sort(
     (a, b) =>

@@ -1,20 +1,19 @@
-import { CalendarDays, ChartLine, Flower2, Plus, Scale } from 'lucide-preact';
+import { Clock3, PencilLine, Scale, Signal } from 'lucide-preact';
 import { Sheet } from '../components/Sheet';
 import { whatsNew } from '../copy/more';
 import { setLocal } from '../db/dexie';
 import { closeSheet } from '../state/ui';
 
 const ITEMS = [
-  { Icon: CalendarDays, text: whatsNew.days },
+  { Icon: Signal, text: whatsNew.day },
+  { Icon: Clock3, text: whatsNew.now },
+  { Icon: PencilLine, text: whatsNew.live },
   { Icon: Scale, text: whatsNew.balance },
-  { Icon: Flower2, text: whatsNew.garden },
-  { Icon: ChartLine, text: whatsNew.weight },
-  { Icon: Plus, text: whatsNew.add },
 ];
 
 export default function WhatsNew() {
   const done = () => {
-    void setLocal('whatsnew:1.0', true);
+    void setLocal('whatsnew:1.2', true);
     closeSheet();
   };
   return (

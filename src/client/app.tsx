@@ -74,6 +74,8 @@ function renderSheet(s: NonNullable<SheetState>) {
           items={s.items}
           title={s.title}
           recipeId={s.recipeId}
+          photo={s.photo}
+          mode={s.mode}
         />
       );
     case 'compose':
@@ -135,7 +137,12 @@ function addMeal() {
   const day = shownDay.value;
   if (!vm || vm.mode === 'future') return openDescribe({});
   const isToday = day === today.value;
-  const open = vm.card?.key ?? vm.rows.find((r) => r.state === 'pending' || r.state === 'current')?.key;
+  // The meal to write down: the one asking now, else the latest open one (a past day falls back to extra).
+  const open =
+    (vm.now?.phase === 'log' ? vm.now.key : undefined) ??
+    [...vm.rows].reverse().find((r) => r.state === 'pending')?.key ??
+    vm.now?.key ??
+    vm.rows.find((r) => r.state === 'current')?.key;
   openDescribe({ slot: open ?? (isToday ? undefined : 'extra'), day: isToday ? undefined : day });
 }
 

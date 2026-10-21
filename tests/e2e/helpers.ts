@@ -3,7 +3,7 @@ import { type BrowserContext, expect, type Locator, type Page, type TestInfo } f
 /** Runs per budget (p50 needs ≥ 20: `BUDGET_RUNS=20 npm run e2e`). Hard max is checked on every run. */
 export const RUNS = Number(process.env.BUDGET_RUNS ?? 1);
 
-// Records taps, JS start, the first meal-card paint, token pops and token reverts on the page's own clock
+// Records taps, JS start, the first now-card paint, log rewards (stamp/pop) and undo reverts on the page's own clock
 // (Playwright's fake clock advances in real time but replaces performance marks in WebKit).
 const FX = `(() => {
   const fx = { taps: [], pops: [], card: null, jsStart: null, watchHollow: false, hollow: null };
@@ -16,9 +16,9 @@ const FX = `(() => {
   document.addEventListener('pointerdown', () => fx.taps.push(performance.now()), true);
   new MutationObserver(() => {
     const t = performance.now();
-    if (fx.card === null && document.querySelector('[data-card] [data-testid=ate]')) fx.card = t;
-    if (document.querySelector('.anim-pop')) fx.pops.push(t);
-    if (fx.watchHollow && fx.hollow === null && !document.querySelector('[data-slot=comida] .tok-1, [data-card] .tok-1')) fx.hollow = t;
+    if (fx.card === null && document.querySelector('[data-card]')) fx.card = t;
+    if (document.querySelector('.anim-pop, .anim-stamp')) fx.pops.push(t);
+    if (fx.watchHollow && fx.hollow === null && !document.querySelector('[data-slot=comida][data-state=done]')) fx.hollow = t;
   }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 })()`;
 
@@ -52,12 +52,20 @@ export async function newPage(context: BrowserContext, day: string, hhmm: string
   return page;
 }
 
-/** Opens Today and waits until the meal card with a dish is ready (data synced). */
+/** Opens Today and waits until "Tu día" and the now card are ready (data synced). */
 export async function openToday(page: Page): Promise<number> {
   const t0 = Date.now();
   await page.goto('/');
-  await page.locator('[data-card] [data-testid=ate]').waitFor();
+  await page.locator('[data-testid=day-card] [data-testid=day-meter]').waitFor();
+  await page.locator('[data-card]').waitFor();
   return Date.now() - t0;
+}
+
+/** Writes a meal in the describe sheet and logs it (the sheet must be open). */
+export async function describeAndLog(page: Page, text: string): Promise<void> {
+  await page.getByTestId('describe-input').fill(text);
+  await page.getByTestId('impact').waitFor();
+  await page.getByTestId('log').click();
 }
 
 /** Waits until the sheets fetched right after the first paint have loaded. The installed app precaches them;

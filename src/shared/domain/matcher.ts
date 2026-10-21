@@ -301,3 +301,32 @@ export function localChips(text: string, plan: PlanData, recipes: RecipeRow[], s
   }
   return chips.slice(0, 3);
 }
+
+/** A description's phrases: split on commas, "y", "con" and "+" ("pollo con mole" → pollo, mole). */
+export function splitPhrases(text: string): string[] {
+  return text
+    .split(/[,;\n+]|\s+y\s+|\s+con\s+|\s+e\s+/i)
+    .map((raw) => raw.trim().replace(/\s+/g, ' ').slice(0, 80))
+    .filter((p) => p.length >= 2);
+}
+
+/** Phrases of a description the local matcher can't place ("mole", "tacos al pastor"): what live
+ *  categorization (JEV) and the meal AI are for. */
+export function unknownPhrases(text: string, plan: PlanData): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const p of splitPhrases(text)) {
+    if (seen.has(norm(p)) || !parseItems(p, plan).unknown.length) continue;
+    seen.add(norm(p));
+    out.push(p);
+    if (out.length === 6) break;
+  }
+  return out;
+}
+
+/** The part of a description the plan table fully understands (phrases with an unknown word left out). */
+export function knownText(text: string, plan: PlanData): string {
+  return splitPhrases(text)
+    .filter((p) => !parseItems(p, plan).unknown.length)
+    .join(', ');
+}

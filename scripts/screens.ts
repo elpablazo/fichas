@@ -188,7 +188,7 @@ async function main() {
       await page.screenshot({ path: `${OUT}/${scheme}-${name}.png`, fullPage: full });
     };
     await page.goto(`${BASE}/`);
-    await page.locator('[data-card]').first().waitFor({ timeout: 20000 });
+    await page.getByTestId('day-meter').waitFor({ timeout: 20000 });
     await page.waitForTimeout(2500); // rewards evaluation + plant chunk
     await shot('01-today');
     await shot('01b-today-full', true);
@@ -201,13 +201,12 @@ async function main() {
     await page.getByTestId('day-card').locator('button').first().click();
     await shot('02-day-sheet');
     await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
-    await page.locator('[data-card] h2 button').click();
+    await page.locator('[data-slot=desayuno] button').first().click();
     await shot('03-meal-sheet');
     await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
     await page.getByTestId('describe-open').click();
     await page.getByTestId('describe-input').fill('3 tortillas, 120 g pollo, 1 tz verdura, 1 manzana');
-    await page.getByTestId('describe-submit').click();
-    await page.getByTestId('preview').waitFor();
+    await page.getByTestId('impact').waitFor();
     await shot('04-describe-preview');
     await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
     await page.locator(`[data-day="${addDays(TODAY, -1)}"]`).click();

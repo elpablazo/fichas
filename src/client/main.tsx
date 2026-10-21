@@ -18,10 +18,11 @@ import { record, reportError, startTelemetry } from './telemetry';
 
 performance.mark('app:js-start');
 
-// A Today snapshot written by 0.8 (v2) means this device used the app before the 1.0 redesign.
+// A Today snapshot from before 1.2 (v2 or v3) means this device used the app before the "¿cómo voy?" redesign.
 const upgrading = (() => {
   try {
-    return (JSON.parse(localStorage.getItem('today:snapshot') ?? 'null') as { v?: number } | null)?.v === 2;
+    const v = (JSON.parse(localStorage.getItem('today:snapshot') ?? 'null') as { v?: number } | null)?.v;
+    return v === 2 || v === 3;
   } catch {
     return false;
   }
@@ -99,12 +100,12 @@ effect(() => {
   });
 });
 
-// One "what's new" card for installed apps upgrading from 0.8; a newly paired device has nothing to compare.
+// One "what's new" card for installed apps upgrading; a newly paired device has nothing to compare.
 let newsDecided = false;
 effect(() => {
   if (newsDecided || !upgrading || !dataReady.value || !activePlan.value || !isStandalone.value) return;
   newsDecided = true;
-  void getLocal('whatsnew:1.0', false).then((seen) => {
+  void getLocal('whatsnew:1.2', false).then((seen) => {
     if (!seen && !sheet.value) openSheet({ kind: 'whats-new' });
   });
 });

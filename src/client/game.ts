@@ -75,8 +75,8 @@ export const hasGameCard = computed(() => {
   );
 });
 
-export async function dismissBackfill(slot: string) {
-  backfillDismissed.value = [...backfillDismissed.value, slot];
+export async function dismissBackfill(slots: string | string[]) {
+  backfillDismissed.value = [...new Set([...backfillDismissed.value, ...[slots].flat()])];
   await setLocal(`backfill:${backfillDay.value}`, backfillDismissed.value);
 }
 export async function dismissRecap() {

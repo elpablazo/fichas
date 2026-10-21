@@ -1,11 +1,13 @@
+// Hoy, top to bottom: the week, "¿cómo voy?" (Tu día), the one meal that matters now, then the day's meals.
+// One thing at a time: before a meal the app helps decide; after it, it asks what was eaten.
 import { Bell, FileUp, Moon, Undo2, X } from 'lucide-preact';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { daysBetween, localParts } from '../../shared/domain/day';
-import { logMeal } from '../actions';
+import { logMeal, planDish, skipSlot, unplanDish } from '../actions';
 import { DayCard } from '../components/DayCard';
 import { GameCard } from '../components/GameCard';
 import { LazyPlant } from '../components/LazyPlant';
-import { MealCard } from '../components/MealCard';
+import { NowCard } from '../components/NowCard';
 import { Timeline } from '../components/Timeline';
 import { CalendarButton, WeekStrip } from '../components/WeekStrip';
 import { buttons, lines, notificationCopy, pools, titles, todayCopy } from '../copy/es-MX';
@@ -14,9 +16,9 @@ import { gamePresentationReady, hasGameCard, openDayClose } from '../game';
 import { lazyView } from '../lazy';
 import { canPrime, dismissPriming, enableReminders, pushBusy } from '../notifications';
 import { now } from '../state/clock';
-import { dayInput, dayVM, shownDay } from '../state/selectors';
+import { dayVM, shownDay } from '../state/selectors';
 import { activePlan, dataReady, planReadingEnabled, today } from '../state/signals';
-import { suggestionsFor } from '../state/today-vm';
+import type { SlotVM } from '../state/today-vm';
 import { navigate, openDescribe, openSheet, otherIndex, pushSlot, selectDay } from '../state/ui';
 
 const TomorrowMenu = lazyView(() => import('../components/TomorrowMenu'));
@@ -32,18 +34,12 @@ export function Today() {
   );
   const layoutReady = dataReady.value && gamePresentationReady.value;
   const [dismissed, setDismissed] = useState<string | null>(null);
-  const plantKey = useRef<string | null>(null);
   useEffect(() => {
     if (vm?.day)
       void getLocal(`renewal:${vm.day}`, false).then((seen) => {
         if (seen) setDismissed(vm.day);
       });
   }, [vm?.day]);
-  const key = vm ? `${vm.day}:${vm.plant.stage}` : null;
-  const grew = !!key && !!plantKey.current && plantKey.current !== key && plantKey.current.startsWith(`${vm?.day}:`);
-  useEffect(() => {
-    plantKey.current = key;
-  }, [key]);
 
   const renewal =
     isToday &&
@@ -69,56 +65,34 @@ export function Today() {
     }
   });
   if (!vm) return <TodaySkeleton />;
-  const card = vm.card;
+  const nowVM = vm.now;
   const evening = isToday && localParts(now.value, vm.tz).hour >= 21;
+  const pastDay = isToday ? undefined : day;
 
   const ate = (anchor: Element | null) => {
-    if (!card?.suggestion || !dataReady.value) return;
-    const s = card.suggestion;
+    const dish = nowVM?.planned;
+    if (!nowVM || !dish || !dataReady.value) return;
     void logMeal({
-      slot: card.key,
-      title: s.title,
-      items: s.items,
-      source: pushSlot.value === card.key ? 'push' : s.origin === 'menu' ? 'menu' : 'suggestion',
-      recipe_id: s.recipe_id,
+      slot: nowVM.key,
+      title: dish.title,
+      items: dish.items,
+      source: pushSlot.value === nowVM.key ? 'push' : 'menu',
+      recipe_id: dish.recipe_id,
       anchor,
     }).then(() => {
       pushSlot.value = null;
     });
   };
-  const cycle = (dir: 1 | -1) => {
-    if (!card) return;
-    if (card.count <= 1) return openSheet({ kind: 'meal', slot: card.key });
-    const next = ((otherIndex.value[card.key] ?? 0) + dir + card.count) % card.count;
-    otherIndex.value = { ...otherIndex.value, [card.key]: next };
+  const other = () => {
+    if (!nowVM || nowVM.count < 2) return;
+    otherIndex.value = { ...otherIndex.value, [nowVM.key]: (otherIndex.value[nowVM.key] ?? 0) + 1 };
   };
-  const adjust = () => {
-    if (!card) return;
-    const s = card.suggestion;
-    openDescribe({
-      slot: card.key,
-      items: s?.items ?? [],
-      title: s?.title,
-      recipeId: s?.recipe_id,
-      text: s?.items.map((i) => i.label).join(', '),
-    });
-  };
-  const quickLog = (slotKey: string, anchor: Element | null) => {
-    const row = vm.rows.find((r) => r.key === slotKey);
-    if (!row || !dataReady.value) return;
-    const top = suggestionsFor(dayInput.value, slotKey, row.target)[0];
-    if (!top) return openSheet({ kind: 'meal', slot: slotKey, day: isToday ? undefined : day });
-    void logMeal({
-      slot: slotKey,
-      title: top.title,
-      items: top.items,
-      source: 'suggestion',
-      recipe_id: top.recipe_id,
-      anchor,
-      day,
-    });
-  };
-  const openMeal = (slot: string) => openSheet({ kind: 'meal', slot, day: isToday ? undefined : day });
+  const describe = (slot: string, extra: { photo?: File; mode?: 'check' } = {}) =>
+    openDescribe({ slot, day: pastDay, ...extra });
+  const openRow = (r: SlotVM) =>
+    r.state === 'done' || r.state === 'skipped'
+      ? openSheet({ kind: 'meal', slot: r.key, day: pastDay })
+      : describe(r.key);
 
   return (
     <main class="app-main anim-fade" id="main">
@@ -147,17 +121,27 @@ export function Today() {
         </section>
       ) : (
         <>
-          {isToday && card ? (
-            <MealCard
-              card={card}
+          <DayCard
+            vm={vm}
+            onOpen={() => openSheet({ kind: 'day', day })}
+            onType={(type) => openSheet({ kind: 'token', type })}
+          />
+          {isToday && nowVM ? (
+            <NowCard
+              now={nowVM}
+              advice={vm.status.advice.filter((a) => a.slot === nowVM.key)}
+              verdict={vm.rows.find((r) => r.key === nowVM.key)?.verdict ?? null}
+              onDescribe={() => describe(nowVM.key)}
+              onPhoto={(photo) => describe(nowVM.key, { photo })}
               onAte={ate}
-              onCycle={cycle}
-              onAdjust={adjust}
-              onOpen={() => openSheet({ kind: 'meal', slot: card.key })}
-              onToken={(type) => openSheet({ kind: 'token', type })}
+              onLike={() => nowVM.idea && void planDish(nowVM.key, nowVM.idea, nowVM.label)}
+              onUnlike={() => void unplanDish(nowVM.key)}
+              onOther={other}
+              onCraving={() => describe(nowVM.key, { mode: 'check' })}
+              onSkip={() => void skipSlot(nowVM.key)}
             />
           ) : isToday && vm.allDone ? (
-            <section class="card anim-rise mb-4 flex flex-col items-center p-5 text-center" data-card>
+            <section class="card anim-rise mb-3 flex flex-col items-center p-5 text-center" data-card>
               <LazyPlant stage={vm.plant.stage} species={vm.plant.species} size={96} sway />
               <h2 class="title mt-1">{titles.allDone}</h2>
               <p class="secondary muted mt-1">{lines.allDoneHelp}</p>
@@ -172,7 +156,7 @@ export function Today() {
               {!layoutReady && cachedLayout ? (
                 <div aria-hidden="true" style={{ height: `${cachedLayout.bannerHeight}px` }} />
               ) : renewal ? (
-                <section class="card anim-rise mb-4 flex items-center gap-3 p-3" data-testid="renewal">
+                <section class="card anim-rise mb-3 flex items-center gap-3 p-3" data-testid="renewal">
                   <span class="row-icon">
                     <FileUp size={19} aria-hidden="true" />
                   </span>
@@ -200,7 +184,7 @@ export function Today() {
                   </button>
                 </section>
               ) : priming ? (
-                <section class="card anim-rise mb-4 p-3" data-testid="notification-prime">
+                <section class="card anim-rise mb-3 p-3" data-testid="notification-prime">
                   <div class="flex items-center gap-3">
                     <span class="row-icon">
                       <Bell size={19} aria-hidden="true" />
@@ -233,15 +217,15 @@ export function Today() {
               )}
             </div>
           )}
-          <DayCard vm={vm} grow={grew} onOpen={() => openSheet({ kind: 'day', day })} />
           {vm.mode === 'past' && vm.rows.some((r) => r.state === 'pending') && (
             <p class="caption mb-2 px-1">{todayCopy.pastHint}</p>
           )}
           <Timeline
             vm={vm}
-            onOpen={openMeal}
-            onQuickLog={quickLog}
-            onExtra={() => openSheet({ kind: 'meal', slot: 'extra', day: isToday ? undefined : day })}
+            onOpen={openRow}
+            onLog={(slot) => describe(slot)}
+            onExtra={() => describe('extra')}
+            onOpenExtras={() => openSheet({ kind: 'meal', slot: 'extra', day: pastDay })}
           />
           {evening && !vm.allDone && (
             <button type="button" class="btn btn-neutral mb-4 w-full" onClick={() => void openDayClose(vm.day)}>
@@ -282,8 +266,8 @@ function TodaySkeleton() {
     <main class="app-main" aria-busy="true">
       <div class="mb-3 h-9 w-24 rounded-xl bg-surface-2" />
       <div class="mb-4 h-[70px] rounded-2xl bg-surface-2" />
-      <div class="card mb-4 h-28" />
-      <div class="card h-64" />
+      <div class="card mb-3 h-56" />
+      <div class="card h-48" />
     </main>
   );
 }

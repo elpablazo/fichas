@@ -73,18 +73,13 @@ try {
   });
   console.log('✓ Production health, auth, plan sync, VAPID identity, manifest, headers and service worker');
 
-  if (await page.getByTestId('adjust').isVisible()) {
-    await page.getByTestId('adjust').click();
-    await expect(page.getByTestId('describe-input')).toBeVisible();
-    console.log('✓ Adjust opens Describe with the existing suggestion');
-  } else {
-    // A real owner can have finished every meal already; still verify a check-only local preview.
-    await page.getByTestId('describe-open').click();
-    await page.getByTestId('describe-input').fill('2 tortillas');
-    await page.getByTestId('describe-submit').click();
-  }
+  await expect(page.getByTestId('day-meter')).toBeVisible();
+  // A local preview appears while typing; closing the sheet logs nothing.
+  await page.getByTestId('describe-open').click();
+  await page.getByTestId('describe-input').fill('2 tortillas');
   await expect(page.getByTestId('preview')).toBeVisible();
-  await page.getByTestId('check-only').click();
+  await expect(page.getByTestId('impact')).toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
   await page.goto(`${ORIGIN}/progreso/plan`);
   await expect(page.getByRole('heading', { name: 'Mi plan', exact: true })).toBeVisible();
   if (healthBody.planReading) await expect(page.getByTestId('new-plan')).toBeVisible();
@@ -101,7 +96,7 @@ try {
     );
   await page.goto(ORIGIN);
   await expect(page.locator('[data-card]')).toBeVisible();
-  console.log('✓ Editable Describe preview/check-only; original PDF is authenticated and intact');
+  console.log('✓ Live Describe preview without logging; original PDF is authenticated and intact');
 
   await page.getByRole('button', { name: 'Cocina', exact: true }).click();
   await expect(page.getByTestId('kitchen')).toBeVisible();
@@ -152,31 +147,35 @@ try {
     await page.getByTestId('describe-open').click();
     await expect(page.getByTestId('dictate')).toBeVisible();
     await page.getByTestId('photo-input').setInputFiles(photoPath);
-    await expect(page.getByText('Esto veo. Ajusta antes de anotar.')).toBeVisible({ timeout: 60000 });
+    await expect(page.getByText('Revisa lo detectado antes de anotar.')).toBeVisible({ timeout: 60000 });
     await expect(page.getByTestId('describe-input')).not.toHaveValue('');
-    await expect(page.getByTestId('preview')).toContainText('≈');
+    await expect(page.getByTestId('preview')).toContainText('aprox.');
     await page.screenshot({ path: 'private/tmp/production-photo-preview.png', fullPage: true });
-    await page.getByRole('button', { name: 'Descartar', exact: true }).click();
+    await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
     await page.getByTestId('describe-open').click();
-    await page.getByTestId('describe-input').fill('3 tacos de bistec');
+    // Typing alone triggers both: JEV names the food groups at once, the meal AI counts portions after a pause.
+    const classifyResponse = page.waitForResponse((response) => response.url().endsWith('/api/ai/classify'));
     const parseResponse = page.waitForResponse((response) => response.url().endsWith('/api/ai/parse'));
-    await page.getByTestId('describe-submit').click();
+    await page.getByTestId('describe-input').fill('3 tacos de bistec');
+    const classified = await classifyResponse;
+    expect(classified.status(), 'JEV classify (JEV_API_KEY secret)').toBe(200);
+    console.log(`✓ JEV groups: ${JSON.stringify(((await classified.json()) as { items: unknown[] }).items)}`);
     expect((await parseResponse).status()).toBe(200);
     await expect(page.getByTestId('preview')).toContainText('3 tortillas', { timeout: 30000 });
-    await page.getByTestId('check-only').click();
+    await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
     const after: PullResponse = await (await context.request.get(`${ORIGIN}/api/sync?since=0`)).json();
     expect(after.changes.logs ?? []).toEqual(pull.changes.logs ?? []);
     expect(after.changes.recipes).toEqual(pull.changes.recipes);
     console.log(
-      '✓ Actual production photo and street-food text → OpenRouter → preview → discard; meals/recipes unchanged',
+      '✓ Actual production photo and street-food text → JEV + OpenRouter → preview → close; meals/recipes unchanged',
     );
   }
 
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('[data-card]')).toBeVisible();
-  await expect(page.locator('[data-slot] .tok').first()).toBeVisible();
+  await expect(page.locator('[data-slot]').first()).toBeVisible();
   await page.getByRole('button', { name: 'Cocina', exact: true }).click();
   await expect(page.getByTestId('pantry-input')).toBeEditable();
   await page.getByRole('button', { name: 'Hoy', exact: true }).click();

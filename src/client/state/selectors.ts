@@ -76,7 +76,7 @@ const SNAPSHOT_KEY = 'today:snapshot';
 export function readSnapshot(): DayVM | null {
   try {
     const vm = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) ?? 'null') as DayVM | null;
-    if (vm?.v !== 3) return null;
+    if (vm?.v !== 4) return null;
     if (appDay(Date.now(), vm.tz, vm.dayStartHour) !== vm.day) return null;
     return vm;
   } catch {
@@ -97,7 +97,6 @@ export const slotNames = computed<Record<string, string>>(() => {
   const slots = activePlan.value?.data.slots ?? [];
   const vm = todayVM.value;
   const times: Record<string, string> = Object.fromEntries((vm?.rows ?? []).map((r) => [r.key, r.time]));
-  if (vm?.card) times[vm.card.key] = vm.card.time;
   const counts = new Map<string, number>();
   for (const s of slots) counts.set(s.label, (counts.get(s.label) ?? 0) + 1);
   return Object.fromEntries(
@@ -119,7 +118,7 @@ let saveTimer: ReturnType<typeof setTimeout> | undefined;
 export function persistSnapshots(): void {
   effect(() => {
     const vm = todayVM.value;
-    if (!vm || !dataReady.value || vm.card?.celebrating) return;
+    if (!vm || !dataReady.value || vm.now?.celebrating) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       try {

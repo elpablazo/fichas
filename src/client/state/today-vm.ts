@@ -3,14 +3,14 @@
 
 import { balanceDay } from '../../shared/domain/balance';
 import { appMinutes, daysBetween } from '../../shared/domain/day';
+import { amountOf, dayStatus, type Meter, type Pace, type PaceGap } from '../../shared/domain/daystatus';
 import { changedIndexes } from '../../shared/domain/fit';
 import { dayLong, fill, relativeDay, timeLabel } from '../../shared/domain/format';
 import { remainingTarget } from '../../shared/domain/log';
 import { equivalentUsage, preferredEquivalent } from '../../shared/domain/recipes';
 import { currentSlot, learnedTimes, slotTimings } from '../../shared/domain/slots';
-import { type SlotState, slotState } from '../../shared/domain/status';
+import { computeStatus, isProvisional, type SlotState, slotState } from '../../shared/domain/status';
 import { suggest } from '../../shared/domain/suggest';
-import { type TokenModel, tokensFor } from '../../shared/domain/tokens';
 import type {
   LogItem,
   LogRow,
@@ -23,7 +23,6 @@ import type {
   Units,
 } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
-import { sumUnits } from '../../shared/domain/units';
 import { flowerModel } from '../../shared/game/garden';
 import type { Stage } from '../../shared/game/species';
 import { labels } from '../copy/es-MX';
@@ -38,34 +37,64 @@ export interface SuggestionVM {
   changed: number[];
 }
 
+/** How a logged meal compares with its target, in whole facts ("+1 🫓", "−1 🍗"). */
+export interface VerdictVM {
+  status: 'on' | 'over' | 'under' | 'mixed';
+  over: PaceGap[];
+  under: PaceGap[];
+}
+
 export interface SlotVM {
   key: string;
   label: string;
   time: string;
-  tokens: TokenModel[];
   state: 'done' | 'skipped' | 'pending' | 'upcoming' | 'current';
-  status: string | null;
-  adjusted: boolean;
   target: Units;
-  /** Title of what was logged, or of tomorrow's planned dish. */
+  /** Title of what was logged, or of the day's planned dish. */
   dish: string | null;
+  verdict: VerdictVM | null;
+  /** Logged while offline; portions still to be counted. */
+  provisional: boolean;
+  /** Cuadrar el día trims this open meal. */
+  adjusted: boolean;
 }
 
-export interface CardVM extends SlotVM {
-  suggestion: SuggestionVM | null;
+/** The one meal that matters right now: decide what to eat (plan) or write down what was eaten (log). */
+export interface NowVM {
+  key: string;
+  label: string;
+  time: string;
+  phase: 'plan' | 'log';
+  /** A dish the owner chose for this meal ("Me late" or tomorrow's menu). */
+  planned: SuggestionVM | null;
+  /** Plan phase: a real dish that fits (the owner's, the nutritionist's), cycled with "Otra idea". */
+  idea: SuggestionVM | null;
   index: number;
   count: number;
   celebrating: boolean;
 }
 
-export interface GaugeVM {
+export interface AdviceVM {
+  slot: string;
+  label: string;
   type: TypeKey;
-  eaten: number;
-  planned: number;
+  n: number;
+  /** The same amount as food: "1 tortilla". */
+  food: string;
+}
+
+export interface StatusVM {
+  meters: Meter[];
+  pace: Pace;
+  ahead: PaceGap[];
+  behind: PaceGap[];
+  advice: AdviceVM[];
+  done: number;
+  total: number;
 }
 
 export interface DayVM {
-  v: 3;
+  v: 4;
   tz: string;
   dayStartHour: number;
   day: string;
@@ -75,12 +104,11 @@ export interface DayVM {
   subtitle: string;
   seasonLabel: string | null;
   plant: { stage: Stage; species: string; n: number };
-  progress: { done: number; total: number };
-  gauges: GaugeVM[];
-  changes: { slot: string; label: string; type: TypeKey; n: number }[];
-  card: CardVM | null;
+  status: StatusVM;
+  now: NowVM | null;
+  /** Every planned meal in order (the now meal included). */
   rows: SlotVM[];
-  extras: { tokens: TokenModel[]; n: number; titles: string[] } | null;
+  extras: { n: number; titles: string[] } | null;
   allDone: boolean;
   planId: string | null;
 }
@@ -137,7 +165,7 @@ export function dayTargets(input: Pick<DayInput, 'plan' | 'logs' | 'day' | 'bala
   ).targets;
 }
 
-/** Suggestions for a slot of the shown day (shared by the card, quick rows and backfill). */
+/** Suggestions for a slot of the shown day (shared by the now card and tomorrow's menu). */
 export function suggestionsFor(input: DayInput, slotKey: string, target: Units): Suggestion[] {
   const plan = input.plan;
   if (!plan) return [];
@@ -158,11 +186,19 @@ export function suggestionsFor(input: DayInput, slotKey: string, target: Units):
   });
 }
 
+function gaps(deltas: Partial<Record<TypeKey, number>>, sign: 1 | -1): PaceGap[] {
+  return TYPE_KEYS.map((t) => ({ type: t, n: (deltas[t] ?? 0) * sign }))
+    .filter((g) => g.n >= 0.5 - 1e-6)
+    .sort((a, b) => b.n - a.n);
+}
+
+const EMPTY_STATUS: StatusVM = { meters: [], pace: 'start', ahead: [], behind: [], advice: [], done: 0, total: 0 };
+
 export function buildDayVM(input: DayInput): DayVM {
   const { plan, day, today } = input;
   const mode: DayVM['mode'] = day === today ? 'today' : day < today ? 'past' : 'future';
   const base: DayVM = {
-    v: 3,
+    v: 4,
     tz: input.tz,
     dayStartHour: input.dayStartHour,
     day,
@@ -172,10 +208,8 @@ export function buildDayVM(input: DayInput): DayVM {
     subtitle: dayLong(day),
     seasonLabel: null,
     plant: { stage: mode === 'future' ? 'soil' : 'seed', species: '', n: 0 },
-    progress: { done: 0, total: 0 },
-    gauges: [],
-    changes: [],
-    card: null,
+    status: EMPTY_STATUS,
+    now: null,
     rows: [],
     extras: null,
     allDone: false,
@@ -191,18 +225,25 @@ export function buildDayVM(input: DayInput): DayVM {
   const flower = flowerModel(data, input.logs, day, today, { level: input.level, closed: input.closed });
   base.plant = { stage: flower.stage, species: flower.species, n: flower.n };
 
-  const balance = balanceDay(data, dayLogs, rules, input.balance && mode !== 'future');
-  for (const t of TYPE_KEYS) {
-    const planned = balance.planned[t] ?? 0;
-    const eaten = balance.eaten[t] ?? 0;
-    if (planned > 1e-6 || eaten > 1e-6) base.gauges.push({ type: t, eaten, planned });
-  }
-  base.changes = balance.adjustments.map((a) => ({
-    slot: a.slot,
-    label: data.slots.find((s) => s.key === a.slot)?.label ?? '',
-    type: a.type,
-    n: a.from - a.to,
-  }));
+  const status = dayStatus(data, dayLogs, input.balance && mode !== 'future');
+  const balance = status.balance;
+  const usage = equivalentUsage(input.logs);
+  base.status = {
+    meters: status.meters,
+    pace: status.pace,
+    ahead: status.ahead,
+    behind: status.behind,
+    advice: status.advice.map((a) => {
+      const e = preferredEquivalent(data, usage, a.slot)(a.type);
+      return {
+        ...a,
+        label: data.slots.find((s) => s.key === a.slot)?.label ?? '',
+        food: e ? amountOf(e, a.n) : '',
+      };
+    }),
+    done: status.done,
+    total: status.total,
+  };
 
   const states: SlotState[] = data.slots.map((s) => {
     const slotLogs = dayLogs.filter((l) => l.slot === s.key);
@@ -210,16 +251,16 @@ export function buildDayVM(input: DayInput): DayVM {
     return slotState(slotLogs, snap && Object.keys(snap).length ? snap : s.target, rules);
   });
   const resolved = states.map((s) => s.resolved);
-  base.progress = { done: resolved.filter(Boolean).length, total: data.slots.length };
   const timings = slotTimings(
     data.slots,
     learnedTimes(input.logs, data.slots, today, input.tz, input.dayStartHour),
     input.dayStartHour,
   );
+  const nowMin = appMinutes(input.now, input.tz, input.dayStartHour);
   let current: number | null = null;
   let pending: number[] = [];
   if (mode === 'today') {
-    const cur = currentSlot(timings, resolved, appMinutes(input.now, input.tz, input.dayStartHour));
+    const cur = currentSlot(timings, resolved, nowMin);
     current = cur.current;
     pending = cur.pending;
     const focus = data.slots.findIndex((s, i) => s.key === input.focusedSlot && !resolved[i]);
@@ -231,7 +272,9 @@ export function buildDayVM(input: DayInput): DayVM {
     mode === 'today' && input.celebrate && input.celebrate.until > input.now
       ? data.slots.findIndex((s) => s.key === input.celebrate?.slotKey)
       : -1;
-  const cardIndex = mode !== 'today' ? -1 : celebrating >= 0 ? celebrating : current;
+  const nowIndex = mode !== 'today' ? -1 : celebrating >= 0 ? celebrating : current;
+  const menuFor = (key: string) =>
+    input.menus.find((m) => m.day === day && m.slot === key && m.accepted_at && !m.deleted_at);
 
   data.slots.forEach((s, i) => {
     const st = states[i] as SlotState;
@@ -239,15 +282,17 @@ export function buildDayVM(input: DayInput): DayVM {
     const target =
       st.resolved && snapTarget && Object.keys(snapTarget).length ? snapTarget : (balance.targets[i] ?? s.target);
     const meals = st.logs.filter((l) => l.kind === 'meal');
-    const menu =
-      mode === 'future'
-        ? input.menus.find((m) => m.day === day && m.slot === s.key && m.accepted_at && !m.deleted_at)
-        : undefined;
-    const vm: SlotVM = {
+    const provisional = meals.length > 0 && meals.every((l) => isProvisional(l));
+    let verdict: VerdictVM | null = null;
+    if (st.kind === 'meal' && !provisional) {
+      const r = computeStatus(st.eaten, target, rules);
+      verdict = { status: r.status, over: gaps(r.deltas, 1), under: gaps(r.deltas, -1) };
+    }
+    const menu = menuFor(s.key);
+    base.rows.push({
       key: s.key,
       label: s.label,
       time: timeLabel(timings[i]?.time ?? 0, input.dayStartHour),
-      tokens: tokensFor(target, st.kind === 'meal' ? st.normalized : {}),
       state:
         st.kind === 'skip'
           ? 'skipped'
@@ -258,42 +303,50 @@ export function buildDayVM(input: DayInput): DayVM {
               : i === current
                 ? 'current'
                 : 'upcoming',
-      status: st.status,
-      adjusted: !st.resolved && balance.adjustments.some((a) => a.slot === s.key),
       target,
       dish: meals.length ? meals.map((l) => l.title).join(' + ') : (menu?.title ?? null),
+      verdict,
+      provisional,
+      adjusted: !st.resolved && balance.adjustments.some((a) => a.slot === s.key),
+    });
+    if (i !== nowIndex) return;
+    const isCelebrating = i === celebrating;
+    const phase: NowVM['phase'] = nowMin < (timings[i]?.time ?? 0) ? 'plan' : 'log';
+    let idea: SuggestionVM | null = null;
+    let count = 0;
+    let index = 0;
+    if (!isCelebrating && phase === 'plan' && !menu) {
+      const list = suggestionsFor(input, s.key, target).filter((x) => x.origin !== 'menu');
+      count = list.length;
+      index = count ? (input.otherIndex[s.key] ?? 0) % count : 0;
+      const chosen = list[index];
+      idea = chosen ? suggestionVM(chosen) : null;
+    }
+    base.now = {
+      key: s.key,
+      label: s.label,
+      time: timeLabel(timings[i]?.time ?? 0, input.dayStartHour),
+      phase,
+      planned:
+        menu && !isCelebrating
+          ? suggestionVM({
+              title: menu.title,
+              items: menu.items,
+              recipe_id: menu.recipe_id ?? undefined,
+              origin: 'menu',
+              changes: [],
+              tag: 'menu',
+            })
+          : null,
+      idea,
+      index,
+      count,
+      celebrating: isCelebrating,
     };
-    if (i === cardIndex) {
-      const isCelebrating = i === celebrating;
-      let suggestion: SuggestionVM | null = null;
-      let count = 0;
-      let index = 0;
-      if (!isCelebrating) {
-        const list = suggestionsFor(input, s.key, target);
-        count = list.length;
-        index = count ? (input.otherIndex[s.key] ?? 0) % count : 0;
-        const chosen = list[index];
-        suggestion = chosen ? suggestionVM(chosen) : null;
-      }
-      base.card = {
-        ...vm,
-        state: isCelebrating ? 'done' : 'current',
-        suggestion,
-        index,
-        count,
-        celebrating: isCelebrating,
-      };
-    } else base.rows.push(vm);
   });
 
   const extras = dayLogs.filter((l) => l.slot === 'extra' && l.kind === 'meal');
-  if (extras.length) {
-    const eaten = sumUnits(extras.map((l) => l.raw_units));
-    base.extras = { tokens: tokensFor({}, eaten), n: extras.length, titles: extras.map((l) => l.title) };
-  }
+  if (extras.length) base.extras = { n: extras.length, titles: extras.map((l) => l.title) };
   base.allDone = mode === 'today' && current === null && celebrating < 0;
   return base;
 }
-
-/** @deprecated name kept for older call sites. */
-export const buildTodayVM = buildDayVM;

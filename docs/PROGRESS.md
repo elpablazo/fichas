@@ -384,3 +384,15 @@ Open:
 **Exportar comidas.** Ajustes → Tus datos → "Mis comidas para mi nutrióloga": choose a date range (7/15/30 days or any From/To), see a preview, then share, copy or save a `.txt`. It lists dishes and portions per day ("Comida (2:30 pm): Pollo con arroz — 120 g pollo, 1 tza arroz"), never exchange units. The full JSON export stays as "Copia de seguridad completa". Built as a lazy sheet (`sheets/ExportMeals.tsx`) over a pure builder (`shared/domain/export-meals.ts`); initial JS unchanged at 89.0 KB. Unit (3) and browser (1) tests added.
 
 **1.1.1.** Progreso → "Para tu nutri" now opens the same meals export (it used to open the season report image, which listed exchange units). The season report is no longer reachable from the UI; its code (`SeasonRecap` mode `report`) is untouched.
+
+## Fichas 1.2.0 — "¿Cómo voy?"
+
+Hoy rebuilt around two moments (decide before a meal, record after it); spec and audit in [04-today-2.md](04-today-2.md), decisions in DECISIONS.md.
+
+- **Tu día first:** one tank per food group (what's left today, a pace notch, "+n" floats when food lands) and one line in words with the change that keeps the day on plan ("Para cuadrar: 1 tortilla menos en la cena").
+- **Now card by the clock:** before a meal, one real dish (fit never adds foods anymore), "Me late" to keep it, "Checar un antojo"; after it, "¿Qué comiste?" (one tap if it was the planned dish).
+- **Describe is live:** local matches while typing, JEV food groups for unknown phrases (`/api/ai/classify`), meal AI portions after a pause, the day's tanks as preview, one button.
+- **Simpler everywhere:** no coin capsules in the meal list (verdict chips instead), no dish list in the meal sheet, a plain "Ayer quedaron n sin anotar", impersonal copy enforced by copy-lint.
+- **Fixed:** photos from the meal sheet never reached Describe; offline descriptions for a past day were logged to today; first-person copy in the day sheet.
+- **Tests:** unit 175 (new `daystatus`, suggestion regression, `unknownPhrases`), worker 76 (new JEV suite), browser specs rewritten for the new flows (Chromium; WebKit and the darwin garden snapshots were not runnable in this environment). Initial JS 89.3 / 90 KB gzip.
+- **Not done here:** deployment (`npm run deploy`) and a live JEV call — the sandbox had no Cloudflare credentials and could not reach `api.typesafe.ai`; `verify:production` now checks JEV after deploying.

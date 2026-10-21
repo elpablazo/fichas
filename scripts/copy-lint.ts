@@ -36,6 +36,32 @@ const BANNED = [
   'asignaci',
   'limite',
 ];
+/** The app has no voice of its own (owner, 2026-10-21): it never speaks as "yo"/"nosotros".
+ *  Buttons in the owner's voice ("Me lo comí", "Me la salté") are fine; these are the app talking. */
+const FIRST_PERSON = [
+  'supuse',
+  'encontre',
+  'no pude',
+  'te aviso',
+  'te escucho',
+  'ajusto',
+  'cuadramos',
+  'dimelo',
+  'lo quite',
+  'esto veo',
+  'lo leo',
+  'lo busco',
+  'lo cuento',
+  ' veo ',
+  'arrancamos',
+  'cerramos',
+  'seguimos',
+  'retomamos',
+  'te propongo',
+  'te recomiendo',
+  'te sugiero',
+  ' toco ',
+];
 /** Keys that are fixed strings for a single, rare moment (not pools that repeat). */
 const NOT_POOLS = new Set(['push.title.slot', 'push.title.plan', 'push.title.test', 'push.body.test']);
 
@@ -64,6 +90,11 @@ flat('line.diagnostics', copy.diagnosticsCopy);
 flat('line.plan', copy.planLines);
 flat('line.new', copy.whatsNew);
 flat('line.today', copy.todayCopy);
+flat('line.pace', copy.paceCopy);
+flat('line.meter', copy.meterCopy);
+flat('line.now', copy.nowCopy);
+flat('line.verdict', copy.verdictCopy);
+flat('line.describe', copy.describeCopy);
 flat('line.day', copy.dayCopy);
 flat('line.garden', copy.gardenCopy);
 flat('line.stage', copy.stageLabels);
@@ -99,6 +130,8 @@ for (const [key, raw] of entries) {
     if (key.startsWith('weight.') && b === 'peso ideal') continue;
     if (f.includes(b)) errors.push(`${key}: banned "${b}" — "${raw}"`);
   }
+  for (const p of FIRST_PERSON)
+    if (` ${f} `.includes(p)) errors.push(`${key}: app speaking in first person "${p.trim()}" — "${raw}"`);
   if ((raw.match(/!/g) ?? []).length > 1) errors.push(`${key}: more than one "!" — "${raw}"`);
   if (key.startsWith('push.')) {
     const maxWords = key.startsWith('push.title.') ? 3 : 8;

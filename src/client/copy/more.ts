@@ -49,7 +49,7 @@ export const weightCopy = {
   works: '¿Funciona tu plan?',
   none: 'Anota tu peso y aquí verás tu tendencia.',
   few: 'Pésate 2 o 3 veces por semana para ver tu tendencia.',
-  fewLeft: 'Con {n} pesajes más veo hacia dónde vas.',
+  fewLeft: 'Con {n} pesajes más se ve hacia dónde vas.',
   losing: 'Va funcionando: bajas {rate} kg por semana.',
   steady: 'Estable: tu tendencia casi no se mueve.',
   gaining: 'Tu tendencia sube {rate} kg por semana.',
@@ -79,7 +79,7 @@ export const weightCopy = {
 export const settingsCopy = {
   experience: 'Experiencia',
   balance: 'Cuadrar el día',
-  balanceHelp: 'Si una comida se pasa, ajusto las que siguen.',
+  balanceHelp: 'Si una comida se pasa, las que siguen se ajustan.',
   reminders: 'Avisos',
   plan: 'Tu plan',
   data: 'Tus datos',
@@ -148,16 +148,19 @@ export const gardenCopy = {
 
 export const dayCopy = {
   title: 'Tu día',
-  types: 'Por tipo de ficha',
+  types: 'Por grupo',
+  legendLeft: 'El número arriba es lo que te queda hoy.',
+  legendMark: 'La rayita marca lo planeado en las comidas ya anotadas.',
+  leftOf: 'quedan {n}',
   meals: 'Por comida',
   eatenOf: '{eaten} de {planned}',
   over: '+{n} hoy',
   balanceTitle: 'Cuadrar el día',
-  balanceOn: 'Si una comida se pasa, ajusto las que siguen.',
-  balanceRules: 'Nunca toco proteína ni verdura, ni más de la mitad.',
+  balanceOn: 'Si una comida se pasa, las que siguen se ajustan.',
+  balanceRules: 'Nunca se quita proteína ni verdura, ni más de media comida.',
   balanceOff: 'Cada comida conserva sus fichas.',
   noChanges: 'Por ahora no hay nada que cuadrar.',
-  unabsorbed: '+{n} {emoji} hoy. Mañana, borrón y cuenta nueva.',
+  unabsorbed: '+{n} {emoji} sobre el plan de hoy. Mañana empieza en cero.',
   checkNutri: 'Pregúntale a tu nutri en tu próxima cita.',
 } as const;
 
@@ -199,7 +202,7 @@ export const kitchenCopy = {
   linkSearch: 'Busca en tu plan',
   linked: 'Vinculado.',
   relink: 'Cambiar',
-  aiQueued: 'Lo busco en cuanto haya internet.',
+  aiQueued: 'Se busca en cuanto haya internet.',
   forSlot: 'Para',
   haveIt: 'Tienes',
   missingIt: 'Falta',
@@ -236,7 +239,7 @@ export const planLines = {
   planSlotAdded: 'Nuevo tiempo',
   planSlotRemoved: 'Tiempo retirado',
   planResume: 'Tu plan sigue en revisión.',
-  planReadError: 'No pude leerlo. Prueba con fotos.',
+  planReadError: 'No se pudo leer. Prueba con fotos.',
   planFilesError: 'PDF hasta 5 MB. Máximo cinco archivos.',
   planDuplicate: 'Ya tienes este plan.',
   planStartConflict: 'Cambió tu día. Elige mañana o revisa.',
@@ -252,11 +255,10 @@ export const planLines = {
 } as const;
 
 export const whatsNew = {
-  title: 'Fichas, renovada',
-  days: 'Toca cualquier día para anotar o corregir.',
-  balance: 'Si una comida se pasa, tu día se cuadra solo.',
-  garden: 'Cada día crece una flor distinta. Colecciónalas.',
-  weight: 'Tu peso ahora muestra tendencia y ritmo.',
-  add: 'El botón + anota lo que sea, desde donde sea.',
-  ok: '¡Vamos!',
+  title: 'Fichas, más simple',
+  day: 'Arriba, cómo va tu día: lo que te queda de cada grupo.',
+  now: 'Antes de comer, una idea. Después, anotas en segundos.',
+  live: 'Escribe como hablas: se entiende mientras escribes.',
+  balance: 'Si te pasas, ves qué ajustar después.',
+  ok: 'Entendido',
 } as const;

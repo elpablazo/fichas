@@ -28,3 +28,21 @@ export const ParseBody = z.object({
 });
 
 export type AiMealData = z.infer<typeof AiMeal>;
+
+// Live food categorization while typing (JEV, docs/04-today-2.md §5). Groups are the plan's food types as people
+// name them; portions never come from here.
+export const FOOD_GROUPS = ['carb', 'protein', 'legume', 'dairy', 'fruit', 'veg', 'fat', 'nuts', 'sugar'] as const;
+export type FoodGroup = (typeof FOOD_GROUPS)[number];
+
+export const ClassifyBody = z.object({
+  items: z.array(z.string().trim().min(1).max(80)).min(1).max(6),
+});
+
+export interface Classified {
+  text: string;
+  /** Probability that the phrase is something eaten or drunk. */
+  food: number;
+  /** Counts as nothing in the plan (water, black coffee, salsa, spices). */
+  free: boolean;
+  groups: FoodGroup[];
+}

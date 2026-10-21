@@ -3,7 +3,9 @@ import { addDays } from '../../src/shared/domain/day';
 import { buildLog } from '../../src/shared/domain/log';
 import type { LogRow } from '../../src/shared/domain/types';
 import { seedPlan } from '../plan-fixture';
-import { checkBudget, dayFor, dismissRenewal, newPage, openToday, RUNS, Taps } from './helpers';
+import { checkBudget, dayFor, describeAndLog, dismissRenewal, newPage, openToday, RUNS, Taps } from './helpers';
+
+const LUNCH = '2 tortillas, 120 g pollo, 1 manzana, 1 tz verdura y 2 cdta aceite';
 
 const log = (day: string, slot: string, _items: unknown[], extra: Partial<LogRow>) => ({
   ...buildLog({
@@ -37,37 +39,40 @@ test('A14 · accept tomorrow in one tap; menu persists and feeds the next day', 
     await expect(page.getByTestId('tomorrow')).not.toBeAttached();
     times.push(Date.now() - t0);
     expect(taps.n).toBe(1);
-    await page.clock.setSystemTime(new Date(`${addDays(day, 1)}T16:52:00-06:00`));
+    await page.clock.setSystemTime(new Date(`${addDays(day, 1)}T17:20:00-06:00`));
     await page.reload();
+    // The accepted menu is the planned dish: after lunchtime it logs in one tap.
     await page.getByTestId('ate').waitFor();
-    await expect(page.locator('[data-card]')).toContainText('planeado');
+    await expect(page.locator('[data-card]')).toContainText('Planeado');
     await page.close();
   }
   checkBudget('A14', times, 3000, 5000);
 });
 
-test('A15 · backfill one meal with one tap, correct day/plan/target, no duplicate on reload', async ({
+test('A15 · yesterday says what is open; log it on its own day, correct day/plan/target', async ({
   context,
   request,
 }, info) => {
   const times: number[] = [];
   for (let i = 0; i < RUNS; i++) {
     const day = dayFor(info, 61, i);
-    const page = await newPage(context, day, '16:52');
+    const page = await newPage(context, day, '17:20');
     await openToday(page);
     // Renewal has higher priority; dismiss it for this app day to reach the recovery card.
     await dismissRenewal(page);
-    await page.getByTestId('backfill').waitFor();
-    const firstSlot = await page.getByTestId('backfill-slot').innerText();
+    await expect(page.getByTestId('backfill-line')).toHaveText('Ayer quedaron 5 sin anotar');
     const taps = new Taps();
     const t0 = Date.now();
-    await taps.tap(page.getByRole('button', { name: 'Lo de siempre', exact: true }));
-    await expect(page.getByTestId('backfill-slot')).not.toHaveText(firstSlot);
+    await taps.tap(page.getByRole('button', { name: 'Ver ayer', exact: true }));
+    await expect(page.locator('h1')).toHaveText('Ayer');
+    await taps.tap(page.getByRole('button', { name: 'Anotar: Desayuno', exact: true }));
+    await expect(page.getByRole('dialog')).toContainText(addDays(day, -1).slice(8).replace(/^0/, ''));
+    await describeAndLog(page, '2 tortillas, 3 huevos, ½ tz verdura y 2 cdta aceite');
+    await expect(page.locator('[data-slot=desayuno]')).toHaveAttribute('data-state', 'done');
     times.push(Date.now() - t0);
-    expect(taps.n).toBe(1);
-    await page.reload();
-    await page.getByTestId('backfill').waitFor();
-    await expect(page.getByTestId('backfill-slot')).not.toHaveText(firstSlot);
+    expect(taps.n).toBe(2);
+    await page.getByRole('button', { name: 'Ir a hoy' }).click();
+    await expect(page.getByTestId('backfill-line')).toHaveText('Ayer quedaron 4 sin anotar');
     const pull = async () => await (await request.get('/api/sync?since=0')).json();
     await expect
       .poll(async () => {
@@ -87,15 +92,16 @@ test('A15 · backfill one meal with one tap, correct day/plan/target, no duplica
     expect(JSON.parse(row.target).carb_sg).toBeGreaterThan(0);
     await page.close();
   }
-  checkBudget('A15', times, 2000, 4000);
+  checkBudget('A15', times, 6000, 10000);
 });
 
 test('progress and stamps persist after undo; favorites and only unlocked styles are usable', async ({
   context,
 }, info) => {
-  const page = await newPage(context, dayFor(info, 62), '16:52');
+  const page = await newPage(context, dayFor(info, 62), '17:20');
   await openToday(page);
-  await page.getByTestId('ate').click();
+  await page.getByTestId('now-describe').click();
+  await describeAndLog(page, LUNCH);
   await page.waitForTimeout(1400); // rewards are persisted after the immediate food feedback
   await page.getByRole('button', { name: 'Deshacer' }).click();
   await page.getByRole('button', { name: 'Jardín', exact: true }).click();
@@ -122,13 +128,14 @@ test('progress and stamps persist after undo; favorites and only unlocked styles
 test('automatic day close after 21:30 preserves undo and opens once per app day', async ({ context }, info) => {
   const page = await newPage(context, dayFor(info, 64), '21:45');
   await openToday(page);
-  await page.getByTestId('ate').click();
+  await page.getByTestId('now-describe').click();
+  await describeAndLog(page, '3 tortillas, 90 g pollo, ½ tz verdura y 2 cdta aceite');
   await page.getByRole('dialog', { name: 'Cerrar el día', exact: true }).waitFor();
   await expect(page.getByRole('button', { name: 'Deshacer', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
   await page.reload();
-  await page.getByTestId('ate').waitFor();
+  await page.locator('[data-card]').waitFor();
   await page.waitForTimeout(1600);
   await expect(page.getByRole('dialog')).not.toBeAttached();
 });
@@ -205,7 +212,7 @@ test('flower snapshots: partial/full/gold/bud/skip/seed, light and dark', async 
     db.close();
   }, ls);
   await page.reload();
-  await page.getByTestId('ate').waitFor();
+  await page.getByTestId('day-card').waitFor();
   await page.getByRole('button', { name: 'Jardín', exact: true }).click();
   await page.getByTestId('garden').waitFor();
   // Two full days bloom; the day with one meal and a skip stays a bud (never wilted).
@@ -232,21 +239,22 @@ test.describe('offline game loop', () => {
       await navigator.serviceWorker.ready;
     });
     await page.reload();
-    await page.getByTestId('ate').waitFor();
+    await page.locator('[data-card]').waitFor();
     await dismissRenewal(page);
     await page.getByTestId('backfill').waitFor();
     await context.setOffline(true);
-    await page.getByRole('button', { name: 'Lo de siempre', exact: true }).click();
+    await page.getByTestId('backfill').getByRole('button', { name: 'Descartar', exact: true }).click();
     await page.getByRole('button', { name: 'Cerrar el día', exact: true }).click();
     await page.getByTestId('accept-menu').click();
     await page.reload();
-    await page.getByTestId('ate').waitFor();
+    await page.locator('[data-card]').waitFor();
     await expect(page.getByRole('dialog')).not.toBeAttached();
+    await expect(page.getByTestId('backfill')).not.toBeAttached();
     await context.setOffline(false);
   });
 });
 
-test('Today stays within 20 visible words with the recovery card', async ({ context }, info) => {
+test('Today stays within 25 visible words with the recovery card', async ({ context }, info) => {
   const page = await newPage(context, dayFor(info, 66), '20:15');
   await openToday(page);
   await dismissRenewal(page);
@@ -255,7 +263,7 @@ test('Today stays within 20 visible words with the recovery card', async ({ cont
     const clone = main.cloneNode(true) as HTMLElement;
     // Excluded by the budget (§14.3): food names, slot labels and times, numbers, emoji, weekday initials.
     for (const el of clone.querySelectorAll(
-      '.sr-only, [data-nowords], [data-card] h2, [data-testid=suggestion-title], [data-card] .secondary, [data-slot] .font-bold, [data-slot] .secondary, [data-slot] .caption, [data-testid=backfill-slot]',
+      '.sr-only, [data-nowords], [data-card] h2, [data-testid=suggestion-title], [data-card] .secondary, [data-slot] .font-bold, [data-slot] .secondary, [data-slot] .caption',
     ))
       el.remove();
     const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
@@ -263,5 +271,5 @@ test('Today stays within 20 visible words with the recovery card', async ({ cont
     while (walker.nextNode()) texts.push(walker.currentNode.textContent ?? '');
     return texts.join(' ').match(/\p{L}+/gu) ?? [];
   });
-  expect(words.length, words.join(' ')).toBeLessThanOrEqual(20);
+  expect(words.length, words.join(' ')).toBeLessThanOrEqual(25);
 });

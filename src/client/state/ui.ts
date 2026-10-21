@@ -53,6 +53,8 @@ export type SheetState =
       recipeId?: string | null;
       /** A photo chosen inside the tap that opened the sheet (iOS needs the picker in the gesture). */
       photo?: File;
+      /** check: "¿Qué se te antoja?" (see if a craving fits before eating). */
+      mode?: 'log' | 'check';
     }
   | { kind: 'compose'; slot: string; day?: string; items?: LogItem[]; title?: string; logId?: string }
   | { kind: 'token'; type: TypeKey }
@@ -81,7 +83,7 @@ export function closeSheet(): void {
  * sheet renders a moment later: focus a hidden proxy input now; the sheet's input takes focus on mount.
  */
 export function openDescribe(s: Omit<Extract<SheetState, { kind: 'describe' }>, 'kind'> = {}): void {
-  if (!s.items?.length) document.getElementById('focus-proxy')?.focus({ preventScroll: true });
+  if (!s.items?.length && !s.photo) document.getElementById('focus-proxy')?.focus({ preventScroll: true });
   sheet.value = { kind: 'describe', ...s };
 }
 
@@ -115,7 +117,7 @@ export const otherIndex = signal<Record<string, number>>({});
 /** Keeps the meal card on the slot just logged while its tokens pop. */
 export const celebrate = signal<{ slotKey: string; until: number; at: number } | null>(null);
 let celebrateTimer: ReturnType<typeof setTimeout> | undefined;
-export function startCelebration(slotKey: string, ms = 1100): void {
+export function startCelebration(slotKey: string, ms = 1800): void {
   const at = Date.now();
   celebrate.value = { slotKey, until: at + ms, at };
   clearTimeout(celebrateTimer);

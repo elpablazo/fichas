@@ -1,4 +1,5 @@
 # Local secrets for `npm run dev` / `vite preview` (copy to .dev.vars). Never commit .dev.vars.
 OWNER_PAIRING_CODE="six random words like this one"
 OPENROUTER_API_KEY=""
+JEV_API_KEY=""
 VAPID_PRIVATE_KEY=""

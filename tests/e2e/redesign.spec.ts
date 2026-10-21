@@ -6,7 +6,7 @@ import { buildLog } from '../../src/shared/domain/log';
 import type { LogItem, LogRow, WeighinRow } from '../../src/shared/domain/types';
 import { equivalentById } from '../../src/shared/domain/units';
 import { seedPlan as plan } from '../plan-fixture';
-import { dayFor, newPage, openToday } from './helpers';
+import { dayFor, describeAndLog, newPage, openToday } from './helpers';
 
 async function rows<T>(page: Page, table: string): Promise<T[]> {
   return page.evaluate(
@@ -60,6 +60,7 @@ test('any day: log yesterday from the week strip at its planned time; today stay
   await page.locator(`[data-day="${yesterday}"]`).click();
   await expect(page.locator('h1')).toHaveText('Ayer');
   await page.getByRole('button', { name: 'Anotar: Desayuno', exact: true }).click();
+  await describeAndLog(page, '2 tortillas, 3 huevos, ½ tz verdura y 2 cdta aceite');
   const logged = async () =>
     (await rows<LogRow>(page, 'logs')).filter((l) => l.day === yesterday && l.slot === 'desayuno' && !l.deleted_at);
   await expect.poll(async () => (await logged()).length).toBe(1);
@@ -69,7 +70,7 @@ test('any day: log yesterday from the week strip at its planned time; today stay
   expect((await rows<LogRow>(page, 'logs')).filter((l) => l.day === day && !l.deleted_at)).toHaveLength(0);
   await page.getByRole('button', { name: 'Ir a hoy', exact: true }).click();
   await expect(page.locator('h1')).toHaveText('Hoy');
-  await expect(page.getByTestId('ate')).toBeVisible();
+  await expect(page.locator('[data-card]')).toBeVisible();
 });
 
 test('cuadrar el día: an over breakfast trims later meals; the switch turns it off and back on', async ({
@@ -99,10 +100,12 @@ test('cuadrar el día: an over breakfast trims later meals; the switch turns it 
   expect(res.ok()).toBe(true);
   const page = await newPage(context, day, '12:00');
   await openToday(page);
-  const note = page.getByTestId('balance-note');
-  await expect(note).toContainText('Cuadramos');
-  await expect(note).toContainText('comida');
-  await expect(note).toContainText('cena');
+  // "¿Cómo voy?" says it in food: two tortillas over → one less at lunch and one less at dinner.
+  const note = page.getByTestId('pace-sub');
+  await expect(page.getByTestId('pace-title')).toContainText('de más');
+  await expect(note).toContainText('Para cuadrar');
+  await expect(note).toContainText('1 tortilla menos en la comida');
+  await expect(note).toContainText('1 tortilla menos en la cena');
 
   const toggle = async (expected: 'true' | 'false') => {
     await page.getByTestId('day-card').locator('button').first().click();
@@ -113,9 +116,9 @@ test('cuadrar el día: an over breakfast trims later meals; the switch turns it 
     await expect(page.getByRole('dialog')).toHaveCount(0);
   };
   await toggle('false');
-  await expect(note).toHaveCount(0);
+  await expect(page.getByTestId('day-card')).not.toContainText('Para cuadrar');
   await toggle('true');
-  await expect(note).toContainText('Cuadramos');
+  await expect(note).toContainText('Para cuadrar');
   await expect
     .poll(async () => (await server(request)).settings.find((r) => r.key === 'rebalance')?.value)
     .toBe(JSON.stringify('allowed'));

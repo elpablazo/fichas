@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { checkBudget, dayFor, dismissRenewal, newPage, openToday, RUNS, Taps } from './helpers';
+import { checkBudget, dayFor, describeAndLog, dismissRenewal, newPage, openToday, RUNS, Taps } from './helpers';
 
 async function mockPush(page: Page, permission = 'granted') {
   await page.addInitScript((result) => {
@@ -74,12 +74,12 @@ test('A18 · activate reminders from priming; permission only after tap', async 
     // Log three occasions on this day; renewal dismissal is independent of the permission budget.
     await dismissRenewal(page);
     for (let n = 0; n < 3; n++) {
-      await page.getByTestId('ate').click();
+      await page.getByTestId('describe-open').click();
+      await describeAndLog(page, '1 manzana');
       await page.waitForTimeout(1200);
     }
     const backfill = page.getByTestId('backfill');
-    while (await backfill.isVisible())
-      await backfill.getByRole('button', { name: 'No me acuerdo', exact: true }).click();
+    if (await backfill.isVisible()) await backfill.getByRole('button', { name: 'Descartar', exact: true }).click();
     const recap = page.locator('button.card[aria-label]');
     if (await recap.isVisible()) await recap.click();
     await page.getByTestId('notification-prime').waitFor();
@@ -108,13 +108,17 @@ test('A19 · cold push link focuses slot and one tap logs with push source', asy
       page = await newPage(context, day, '20:40');
     const t0 = Date.now();
     await page.goto('/?slot=desayuno&src=push');
-    await page.getByTestId('ate').waitFor();
+    await page.getByTestId('now-describe').waitFor();
     await expect(page.locator('[data-card]')).toContainText('Desayuno');
+    await expect(page.locator('[data-card] h2')).toHaveText('¿Qué desayunaste?');
     const taps = new Taps();
-    await taps.tap(page.getByTestId('ate'));
-    await expect(page.locator('[data-card] .anim-pop').first()).toBeVisible();
+    await taps.tap(page.getByTestId('now-describe'));
+    await page.getByTestId('describe-input').fill('2 tortillas, 3 huevos, ½ tz verdura y 2 cdta aceite');
+    await page.getByTestId('impact').waitFor();
+    await taps.tap(page.getByTestId('log'));
+    await expect(page.locator('[data-card] .anim-stamp').first()).toBeVisible();
     times.push(Date.now() - t0);
-    expect(taps.n).toBe(1);
+    expect(taps.n).toBe(2);
     await expect
       .poll(async () => {
         const body = await (await request.get('/api/sync?since=0')).json();
@@ -126,7 +130,7 @@ test('A19 · cold push link focuses slot and one tap logs with push source', asy
       .toBe(true);
     await page.close();
   }
-  checkBudget('A19', times, 4000, 6000);
+  checkBudget('A19', times, 6000, 9000);
 });
 
 test('denied permission keeps reminders off and shows recovery copy', async ({ context, request }, info) => {

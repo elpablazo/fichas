@@ -1,26 +1,13 @@
-// "Tu día": today's plant, one gauge per food type (eaten of the day's plan) and the balancing note.
-import { ChevronRight, Scale } from 'lucide-preact';
+// "Tu día": the answer to "¿cómo voy?" in one line, what's left of each food type as tanks, and the one change
+// that keeps the day on plan ("Para cuadrar: 1 tortilla menos en la cena").
+import { ChevronRight } from 'lucide-preact';
+import type { PaceGap } from '../../shared/domain/daystatus';
 import { fill } from '../../shared/domain/format';
 import type { TypeKey } from '../../shared/domain/types';
 import { formatCount } from '../../shared/domain/units';
-import { articles, labels, stageLabels, titles, todayCopy, typeLabels } from '../copy/es-MX';
-import type { DayVM, GaugeVM } from '../state/today-vm';
-import { LazyPlant } from './LazyPlant';
-import { Ring } from './ui';
-
-const COLOR: Record<TypeKey, string> = {
-  carb_sg: 'var(--t-carb)',
-  carb_cg: 'var(--t-carb)',
-  protein_poa: 'var(--t-prot)',
-  legume: 'var(--t-leg)',
-  dairy: 'var(--t-dairy)',
-  fruit: 'var(--t-fruit)',
-  veg: 'var(--t-veg)',
-  sugar_sg: 'var(--t-sugar)',
-  sugar_cg: 'var(--t-sugar)',
-  fat_sp: 'var(--t-fat)',
-  fat_cp: 'var(--t-fatp)',
-};
+import { articles, paceCopy, typeLabels } from '../copy/es-MX';
+import type { AdviceVM, DayVM } from '../state/today-vm';
+import { DayMeter } from './DayMeter';
 
 /** "la cena", "el desayuno". */
 export function withArticle(label: string): string {
@@ -29,98 +16,87 @@ export function withArticle(label: string): string {
   return art ? `${art} ${label.toLowerCase()}` : label.toLowerCase();
 }
 
-export function balanceLine(changes: DayVM['changes']): string {
-  const parts = changes.map((c) =>
-    fill(todayCopy.change, { n: formatCount(c.n), emoji: typeLabels[c.type].emoji, slot: withArticle(c.label) }),
-  );
-  const joined =
-    parts.length <= 1
-      ? (parts[0] ?? '')
-      : fill(todayCopy.andMore, { a: parts.slice(0, -1).join(', '), b: parts.at(-1) ?? '' });
-  return fill(todayCopy.balanced, { changes: joined });
+/** "a", "a y b", "a, b y c". */
+export function joinAnd(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? '';
+  return fill(paceCopy.and, { a: parts.slice(0, -1).join(', '), b: parts.at(-1) ?? '' });
 }
 
-export function Gauge({ g, size = 38 }: { g: GaugeVM; size?: number }) {
-  const meta = typeLabels[g.type];
-  const over = g.eaten - g.planned;
-  const label = `${meta.label}: ${formatCount(Math.min(g.eaten, g.planned))} ${labels.of} ${formatCount(g.planned)}${over >= 0.25 ? `, +${formatCount(over)}` : ''}`;
+/** "1 🫓", "1 🫓 y ½ 🥑" (at most two types: one glance). */
+export function gapList(gaps: PaceGap[]): string {
+  return joinAnd(gaps.slice(0, 2).map((g) => `${formatCount(g.n)} ${typeLabels[g.type].emoji}`));
+}
+
+/** "Para cuadrar: 1 tortilla menos en la cena." */
+export function adviceLine(advice: AdviceVM[]): string {
+  return fill(paceCopy.adviceSub, {
+    list: joinAnd(
+      advice.map((a) =>
+        fill(paceCopy.adviceItem, {
+          food: a.food || `${formatCount(a.n)} ${typeLabels[a.type].emoji}`,
+          slot: withArticle(a.label),
+        }),
+      ),
+    ),
+  });
+}
+
+/** Title and subtitle of "Tu día" for any state of any day. */
+export function paceLines(vm: Pick<DayVM, 'status' | 'mode'>): { title: string; sub: string | null } {
+  const s = vm.status;
+  const advice = s.advice.length ? adviceLine(s.advice) : null;
+  switch (s.pace) {
+    case 'start':
+      return vm.mode === 'past'
+        ? { title: paceCopy.pastStartTitle, sub: paceCopy.pastStartSub }
+        : { title: paceCopy.startTitle, sub: null };
+    case 'on':
+      return s.done === s.total
+        ? { title: paceCopy.roundTitle, sub: paceCopy.roundSub }
+        : { title: paceCopy.onTitle, sub: paceCopy.onSub };
+    case 'ahead':
+      return { title: fill(paceCopy.aheadTitle, { list: gapList(s.ahead) }), sub: advice ?? paceCopy.keepSub };
+    case 'behind': {
+      const top = s.behind[0];
+      const meter = s.meters.find((m) => m.type === top?.type);
+      return {
+        title: fill(paceCopy.behindTitle, { list: gapList(s.behind) }),
+        sub:
+          top && meter && meter.remaining >= 0.5 && s.done < s.total
+            ? fill(paceCopy.behindSub, { n: formatCount(meter.remaining), emoji: typeLabels[top.type].emoji })
+            : null,
+      };
+    }
+    default:
+      return {
+        title: fill(paceCopy.mixedTitle, { over: gapList(s.ahead.slice(0, 1)), under: gapList(s.behind.slice(0, 1)) }),
+        sub: advice,
+      };
+  }
+}
+
+export function DayCard({ vm, onOpen, onType }: { vm: DayVM; onOpen: () => void; onType?: (t: TypeKey) => void }) {
+  const { title, sub } = paceLines(vm);
   return (
-    <span class="flex flex-col items-center gap-1" role="img" aria-label={label}>
-      <span class="relative">
-        <Ring
-          value={g.planned ? g.eaten : g.eaten ? 1 : 0}
-          max={g.planned || 1}
-          size={size}
-          stroke={3.5}
-          color={COLOR[g.type]}
-        >
-          <span class="text-[16px] leading-none" aria-hidden="true">
-            {meta.emoji}
-          </span>
-        </Ring>
-        {over >= 0.25 && (
-          <span
-            class="num absolute -top-1 -right-2 rounded-full px-1 text-[10px] font-black leading-4"
-            style="background: var(--ink); color: var(--bg); box-shadow: 0 0 0 2px var(--surface)"
-            aria-hidden="true"
-          >
-            +{formatCount(over)}
+    <section class="card mb-3 px-4 pt-3.5 pb-4" data-testid="day-card" aria-label={title}>
+      <button type="button" class="press -mx-1 block w-[calc(100%+8px)] rounded-2xl px-1 text-left" onClick={onOpen}>
+        <span class="flex items-center justify-between gap-2">
+          <span class="kicker num">{fill(paceCopy.kicker, { n: vm.status.done, total: vm.status.total })}</span>
+          <ChevronRight size={20} class="-mr-1 shrink-0 text-ink-3" aria-hidden="true" />
+        </span>
+        <span class="title mt-0.5 block" data-testid="pace-title">
+          {title}
+        </span>
+        {sub && (
+          <span class="secondary muted mt-0.5 block" data-testid="pace-sub">
+            {sub}
           </span>
         )}
-      </span>
-      <span class="num text-[12px] font-bold leading-4 text-ink-2" aria-hidden="true">
-        {formatCount(Math.min(g.eaten, g.planned))}/{formatCount(g.planned)}
-      </span>
-    </span>
-  );
-}
-
-export function DayCard({ vm, onOpen, grow }: { vm: DayVM; onOpen: () => void; grow?: boolean }) {
-  const { done, total } = vm.progress;
-  return (
-    <section class="card mb-4 overflow-hidden" data-testid="day-card">
-      <button type="button" class="press flex w-full items-center gap-3 px-4 pt-3.5 text-left" onClick={onOpen}>
-        <span
-          class="grid h-[52px] w-[52px] shrink-0 place-items-end justify-center overflow-hidden rounded-[18px]"
-          style="background: linear-gradient(180deg, var(--sky-2), var(--sky-1))"
-          key={`${vm.plant.stage}-${vm.day}`}
-        >
-          <LazyPlant
-            stage={vm.plant.stage}
-            species={vm.plant.species}
-            size={50}
-            sway={vm.mode === 'today'}
-            grow={grow}
-            label={`${stageLabels[vm.plant.stage]}`}
-          />
-        </span>
-        <span class="min-w-0 flex-1">
-          <span class="headline block">{titles.yourDay}</span>
-          <span class="num caption block font-semibold">{fill(labels.progress, { n: done, total })}</span>
-        </span>
-        <ChevronRight size={20} class="text-ink-3" aria-hidden="true" />
       </button>
-      {vm.gauges.length > 0 && (
-        <div
-          class={`no-scrollbar px-3 pt-3 pb-3 ${vm.gauges.length <= 7 ? 'grid' : 'flex gap-3 overflow-x-auto'}`}
-          style={vm.gauges.length <= 7 ? `grid-template-columns: repeat(${vm.gauges.length}, minmax(0, 1fr))` : ''}
-        >
-          {vm.gauges.map((g) => (
-            <Gauge key={g.type} g={g} />
-          ))}
-        </div>
+      {vm.status.meters.length > 0 && (
+        <p class="caption mt-3 mb-1.5 font-semibold">{vm.mode === 'past' ? paceCopy.leftPast : paceCopy.left}</p>
       )}
-      {vm.changes.length > 0 && (
-        <button
-          type="button"
-          class="press flex w-full items-center gap-2 border-line border-t px-4 py-2.5 text-left"
-          onClick={onOpen}
-          data-testid="balance-note"
-        >
-          <Scale size={16} class="shrink-0 text-accent-ink" aria-hidden="true" />
-          <span class="secondary font-semibold">{balanceLine(vm.changes)}</span>
-        </button>
-      )}
+      <DayMeter key={vm.day} meters={vm.status.meters} pace={vm.mode !== 'future'} onType={onType} />
     </section>
   );
 }

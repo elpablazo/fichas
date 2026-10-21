@@ -1,27 +1,42 @@
-import { Camera, CircleAlert, CircleCheck, Clock3, Mic, Scale, Square, WandSparkles, WifiOff, X } from 'lucide-preact';
+// "¿Qué comiste?" (log) and "¿Qué se te antoja?" (check). Understanding is live: foods the plan table knows appear
+// as they're typed, JEV names the food groups of the rest within a moment, and the meal AI fills their portions
+// after a short pause. Below, the same tanks as Today show where the meal lands. One button: Anotar.
+import {
+  Blocks,
+  Camera,
+  ChevronDown,
+  CircleAlert,
+  Clock3,
+  Mic,
+  Minus,
+  Plus,
+  SkipForward,
+  Square,
+  WandSparkles,
+  WifiOff,
+  X,
+} from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { balanceDay } from '../../shared/domain/balance';
+import type { Classified } from '../../shared/ai-schema';
 import { dayLong } from '../../shared/domain/format';
-import { makeItem, stepOf, withQty } from '../../shared/domain/items';
-import { type Chip, localChips, matchText, parseItems } from '../../shared/domain/matcher';
+import { mainType, stepOf, withQty } from '../../shared/domain/items';
+import { knownText, localChips, type ParseResult, parseItems, unknownPhrases } from '../../shared/domain/matcher';
 import { autoTitle } from '../../shared/domain/recipes';
-import type { LogItem, LogRow } from '../../shared/domain/types';
-import { unitsOfItems } from '../../shared/domain/units';
-import { logMeal, logPendingDescription } from '../actions';
-import { parsePhoto, parseRemote } from '../ai';
-import { balanceLine } from '../components/DayCard';
+import { capitalize, norm } from '../../shared/domain/text';
+import type { LogItem, PlanData, RecipeRow, TypeKey } from '../../shared/domain/types';
+import { logMeal, logPendingDescription, planDish, skipSlot } from '../actions';
+import { classifyRemote, parsePhoto, parseRemote } from '../ai';
+import { DayMeter } from '../components/DayMeter';
 import { Sheet } from '../components/Sheet';
-import { Stepper } from '../components/Stepper';
-import { TokenRow } from '../components/Token';
-import { a11y, buttons, dates, labels, lines, pools, typeLabels } from '../copy/es-MX';
+import { a11y, buttons, dates, describeCopy, labels, lines, pools, typeLabels } from '../copy/es-MX';
 import { preparePhoto } from '../media/photo';
 import { useDictation } from '../media/speech';
 import { balanceOn, dayVM, slotNames } from '../state/selectors';
-import { liveLogs, liveRecipes, planForDay, plans, today } from '../state/signals';
-import { closeSheet, openSheet } from '../state/ui';
+import { liveRecipes, planForDay, plans, today } from '../state/signals';
+import { closeSheet, openSheet, pushSlot } from '../state/ui';
 import { markUx, record } from '../telemetry';
-import { fitTo, previewModel, slotRemaining } from './preview';
+import { impact, slotRemaining } from './preview';
 
 interface Props {
   slot?: string;
@@ -31,53 +46,73 @@ interface Props {
   title?: string;
   recipeId?: string | null;
   photo?: File;
+  mode?: 'log' | 'check';
 }
 
-interface Draft {
+/** A fixed set of items (a dish picked from the owner's own, a photo, or an adjustment): typing unpins it. */
+interface Pinned {
   title: string;
   items: LogItem[];
-  changed: Set<number>;
   recipeId: string | null;
-  source: 'describe' | 'photo';
+  source: 'describe' | 'photo' | 'recent';
+  /** Items "Ajustar" changed (highlighted). */
+  changed?: Set<number>;
 }
 
-type State =
-  | 'idle'
-  | 'thinking'
-  | 'nomatch'
-  | 'offline'
-  | 'error'
-  | 'photo-reading'
-  | 'photo-error'
-  | 'photo-empty'
-  | 'photo-offline'
-  | 'unavailable';
+type Remote = 'idle' | 'waiting' | 'offline' | 'unavailable' | 'error';
+type PhotoState = 'idle' | 'reading' | 'error' | 'empty' | 'offline' | 'unavailable';
+
+const GROUP_TYPE: Record<Classified['groups'][number], TypeKey> = {
+  carb: 'carb_sg',
+  protein: 'protein_poa',
+  legume: 'legume',
+  dairy: 'dairy',
+  fruit: 'fruit',
+  veg: 'veg',
+  fat: 'fat_sp',
+  nuts: 'fat_cp',
+  sugar: 'sugar_sg',
+};
+const keyOf = (i: LogItem) => i.equivalent_id ?? `x:${norm(i.label)}`;
+
+/** Items with the stepper changes applied (a null quantity removes the item). */
+function withEdits(items: LogItem[], edits: Record<string, number | null>, plan: PlanData): LogItem[] {
+  return items.flatMap((it) => {
+    const k = keyOf(it);
+    if (!(k in edits)) return [it];
+    const q = edits[k];
+    return q === null || q === undefined ? [] : [withQty(it, q, plan)];
+  });
+}
 
 export default function Describe(props: Props) {
+  const mode = props.mode ?? 'log';
   const day = props.day ?? today.value;
   const plan = planForDay(plans.value, day);
   const vm = dayVM.value?.day === day ? dayVM.value : null;
-  const [slot, setSlot] = useState(props.slot ?? vm?.card?.key ?? 'extra');
+  const [slot, setSlot] = useState(props.slot ?? vm?.now?.key ?? 'extra');
+  const [picking, setPicking] = useState(false);
   const [text, setText] = useState(props.text ?? '');
-  const [chips, setChips] = useState<Chip[]>([]);
-  const [draft, setDraft] = useState<Draft | null>(
+  const [pinned, setPinned] = useState<Pinned | null>(
     props.items?.length
-      ? {
-          title: props.title ?? '',
-          items: props.items,
-          changed: new Set(),
-          recipeId: props.recipeId ?? null,
-          source: 'describe',
-        }
+      ? { title: props.title ?? '', items: props.items, recipeId: props.recipeId ?? null, source: 'describe' }
       : null,
   );
-  const [state, setState] = useState<State>('idle');
-  const input = useRef<HTMLInputElement>(null);
+  const [remote, setRemote] = useState<{ key: string; result: ParseResult } | null>(null);
+  const [remoteState, setRemoteState] = useState<Remote>('idle');
+  const [groups, setGroups] = useState<Record<string, Classified>>({});
+  const [edits, setEdits] = useState<Record<string, number | null>>({});
+  const [photoState, setPhotoState] = useState<PhotoState>('idle');
+  const [submitting, setSubmitting] = useState(false);
+  const input = useRef<HTMLTextAreaElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const selectedPhoto = useRef<File | null>(null);
   const request = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const started = useRef(performance.now());
+  const previewed = useRef(false);
+  /** The meal-AI request for the current text, so "Anotar" waits for it instead of asking twice. */
+  const inflight = useRef<{ key: string; promise: Promise<ParseResult | null> } | null>(null);
 
   const cancelRequest = () => {
     generation.current++;
@@ -85,11 +120,15 @@ export default function Describe(props: Props) {
     request.current = null;
   };
   const editText = (value: string) => {
+    // A new description cancels anything still reading the old one (a late photo or parse can't overwrite it).
     cancelRequest();
+    inflight.current = null;
+    setRemoteState('idle');
+    if (pinned) setPinned(null);
     selectedPhoto.current = null;
+    setPhotoState('idle');
+    setEdits({});
     setText(value);
-    setDraft(null);
-    setState('idle');
   };
   const dictation = useDictation(editText, () => input.current?.focus({ preventScroll: true }));
   useEffect(
@@ -99,21 +138,10 @@ export default function Describe(props: Props) {
     },
     [],
   );
-
-  const chipRow = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (props.photo) void readPhoto(props.photo);
     else if (!props.items?.length) input.current?.focus({ preventScroll: true });
   }, []);
-  useEffect(() => {
-    chipRow.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
-  }, [slot]);
-
-  useEffect(() => {
-    if (!plan || draft) return;
-    const t = setTimeout(() => setChips(localChips(text, plan.data, liveRecipes.value, slot)), 250);
-    return () => clearTimeout(t);
-  }, [text, slot, draft]);
 
   const names = slotNames.value;
   const slotOptions = useMemo(
@@ -127,81 +155,96 @@ export default function Describe(props: Props) {
     [plan, names],
   );
 
-  const recent = useMemo(
+  const data = plan?.data;
+  const target = data ? slotRemaining(slot, day, data) : {};
+  // Only phrases the table fully knows become rows; a phrase with an unknown word waits for its portions whole
+  // ("3 tacos de pollo" is not "30 g pollo").
+  const local = useMemo(
+    () => (data && !pinned ? parseItems(knownText(text, data), data, target) : null),
+    [text, slot, pinned, data],
+  );
+  const phrases = useMemo(() => (data && !pinned ? unknownPhrases(text, data) : []), [text, pinned, data]);
+  const remoteKey = `${slot}|${norm(text)}`;
+  const remoteNow = remote?.key === remoteKey ? remote.result : null;
+  const dishes: RecipeRow[] = useMemo(
     () =>
-      liveRecipes.value
-        .filter((r) => !r.hidden && r.times > 0 && r.items.length)
-        .sort((a, b) => (b.last_used_at ?? 0) - (a.last_used_at ?? 0))
-        .slice(0, 6),
-    [],
+      data && !pinned && norm(text).length >= 2
+        ? localChips(text, data, liveRecipes.value, slot)
+            .flatMap((c) => (c.kind === 'recipe' ? [c.recipe] : []))
+            .filter((r) => norm(r.title) !== norm(text))
+            .slice(0, 2)
+        : [],
+    [text, pinned, slot, data],
   );
 
-  if (!plan) return null;
-  const data = plan.data;
-  const slotLabel = slotOptions.find((s) => s.key === slot)?.label ?? '';
-  const target = slotRemaining(slot, day, data);
-  const model = draft ? previewModel(draft.items, slot, slotLabel, target, data) : null;
-  const pastDay = day !== today.value ? day : undefined;
+  // JEV: name the food groups of what the table doesn't know, a moment after typing stops.
+  useEffect(() => {
+    const missing = phrases.filter((p) => !groups[norm(p)]);
+    if (!missing.length) return;
+    const ctl = new AbortController();
+    const t = setTimeout(() => {
+      void classifyRemote(missing, ctl.signal).then((out) => {
+        if (!out?.length) return;
+        setGroups((g) => ({ ...g, ...Object.fromEntries(out.map((c) => [norm(c.text), c])) }));
+      });
+    }, 350);
+    return () => {
+      clearTimeout(t);
+      ctl.abort();
+    };
+  }, [phrases.join('|')]);
 
-  // "Does it fit my day?": what logging this would balance later today.
-  const dayEffect = (() => {
-    if (!draft || !model || model.status !== 'over' || !balanceOn.value || slot === 'extra') return null;
-    const raw = unitsOfItems(draft.items, data);
-    const fake = { day, slot, kind: 'meal', raw_units: raw, deleted_at: null, items: draft.items } as unknown as LogRow;
-    const logs = liveLogs.value.filter((l) => l.day === day);
-    const after = balanceDay(data, [...logs, fake], data.swaps, true);
-    const before = new Set(
-      balanceDay(data, logs, data.swaps, true).adjustments.map((a) => `${a.slot}:${a.type}:${a.to}`),
-    );
-    const fresh = after.adjustments.filter((a) => !before.has(`${a.slot}:${a.type}:${a.to}`) && a.slot !== slot);
-    if (!fresh.length) return null;
-    return balanceLine(
-      fresh.map((a) => ({
-        slot: a.slot,
-        label: data.slots.find((s) => s.key === a.slot)?.label ?? '',
-        type: a.type,
-        n: a.from - a.to,
-      })),
-    );
-  })();
+  // Meal AI: portions for the unknown phrases, after a short pause (the whole text, so dishes decompose).
+  useEffect(() => {
+    if (!phrases.length || pinned || !data || text.trim().length < 3 || remote?.key === remoteKey) {
+      if (!phrases.length && remoteState === 'waiting') setRemoteState('idle');
+      return;
+    }
+    const t = setTimeout(() => void runRemote(), 900);
+    return () => clearTimeout(t);
+  }, [remoteKey, phrases.length, pinned]);
 
-  const show = (title: string, items: LogItem[], source: Draft['source'] = 'describe') => {
-    setDraft({ title, items, changed: new Set(), recipeId: null, source });
-    setState('idle');
-    markUx('describe:preview');
-    record('describe_preview', Math.round(performance.now() - started.current));
-  };
+  function runRemote(): Promise<ParseResult | null> {
+    if (inflight.current?.key === remoteKey) return inflight.current.promise;
+    const promise = fetchRemote();
+    inflight.current = { key: remoteKey, promise };
+    return promise;
+  }
 
-  const submit = async () => {
-    const t = text.trim();
-    if (!t) return;
-    dictation.cancel();
+  async function fetchRemote(): Promise<ParseResult | null> {
+    if (!data) return null;
     cancelRequest();
-    selectedPhoto.current = null;
-    markUx('describe:submit');
-    started.current = performance.now();
-    const local = matchText(t, data, liveRecipes.value, target);
-    if (local) return show(local.title, local.items);
-    setState('thinking');
     const token = generation.current;
+    const key = remoteKey;
+    const t = text.trim();
+    if (!navigator.onLine) {
+      setRemoteState('offline');
+      return null;
+    }
+    setRemoteState('waiting');
     request.current = new AbortController();
-    const r = await parseRemote(t, slot, day, request.current.signal);
-    if (token !== generation.current) return;
+    const r = await parseRemote(t, slot, day, request.current.signal, plan?.id);
+    if (token !== generation.current) return null;
     request.current = null;
-    if (r.kind === 'ok') return show(r.result.title, r.result.items);
-    setState(r.kind === 'offline' ? 'offline' : r.kind === 'unavailable' ? 'nomatch' : 'error');
-  };
+    if (r.kind === 'ok') {
+      setRemote({ key, result: r.result });
+      setRemoteState('idle');
+      return r.result;
+    }
+    setRemoteState(r.kind === 'offline' ? 'offline' : r.kind === 'unavailable' ? 'unavailable' : 'error');
+    return null;
+  }
 
   async function readPhoto(file: File) {
     dictation.cancel();
     cancelRequest();
     selectedPhoto.current = file;
-    setDraft(null);
-    setState('photo-reading');
+    setPinned(null);
+    setPhotoState('reading');
     const token = generation.current;
     started.current = performance.now();
     if (!navigator.onLine) {
-      setState('photo-offline');
+      setPhotoState('offline');
       return;
     }
     try {
@@ -212,134 +255,286 @@ export default function Describe(props: Props) {
       if (token !== generation.current) return;
       request.current = null;
       if (result.kind === 'ok') {
-        if (!result.result.items.length) {
-          setState('photo-empty');
-          return;
-        }
+        if (!result.result.items.length) return setPhotoState('empty');
         setText(result.result.items.map((item) => item.label).join(', '));
-        return show(result.result.title, result.result.items, 'photo');
+        setEdits({});
+        setPinned({ title: result.result.title, items: result.result.items, recipeId: null, source: 'photo' });
+        setPhotoState('idle');
+        return;
       }
-      setState(result.kind === 'offline' ? 'photo-offline' : result.kind === 'unavailable' ? 'unavailable' : 'error');
+      setPhotoState(result.kind === 'offline' ? 'offline' : result.kind === 'unavailable' ? 'unavailable' : 'error');
     } catch {
-      if (token === generation.current) setState('photo-error');
+      if (token === generation.current) setPhotoState('error');
     }
   }
 
-  const useChip = (c: Chip) => {
-    cancelRequest();
-    dictation.cancel();
-    selectedPhoto.current = null;
-    setState('idle');
-    if (c.kind === 'recipe') {
-      setDraft({
-        title: c.recipe.title,
-        items: c.recipe.items,
-        changed: new Set(),
-        recipeId: c.recipe.id,
-        source: 'describe',
-      });
-    } else {
-      const need = Math.max(1, target[c.eq.type] ?? 1);
-      const item = { ...makeItem(c.eq, need * c.eq.qty), assumed_qty: true };
-      setDraft({
-        title: autoTitle([item], data),
-        items: [item],
-        changed: new Set(),
-        recipeId: null,
-        source: 'describe',
-      });
-    }
-    markUx('describe:preview');
-  };
+  // A photo's text mirrors its reviewed items, so what's logged is what's written.
+  const photoText =
+    pinned?.source === 'photo' && data
+      ? withEdits(pinned.items, edits, data)
+          .map((i) => i.label)
+          .join(', ')
+      : null;
+  useEffect(() => {
+    if (photoText !== null && photoText !== text) setText(photoText);
+  }, [photoText]);
 
-  const updateItems = (items: LogItem[], changed = new Set<number>()) => {
-    if (!draft) return;
-    setDraft({ ...draft, items, changed });
-    if (draft.source === 'photo') setText(items.map((item) => item.label).join(', '));
-  };
+  if (!plan || !data) return null;
+  const slotLabel = slotOptions.find((s) => s.key === slot)?.label ?? '';
+  /** The meal's plain name for sentences ("tu colación"); the chip keeps its time when the name repeats. */
+  const slotName = slot === 'extra' ? labels.extraSlot : (data.slots.find((s) => s.key === slot)?.label ?? slotLabel);
+  const pastDay = day !== today.value ? day : undefined;
+  const fromAi = !pinned && !!remoteNow;
+  const base: LogItem[] = pinned?.items ?? (remoteNow ? remoteNow.items : (local?.items ?? []));
+  const items = withEdits(base, edits, data);
+  // Phrases still waiting for portions (shown with JEV's groups while the meal AI works).
+  const open = fromAi || pinned ? [] : phrases;
+  const counting = remoteState === 'waiting' && open.length > 0;
+  const shown = items.length > 0 || open.length > 0;
+  if (items.length && !previewed.current) {
+    previewed.current = true;
+    markUx('describe:preview');
+    record('describe_preview', Math.round(performance.now() - started.current));
+  }
+  const model = items.length ? impact(items, slot, slotName, target, data, day, balanceOn.value) : null;
+  const notFood = open.filter((p) => (groups[norm(p)]?.food ?? 1) < 0.3);
+  const unresolved =
+    remoteState !== 'idle' && remoteState !== 'waiting' ? open.filter((p) => !notFood.includes(p)) : [];
+  const resolved = slotOptions.length && vm?.rows.find((r) => r.key === slot);
+  const canSkip =
+    mode === 'log' &&
+    slot !== 'extra' &&
+    !text.trim() &&
+    !pinned &&
+    resolved &&
+    resolved.state !== 'done' &&
+    resolved.state !== 'skipped';
+
+  const titleFor = (list: LogItem[]) =>
+    pinned?.title || remoteNow?.title || autoTitle(list, data) || capitalize(text.trim());
 
   const step = (i: number, dir: 1 | -1) => {
-    if (!draft) return;
-    const it = draft.items[i];
+    const it = items[i];
     if (!it) return;
     const q = it.qty + dir * stepOf(it, data);
-    const items =
-      q > 1e-6 ? draft.items.map((x, j) => (j === i ? withQty(x, q, data) : x)) : draft.items.filter((_, j) => j !== i);
-    updateItems(items);
+    setEdits({ ...edits, [keyOf(it)]: q > 1e-6 ? q : null });
+  };
+  const remove = (i: number) => {
+    const it = items[i];
+    if (it) setEdits({ ...edits, [keyOf(it)]: null });
+  };
+  const applyFix = () => {
+    if (!model?.fix) return;
+    setPinned({
+      title: titleFor(model.fix.items),
+      items: model.fix.items,
+      recipeId: pinned?.recipeId ?? null,
+      source: pinned?.source ?? 'describe',
+      changed: model.fix.changed,
+    });
+    setEdits({});
+  };
+  const useDish = (r: RecipeRow) => {
+    cancelRequest();
+    dictation.cancel();
+    setText(r.title);
+    setEdits({});
+    setPinned({ title: r.title, items: r.items, recipeId: r.id, source: 'recent' });
   };
 
-  const fitNow = () => {
-    if (!draft) return;
-    const r = fitTo(draft.items, target, data, slot);
-    const changed = new Set<number>();
-    for (const c of r.changes) {
-      if ('item_index' in c) changed.add(c.item_index);
-      else if ('added' in c) changed.add(r.items.indexOf(c.added));
-    }
-    updateItems(r.items, changed);
-  };
-
-  const log = (anchor: Element | null) => {
-    if (!draft?.items.length) return;
-    const title = draft.title || autoTitle(draft.items, data) || text.trim();
+  const finish = (list: LogItem[], anchor: Element | null) => {
+    const fromPush = !pastDay && pushSlot.value === slot;
+    const source =
+      pinned?.source === 'photo' ? 'photo' : pinned?.source === 'recent' ? 'recent' : fromPush ? 'push' : 'describe';
+    if (fromPush) pushSlot.value = null;
     void logMeal({
       slot,
-      title,
-      items: draft.items,
-      source: draft.source,
-      recipe_id: draft.recipeId,
+      title: titleFor(list),
+      items: list,
+      source,
+      recipe_id: pinned?.recipeId ?? null,
       anchor,
       day: pastDay,
     });
     closeSheet();
   };
 
-  const busy = state === 'thinking' || state === 'photo-reading';
-  const header = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void submit();
-      }}
+  const submit = async (anchor: Element | null) => {
+    if (submitting) return;
+    dictation.cancel();
+    if (mode === 'check') {
+      if (!items.length) return;
+      void planDish(slot, { title: titleFor(items), items, recipe_id: pinned?.recipeId ?? null }, slotName, day);
+      closeSheet();
+      return;
+    }
+    // Portions still being counted: wait for them (or keep the description to count later when offline).
+    if (open.length && !fromAi) {
+      if (!navigator.onLine || remoteState === 'offline') {
+        void logPendingDescription(text, slot, day);
+        closeSheet();
+        return;
+      }
+      if (remoteState === 'idle' || remoteState === 'waiting') {
+        setSubmitting(true);
+        const r = await runRemote();
+        setSubmitting(false);
+        if (r?.items.length) return finish(withEdits(r.items, edits, data), anchor);
+        if (!items.length) return;
+      }
+    }
+    if (items.length) finish(items, anchor);
+  };
+
+  const message = (icon: ComponentChildren, body: string) => (
+    <div class="well mt-3 flex items-start gap-3 px-4 py-3">
+      <span class="mt-0.5 text-ink-2">{icon}</span>
+      <p class="secondary flex-1">{body}</p>
+    </div>
+  );
+
+  const header = <h2 class="title">{mode === 'check' ? describeCopy.titleCheck : describeCopy.titleLog}</h2>;
+
+  const footer =
+    mode === 'check' ? (
+      items.length ? (
+        <button
+          type="button"
+          class="btn btn-primary w-full"
+          data-testid="log"
+          onClick={(e) => void submit(e.currentTarget)}
+        >
+          {buttons.like}
+        </button>
+      ) : undefined
+    ) : canSkip ? (
+      <button
+        type="button"
+        class="btn btn-neutral w-full"
+        data-testid="skip"
+        onClick={() => {
+          void skipSlot(slot, day);
+          closeSheet();
+        }}
+      >
+        <SkipForward size={18} aria-hidden="true" />
+        {buttons.skip}
+      </button>
+    ) : text.trim() || items.length ? (
+      <button
+        type="button"
+        class="btn btn-primary w-full"
+        data-testid="log"
+        disabled={submitting || (!items.length && !open.length) || (!items.length && notFood.length === open.length)}
+        onClick={(e) => void submit(e.currentTarget)}
+      >
+        {submitting ? describeCopy.counting : buttons.log}
+      </button>
+    ) : undefined;
+
+  return (
+    <Sheet
+      label={mode === 'check' ? describeCopy.titleCheck : describeCopy.titleLog}
+      onClose={closeSheet}
+      header={header}
+      footer={footer}
     >
-      <div class="field-wrap">
-        <input
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="chip"
+          aria-expanded={picking}
+          aria-label={`${a11y.pickSlot}: ${slotLabel}`}
+          data-testid="slot-pick"
+          onClick={() => setPicking(!picking)}
+        >
+          {slotLabel}
+          <ChevronDown size={16} aria-hidden="true" class={`transition-transform ${picking ? 'rotate-180' : ''}`} />
+        </button>
+        {pastDay && (
+          <span class="badge accent">
+            <Clock3 size={12} aria-hidden="true" />
+            {pastDay === today.value ? dates.today : dayLong(pastDay)}
+          </span>
+        )}
+      </div>
+      {picking && (
+        <div class="anim-rise -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
+          {slotOptions.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              class="chip"
+              aria-pressed={slot === s.key}
+              onClick={() => {
+                setSlot(s.key);
+                setPicking(false);
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div class="relative">
+        <textarea
           ref={input}
-          class="field"
-          type="text"
-          inputMode="text"
-          enterKeyHint="done"
+          class="textarea"
+          rows={2}
+          enterkeyhint="done"
           autoComplete="off"
           maxLength={2000}
-          autoCorrect="on"
-          placeholder={pools['describe.placeholder'][0]}
+          placeholder={describeCopy.placeholder}
           aria-label={pools['describe.placeholder'][0]}
           value={text}
           data-testid="describe-input"
           onInput={(e) => {
             dictation.cancel();
-            editText((e.currentTarget as HTMLInputElement).value);
+            editText((e.currentTarget as HTMLTextAreaElement).value);
+            const el = e.currentTarget as HTMLTextAreaElement;
+            el.style.height = 'auto';
+            el.style.height = `${el.scrollHeight}px`;
+          }}
+          onKeyDown={(e) => {
+            // "Listo" on the keyboard only hides it, so the preview is in view before anything is logged.
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
           }}
         />
-        <span class="field-actions">
+        <span class="absolute right-2 bottom-2 flex gap-1">
           <button
             type="button"
             class="icon-btn"
             data-testid="dictate"
             aria-label={dictation.active ? buttons.stopDictation : buttons.dictate}
             aria-pressed={dictation.active}
-            style={dictation.active ? 'background: var(--accent); color: var(--on-accent)' : ''}
-            onClick={() => {
-              cancelRequest();
-              setState('idle');
-              dictation.toggle(text);
-            }}
+            style={
+              dictation.active ? 'background: var(--accent); color: var(--on-accent)' : 'background: var(--surface)'
+            }
+            onClick={() => dictation.toggle(text)}
           >
             {dictation.active ? <Square size={16} aria-hidden="true" /> : <Mic size={20} aria-hidden="true" />}
           </button>
           <button
             type="button"
             class="icon-btn"
+            style="background: var(--surface)"
+            data-testid="compose"
+            aria-label={a11y.compose}
+            onClick={() => {
+              dictation.cancel();
+              openSheet({ kind: 'compose', slot, day: pastDay, items: items.length ? items : undefined });
+            }}
+          >
+            <Blocks size={20} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            style="background: var(--surface)"
             data-testid="take-photo"
             aria-label={buttons.photo}
             onClick={() => {
@@ -350,184 +545,64 @@ export default function Describe(props: Props) {
             <Camera size={20} aria-hidden="true" />
           </button>
         </span>
-      </div>
-      <input
-        ref={photoInput}
-        class="hidden"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        aria-label={lines.photoInput}
-        data-testid="photo-input"
-        onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
-          event.currentTarget.value = '';
-          if (file) void readPhoto(file);
-        }}
-      />
-    </form>
-  );
-
-  const footer =
-    draft && model ? (
-      <div data-testid="preview-actions">
-        <div class={`grid gap-2 ${model.canFit ? 'grid-cols-[auto_1fr]' : ''}`}>
-          {model.canFit && (
-            <button type="button" class="btn btn-tonal" data-testid="fit" onClick={fitNow}>
-              <WandSparkles size={19} aria-hidden="true" />
-              {buttons.fit}
-            </button>
-          )}
-          <button
-            type="button"
-            class="btn btn-primary"
-            disabled={!draft.items.length}
-            data-testid="log"
-            onClick={(e) => log(e.currentTarget)}
-          >
-            {buttons.log}
-          </button>
-        </div>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm mt-1 w-full"
-          data-testid="check-only"
-          onClick={() => {
-            record('describe_check', Math.round(performance.now() - started.current));
-            closeSheet();
+        <input
+          ref={photoInput}
+          class="hidden"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          aria-label={lines.photoInput}
+          data-testid="photo-input"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = '';
+            if (file) void readPhoto(file);
           }}
-        >
-          {draft.source === 'photo' ? buttons.discard : buttons.check}
-        </button>
+        />
       </div>
-    ) : text.trim() && !dictation.active && !busy && state === 'idle' ? (
-      <button type="button" class="btn btn-primary w-full" data-testid="describe-submit" onClick={() => void submit()}>
-        {buttons.preview}
-      </button>
-    ) : undefined;
-
-  const message = (icon: ComponentChildren, text: string) => (
-    <div class="well my-2 flex items-start gap-3 px-4 py-3">
-      <span class="mt-0.5 text-ink-2">{icon}</span>
-      <p class="secondary flex-1">{text}</p>
-    </div>
-  );
-
-  return (
-    <Sheet label={pools['describe.placeholder'][0]} onClose={closeSheet} header={header} footer={footer}>
-      {pastDay && (
-        <p class="badge accent mb-2">
-          <Clock3 size={12} aria-hidden="true" />
-          {pastDay === today.value ? dates.today : dayLong(pastDay)}
-        </p>
-      )}
-      <div ref={chipRow} class="no-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pt-0.5 pb-1">
-        {slotOptions.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            class="chip"
-            aria-pressed={slot === s.key}
-            onClick={() => {
-              cancelRequest();
-              dictation.cancel();
-              setSlot(s.key);
-              if (state !== 'idle') setState('idle');
-            }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
       {dictation.active && (
-        <p class="caption mb-2 flex items-center gap-2" role="status">
+        <p class="caption mt-2 flex items-center gap-2" role="status">
           <span class="h-2 w-2 animate-pulse rounded-full bg-accent" />
           {lines.voiceListening}
         </p>
       )}
-      {dictation.fallback && <p class="caption mb-2">{lines.voiceKeyboard}</p>}
+      {dictation.fallback && <p class="caption mt-2">{lines.voiceKeyboard}</p>}
 
-      {!draft && !busy && chips.length > 0 && (
-        <div class="mb-3 flex flex-wrap gap-2">
-          {chips.map((c, i) => (
-            <button key={i} type="button" class="chip" onClick={() => useChip(c)}>
-              {c.kind === 'recipe' ? c.recipe.title : c.eq.food}
+      {dishes.length > 0 && (
+        <div class="mt-3 flex flex-wrap gap-2">
+          {dishes.map((r) => (
+            <button key={r.id} type="button" class="chip filled" onClick={() => useDish(r)}>
+              {r.title}
             </button>
           ))}
         </div>
       )}
-      {!draft && !busy && !text.trim() && state === 'idle' && recent.length > 0 && (
-        <section class="mb-2">
-          <h3 class="kicker mb-2 px-1">{labels.recent}</h3>
-          <div class="flex flex-wrap gap-2">
-            {recent.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                class="chip filled"
-                onClick={() => useChip({ kind: 'recipe', recipe: r } as Chip)}
-              >
-                {r.title}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
 
-      {busy && (
-        <div class="well my-2 flex items-center gap-3 px-4 py-3" role="status">
-          <span class="flex gap-1" aria-hidden="true">
-            {(['carb_sg', 'protein_poa', 'veg'] as const).map((t, i) => (
-              <span key={t} class={`tok tok-1 t-${t} anim-think`} style={`--s:26px;animation-delay:${i * 120}ms`}>
-                <span class="e">{typeLabels[t].emoji}</span>
-              </span>
-            ))}
-          </span>
-          <span class="secondary flex-1 font-semibold">
-            {state === 'photo-reading' ? lines.photoReading : pools['describe.thinking'][0]}
-          </span>
+      {photoState === 'reading' && (
+        <div class="well mt-3 flex items-center gap-3 px-4 py-3" role="status">
+          <Thinking />
+          <span class="secondary flex-1 font-semibold">{lines.photoReading}</span>
           <button
             type="button"
             class="btn btn-ghost btn-sm"
             onClick={() => {
               cancelRequest();
               selectedPhoto.current = null;
-              setState('idle');
+              setPhotoState('idle');
             }}
           >
             {buttons.discard}
           </button>
         </div>
       )}
-      {state === 'offline' && (
-        <div class="py-1">
-          {message(<WifiOff size={18} aria-hidden="true" />, pools['describe.offline'][0])}
-          <button
-            type="button"
-            class="btn btn-primary mt-2 w-full"
-            data-testid="pending-log"
-            onClick={() => {
-              void logPendingDescription(text, slot);
-              closeSheet();
-            }}
-          >
-            {buttons.log}
-          </button>
-          <button type="button" class="btn btn-ghost btn-sm mt-1 w-full" data-testid="check-only" onClick={closeSheet}>
-            {buttons.check}
-          </button>
-        </div>
-      )}
-      {state === 'error' && message(<CircleAlert size={18} aria-hidden="true" />, pools['error.generic'][0])}
-      {state === 'photo-error' && message(<CircleAlert size={18} aria-hidden="true" />, lines.photoError)}
-      {state === 'photo-empty' && message(<CircleAlert size={18} aria-hidden="true" />, lines.photoEmpty)}
-      {state === 'photo-offline' && message(<WifiOff size={18} aria-hidden="true" />, lines.photoOffline)}
-      {state === 'unavailable' && message(<CircleAlert size={18} aria-hidden="true" />, lines.aiUnavailable)}
-      {selectedPhoto.current && ['error', 'photo-offline', 'unavailable'].includes(state) && (
+      {photoState === 'error' && message(<CircleAlert size={18} aria-hidden="true" />, lines.photoError)}
+      {photoState === 'empty' && message(<CircleAlert size={18} aria-hidden="true" />, lines.photoEmpty)}
+      {photoState === 'offline' && message(<WifiOff size={18} aria-hidden="true" />, lines.photoOffline)}
+      {photoState === 'unavailable' && message(<CircleAlert size={18} aria-hidden="true" />, lines.aiUnavailable)}
+      {selectedPhoto.current && ['error', 'offline', 'unavailable'].includes(photoState) && (
         <button
           type="button"
-          class="btn btn-neutral btn-sm"
+          class="btn btn-neutral btn-sm mt-2"
           onClick={() => {
             if (selectedPhoto.current) void readPhoto(selectedPhoto.current);
           }}
@@ -535,77 +610,199 @@ export default function Describe(props: Props) {
           {buttons.retry}
         </button>
       )}
-      {state === 'nomatch' && (
-        <div class="py-1">
-          {message(<CircleAlert size={18} aria-hidden="true" />, lines.noMatch)}
-          <button
-            type="button"
-            class="btn btn-tonal mt-2 w-full"
-            onClick={() =>
-              openSheet({ kind: 'compose', slot, day: pastDay, items: parseItems(text, data, target).items })
-            }
-          >
-            {buttons.compose}
-          </button>
+
+      {shown && (
+        <div data-testid="preview" class="mt-3">
+          {pinned?.source === 'photo' && <p class="secondary muted mb-2">{lines.photoReview}</p>}
+          <ul class="grid gap-1">
+            {items.map((it, i) => (
+              <ItemRow
+                key={`${keyOf(it)}-${i}`}
+                item={it}
+                type={mainType(it, data)}
+                highlight={!Object.keys(edits).length && !!pinned?.changed?.has(i)}
+                onMinus={() => step(i, -1)}
+                onPlus={() => step(i, 1)}
+                onRemove={() => remove(i)}
+              />
+            ))}
+            {open.map((p) => (
+              <PendingRow key={p} text={p} info={groups[norm(p)]} counting={counting} />
+            ))}
+          </ul>
+          {unresolved.length > 0 && (
+            <div class="mt-2">
+              {message(
+                remoteState === 'offline' ? (
+                  <WifiOff size={18} aria-hidden="true" />
+                ) : (
+                  <CircleAlert size={18} aria-hidden="true" />
+                ),
+                remoteState === 'offline'
+                  ? pools['describe.offline'][0]
+                  : `${describeCopy.partial.replace('{text}', unresolved.join(', '))}`,
+              )}
+              {remoteState !== 'offline' && (
+                <button
+                  type="button"
+                  class="btn btn-tonal btn-sm mt-2"
+                  onClick={() => openSheet({ kind: 'compose', slot, day: pastDay, items })}
+                >
+                  {buttons.compose}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {draft && model && (
-        <div data-testid="preview" class="anim-rise">
-          {draft.source === 'photo' && <p class="secondary muted mb-2">{lines.photoReview}</p>}
-          <div class="grid">
-            {draft.items.map((it, i) =>
-              it.free ? (
-                <div key={i} class="flex items-center justify-between gap-2 py-1 pl-1">
-                  <span class="secondary">
-                    {it.label} <span class="badge ml-1">{labels.free}</span>
-                  </span>
-                  <button
-                    type="button"
-                    class="icon-btn ghost text-ink-3"
-                    aria-label={`${a11y.remove}: ${it.label}`}
-                    onClick={() => updateItems(draft.items.filter((_, j) => i !== j))}
-                  >
-                    <X size={18} aria-hidden="true" />
-                  </button>
-                </div>
-              ) : (
-                <Stepper
-                  key={i}
-                  label={it.label}
-                  highlight={draft.changed.has(i)}
-                  note={
-                    [it.estimated ? labels.estimated : '', it.assumed_qty ? labels.supposed : '']
-                      .filter(Boolean)
-                      .join(' ') || null
-                  }
-                  onRemove={() => updateItems(draft.items.filter((_, j) => i !== j))}
-                  onMinus={() => step(i, -1)}
-                  onPlus={() => step(i, 1)}
-                />
-              ),
-            )}
-          </div>
-          {model.tokens.length > 0 && (
-            <div class="well mt-3 p-3">
-              {slot !== 'extra' && <p class="kicker mb-2">{lines.vsSlot.replace('{slot}', slotLabel)}</p>}
-              <TokenRow tokens={model.tokens} size={26} label={model.line} />
-            </div>
-          )}
-          <p class="mt-3 flex items-start gap-2 font-semibold" data-testid="status-line">
-            {model.status === 'on' || model.status === 'free' ? (
-              <CircleCheck size={20} class="mt-0.5 shrink-0 text-accent-ink" aria-hidden="true" />
-            ) : null}
-            <span>{model.line}</span>
+      {model && (
+        <section
+          class="well anim-rise mt-4 p-4 transition-opacity"
+          style={counting ? 'opacity:.5' : undefined}
+          aria-busy={counting}
+          data-testid="impact"
+        >
+          <p class="headline" data-testid="status-line">
+            {model.line}
           </p>
-          {dayEffect && (
-            <p class="secondary muted mt-1 flex items-start gap-2" data-testid="day-effect">
-              <Scale size={16} class="mt-0.5 shrink-0 text-accent-ink" aria-hidden="true" />
-              <span>{dayEffect}</span>
+          {model.sub && <p class="secondary muted mt-0.5">{model.sub}</p>}
+          {model.later && (
+            <p class="secondary mt-0.5 font-semibold text-accent-ink" data-testid="day-effect">
+              {model.later}
             </p>
           )}
-        </div>
+          {mode === 'check' && model.fix && (
+            <div class="mt-2 flex items-center gap-2">
+              <p class="secondary muted flex-1">{model.fix.hint}</p>
+              <button type="button" class="btn btn-tonal btn-sm shrink-0" data-testid="fit" onClick={applyFix}>
+                <WandSparkles size={17} aria-hidden="true" />
+                {buttons.fit}
+              </button>
+            </div>
+          )}
+          <p class="kicker mt-4 mb-2">{mode === 'check' ? describeCopy.impactCheck : describeCopy.impactLog}</p>
+          <DayMeter meters={model.meters} adding={model.adding} size="sm" />
+        </section>
       )}
     </Sheet>
+  );
+}
+
+function Thinking() {
+  return (
+    <span class="flex gap-1" aria-hidden="true">
+      {(['carb_sg', 'protein_poa', 'veg'] as const).map((t, i) => (
+        <span key={t} class={`tok tok-1 t-${t} anim-think`} style={`--s:22px;animation-delay:${i * 120}ms`}>
+          <span class="e">{typeLabels[t].emoji}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function ItemRow({
+  item,
+  type,
+  highlight,
+  onMinus,
+  onPlus,
+  onRemove,
+}: {
+  item: LogItem;
+  type: TypeKey | null;
+  highlight: boolean;
+  onMinus: () => void;
+  onPlus: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <li class="anim-rise flex min-h-12 items-center gap-2.5">
+      {item.free || !type ? (
+        <span
+          class="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-surface-2 text-[13px] font-black text-ink-3"
+          aria-hidden="true"
+        >
+          0
+        </span>
+      ) : (
+        <span class={`tok tok-1 t-${type}`} style="--s:30px" aria-hidden="true">
+          <span class="e">{typeLabels[type].emoji}</span>
+        </span>
+      )}
+      <span class={`min-w-0 flex-1 rounded-lg px-1 font-semibold ${highlight ? 'highlight' : ''}`}>
+        {item.label}
+        {item.free ? (
+          <span class="badge ml-2 align-middle">{describeCopy.free_tag}</span>
+        ) : item.assumed_qty || item.estimated ? (
+          <span class="badge ml-2 align-middle">{describeCopy.approx}</span>
+        ) : null}
+      </span>
+      {!item.free && (
+        <>
+          <button
+            type="button"
+            class="icon-btn"
+            style="width:38px;height:38px"
+            aria-label={`${a11y.stepDown}: ${item.label}`}
+            onClick={onMinus}
+          >
+            <Minus size={17} strokeWidth={2.6} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            style="width:38px;height:38px"
+            aria-label={`${a11y.stepUp}: ${item.label}`}
+            onClick={onPlus}
+          >
+            <Plus size={17} strokeWidth={2.6} aria-hidden="true" />
+          </button>
+        </>
+      )}
+      <button
+        type="button"
+        class="icon-btn ghost -mr-2 text-ink-3"
+        aria-label={`${a11y.remove}: ${item.label}`}
+        onClick={onRemove}
+      >
+        <X size={18} aria-hidden="true" />
+      </button>
+    </li>
+  );
+}
+
+/** A phrase the table doesn't know: its food groups (JEV) right away, its portions once the meal AI answers. */
+function PendingRow({ text, info, counting }: { text: string; info?: Classified; counting: boolean }) {
+  const types = info && !info.free ? info.groups.map((g) => GROUP_TYPE[g]) : [];
+  const notFood = !!info && info.food < 0.3;
+  return (
+    <li class="flex min-h-12 items-center gap-2.5" data-testid="pending-phrase">
+      <span class="flex shrink-0 -space-x-2" aria-hidden="true">
+        {types.length ? (
+          types.slice(0, 3).map((t) => (
+            <span key={t} class={`tok tok-1 t-${t} anim-pop`} style="--s:30px">
+              <span class="e">{typeLabels[t].emoji}</span>
+            </span>
+          ))
+        ) : (
+          <span class={`tok tok-0 t-carb_sg ${counting ? 'anim-think' : ''}`} style="--s:30px">
+            <span class="e">{info?.free ? '·' : '…'}</span>
+          </span>
+        )}
+      </span>
+      <span class="min-w-0 flex-1">
+        <span class="block truncate font-semibold">{text}</span>
+        <span class="caption block">
+          {notFood
+            ? describeCopy.notFood
+            : info?.free
+              ? describeCopy.free
+              : counting
+                ? describeCopy.counting
+                : types.map((t) => typeLabels[t].short).join(' · ')}
+        </span>
+      </span>
+    </li>
   );
 }

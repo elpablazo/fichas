@@ -2,14 +2,15 @@
 
 import { balanceDay } from '../shared/domain/balance';
 import { appMinutesToHhmm, zonedTime } from '../shared/domain/day';
+import { fill } from '../shared/domain/format';
 import { buildLog, buildSkip } from '../shared/domain/log';
 import { fingerprint, upsertRecipe } from '../shared/domain/recipes';
 import { baseTimes } from '../shared/domain/slots';
 import { computeStatus, isOccasion } from '../shared/domain/status';
-import type { LogItem, LogRow, LogSource, RecipeRow, TypeKey, Units } from '../shared/domain/types';
+import type { LogItem, LogRow, LogSource, MenuRow, RecipeRow, TypeKey, Units } from '../shared/domain/types';
 import { TYPE_KEYS } from '../shared/domain/types';
 import { addUnits, formatCount, sumUnits, totalUnits } from '../shared/domain/units';
-import { typeLabels } from './copy/es-MX';
+import { nowCopy, typeLabels } from './copy/es-MX';
 import { pick } from './copy/pick';
 import { db } from './db/dexie';
 import { writeRow, writeRows } from './db/outbox';
@@ -18,7 +19,7 @@ import { sparkle } from './feedback/celebrate';
 import { tick } from './feedback/haptics';
 import { playTokens, unlockAudio } from './feedback/sound';
 import { balanceOn } from './state/selectors';
-import { addOptimistic, liveLogs, liveRecipes, planForDay, plans, settings, today } from './state/signals';
+import { addOptimistic, liveLogs, liveRecipes, menus, planForDay, plans, settings, today } from './state/signals';
 import { dayTargets } from './state/today-vm';
 import { showToast, startCelebration } from './state/ui';
 import { markUx } from './telemetry';
@@ -239,8 +240,7 @@ export async function deleteLog(prev: LogRow): Promise<void> {
 }
 
 /** Persist the occasion and retry request atomically. Unknown portions stay empty. */
-export async function logPendingDescription(text: string, slot: string): Promise<void> {
-  const day = today.value;
+export async function logPendingDescription(text: string, slot: string, day = today.value): Promise<void> {
   const plan = planForDay(plans.value, day);
   if (!plan) return;
   markUx('log:tap');
@@ -257,6 +257,7 @@ export async function logPendingDescription(text: string, slot: string): Promise
     items: [],
     source: 'describe',
     now,
+    eaten_at: day !== today.value ? plannedTime(slot, day) : undefined,
     target: targetFor(slot, day),
     slotLogs: liveLogs.value.filter((l) => l.day === day && l.slot === slot),
   });
@@ -270,6 +271,45 @@ export async function logPendingDescription(text: string, slot: string): Promise
   // Wake the sync loop without waiting for connectivity.
   schedule();
   showToast(pick('describe.offline'), () => void undoLog(row, undefined, undefined));
+}
+
+/** "Me late": keep a dish as the plan for one meal, so logging it later is one tap. Undoable. */
+export async function planDish(
+  slot: string,
+  dish: { title: string; items: LogItem[]; recipe_id?: string | null },
+  slotLabel: string,
+  day = today.value,
+): Promise<void> {
+  const at = Date.now();
+  const id = `${day}:${slot}`;
+  const prev = menus.value.find((m) => m.id === id);
+  const row: MenuRow = {
+    id,
+    day,
+    slot,
+    title: dish.title,
+    items: dish.items,
+    recipe_id: dish.recipe_id ?? null,
+    accepted_at: at,
+    updated_at: at,
+    deleted_at: null,
+    rev: prev?.rev ?? 0,
+  };
+  tick(1);
+  await writeRow('menus', row);
+  showToast(fill(nowCopy.liked, { slot: slotLabel.toLowerCase() }), () => {
+    const undo = prev ?? { ...row, deleted_at: Date.now() };
+    void writeRow('menus', { ...undo, updated_at: Date.now() });
+  });
+}
+
+/** Drop the planned dish of a meal (the idea comes back). Undoable. */
+export async function unplanDish(slot: string, day = today.value): Promise<void> {
+  const prev = menus.value.find((m) => m.id === `${day}:${slot}` && !m.deleted_at);
+  if (!prev) return;
+  const at = Date.now();
+  await writeRow('menus', { ...prev, deleted_at: at, updated_at: at });
+  showToast(nowCopy.unliked, () => void writeRow('menus', { ...prev, updated_at: Date.now() }));
 }
 
 export async function setSetting(key: string, value: unknown): Promise<void> {

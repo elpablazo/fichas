@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { ParseBody } from '../../shared/ai-schema';
+import { type Classified, ClassifyBody, ParseBody } from '../../shared/ai-schema';
 import type { ParseResult } from '../../shared/domain/matcher';
 import { matchText } from '../../shared/domain/matcher';
 import { matchPantry } from '../../shared/domain/pantry';
@@ -7,6 +7,7 @@ import { norm } from '../../shared/domain/text';
 import type { PlanData } from '../../shared/domain/types';
 import { IdeasBody, PantryBody } from '../../shared/kitchen-schema';
 import { type AppEnv, apiError } from '../lib/http';
+import { classifyFood, JEV_VERSION } from '../lib/jev';
 import { KITCHEN_PROMPT_VERSION, runIdeasAi, runPantryAi } from '../lib/kitchen-ai';
 import { AiFailure, runMealAi } from '../lib/meal-ai';
 import { PROMPT_VERSION } from '../lib/prompts/meal';
@@ -98,6 +99,57 @@ function fail(c: Parameters<typeof apiError>[0], error: unknown) {
   const code = error instanceof AiFailure ? error.code : 'upstream';
   return apiError(c, code === 'daily_cap' ? 429 : 503, code, 'Unable to read this meal.');
 }
+
+// Live categorization while typing (JEV). Best effort: a phrase JEV can't answer is simply left out.
+ai.post('/classify', async (c) => {
+  const parsed = ClassifyBody.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return apiError(c, 400, 'bad_request', 'Invalid phrases.');
+  if (!c.env.JEV_API_KEY) return apiError(c, 503, 'unavailable', 'Classifier not configured.');
+  const model = c.env.JEV_MODEL || 'jev-latest';
+  const phrases = [...new Map(parsed.data.items.map((t) => [norm(t), t])).entries()].filter(([n]) => n);
+  const keys = await Promise.all(phrases.map(([n]) => sha256Hex(JSON.stringify(['classify', model, JEV_VERSION, n]))));
+  const cached = new Map<string, Classified>();
+  if (keys.length) {
+    const rows = await c.env.DB.prepare(
+      `SELECT key, output FROM ai_cache WHERE key IN (${keys.map(() => '?').join(',')})`,
+    )
+      .bind(...keys)
+      .all<{ key: string; output: string }>();
+    for (const r of rows.results) cached.set(r.key, JSON.parse(r.output) as Classified);
+  }
+  const missing = phrases.map((p, i) => ({ text: p[1], key: keys[i] as string })).filter((p) => !cached.has(p.key));
+  if (missing.length && !(await allow(c.env.DB, `jev:${c.get('session').id}`, 300))) {
+    return apiError(c, 429, 'rate_limited', 'Try later.');
+  }
+  const fresh = await Promise.all(
+    missing.map(async (p) => {
+      try {
+        return { key: p.key, result: await classifyFood(c.env, p.text) };
+      } catch {
+        return null;
+      }
+    }),
+  );
+  const done = fresh.filter((f): f is { key: string; result: Classified } => !!f);
+  if (done.length)
+    c.executionCtx.waitUntil(
+      c.env.DB.batch(
+        done.map((f) =>
+          c.env.DB.prepare(
+            'INSERT OR REPLACE INTO ai_cache (key, job, model, output, created_at) VALUES (?,?,?,?,?)',
+          ).bind(f.key, 'classify', model, JSON.stringify(f.result), Date.now()),
+        ),
+      ),
+    );
+  for (const f of done) cached.set(f.key, f.result);
+  const items = phrases
+    .map(([, text], i) => {
+      const hit = cached.get(keys[i] as string);
+      return hit ? { ...hit, text } : null;
+    })
+    .filter((x): x is Classified => !!x);
+  return c.json({ items });
+});
 
 ai.post('/parse', async (c) => {
   const parsed = ParseBody.safeParse(await c.req.json().catch(() => null));

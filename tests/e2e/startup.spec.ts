@@ -23,7 +23,7 @@ test('snapshot keeps the meal position while the recovery card hydrates', async 
   });
   try {
     await page.reload();
-    await expect(page.locator('[data-card] [data-testid=ate]')).toBeVisible();
+    await expect(page.locator('[data-card]')).toBeVisible();
     // This readable snapshot must keep the prior compact card and reserved banner space,
     // even before the first pull permits the recovery UI to become interactive.
     await expect(page.getByTestId('backfill')).toHaveCount(0);
@@ -39,12 +39,14 @@ test('snapshot keeps the meal position while the recovery card hydrates', async 
   expect(Math.abs(after!.height - before!.height)).toBeLessThanOrEqual(1);
 });
 
-test('installed app upgrading from 0.8 shows what is new once; a new device never does', async ({ context }, info) => {
+test('installed app upgrading from an older Today shows what is new once; a new device never does', async ({
+  context,
+}, info) => {
   const fresh = await newPage(context, dayFor(info, 140, 0), '12:00');
   await fresh.addInitScript(() => Object.defineProperty(navigator, 'standalone', { value: true }));
   await openToday(fresh);
   await fresh.waitForTimeout(1500);
-  await expect(fresh.getByRole('dialog', { name: 'Fichas, renovada' })).toHaveCount(0);
+  await expect(fresh.getByRole('dialog', { name: 'Fichas, más simple' })).toHaveCount(0);
   await fresh.close();
 
   const page = await newPage(context, dayFor(info, 140, 1), '12:00');
@@ -57,12 +59,12 @@ test('installed app upgrading from 0.8 shows what is new once; a new device neve
     }
   });
   await openToday(page);
-  const news = page.getByRole('dialog', { name: 'Fichas, renovada' });
+  const news = page.getByRole('dialog', { name: 'Fichas, más simple' });
   await expect(news).toBeVisible();
-  await news.getByRole('button', { name: '¡Vamos!', exact: true }).click();
+  await news.getByRole('button', { name: 'Entendido', exact: true }).click();
   await expect(news).toHaveCount(0);
   await page.reload();
-  await page.locator('[data-card] [data-testid=ate]').waitFor();
+  await page.locator('[data-card]').waitFor();
   await page.waitForTimeout(1500);
   await expect(news).toHaveCount(0);
 });
