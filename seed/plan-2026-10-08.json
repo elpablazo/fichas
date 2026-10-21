@@ -1,0 +1,2575 @@
+{
+  "schema": 1,
+  "issued_on": "2026-10-08",
+  "next_appointment": null,
+  "fluids_ml": 3000,
+  "exercise": "5 de 7 días, 45–60 min",
+  "notes": [
+    "Ir al médico",
+    "Tomar kéfir"
+  ],
+  "slots": [
+    {
+      "key": "desayuno",
+      "label": "Desayuno",
+      "source_label": "Desayuno",
+      "kind": "meal",
+      "time": "11:00",
+      "target": {
+        "carb_sg": 2,
+        "protein_poa": 3,
+        "veg": 1,
+        "fat_sp": 2
+      },
+      "example": {
+        "title": "Huevos con tortillas",
+        "items": [
+          {
+            "text": "2 tortillas de maíz",
+            "options": [
+              {
+                "equivalent_id": "carb_sg.tortilla_de_maiz",
+                "qty": 2,
+                "unit": "pza"
+              }
+            ]
+          },
+          {
+            "text": "3 huevos",
+            "options": [
+              {
+                "equivalent_id": "protein_poa.huevo",
+                "qty": 3,
+                "unit": "pza"
+              }
+            ]
+          },
+          {
+            "text": "½ taza de verdura",
+            "options": [
+              {
+                "equivalent_id": "veg.verdura_cocida",
+                "qty": 0.5,
+                "unit": "tza"
+              }
+            ]
+          },
+          {
+            "text": "1 cdta de aceite",
+            "options": [
+              {
+                "equivalent_id": "fat_sp.aceite_vegetal",
+                "qty": 1,
+                "unit": "cdta"
+              }
+            ]
+          },
+          {
+            "text": "⅓ de aguacate",
+            "options": [
+              {
+                "equivalent_id": "fat_sp.aguacate",
+                "qty": 0.3333,
+                "unit": "pza"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "colacion_1",
+      "label": "Colación",
+      "source_label": "Colación 1",
+      "kind": "snack",
+      "time": "13:00",
+      "target": {
+        "dairy": 1,
+        "fruit": 1,
+        "fat_cp": 1
+      },
+      "example": {
+        "title": "Latte, manzana y chocolate",
+        "items": [
+          {
+            "text": "1 taza de leche (latte)",
+            "options": [
+              {
+                "equivalent_id": "dairy.leche_de_vaca_descremada",
+                "qty": 1,
+                "unit": "tza"
+              }
+            ]
+          },
+          {
+            "text": "1 manzana",
+            "options": [
+              {
+                "equivalent_id": "fruit.manzana",
+                "qty": 1,
+                "unit": "pza"
+              }
+            ]
+          },
+          {
+            "text": "½ chocolate sin azúcar",
+            "options": [
+              {
+                "equivalent_id": "fat_cp.chocolate_sin_azucar",
+                "qty": 0.5,
+                "unit": "pza"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "comida",
+      "label": "Comida",
+      "source_label": "Comida",
+      "kind": "meal",
+      "time": "17:00",
+      "target": {
+        "carb_sg": 2,
+        "protein_poa": 4,
+        "fruit": 1,
+        "veg": 2,
+        "fat_sp": 2
+      },
+      "example": {
+        "title": "Pollo con tortillas y verdura",
+        "items": [
+          {
+            "text": "2 tortillas de maíz",
+            "options": [
+              {
+                "equivalent_id": "carb_sg.tortilla_de_maiz",
+                "qty": 2,
+                "unit": "pza"
+              }
+            ]
+          },
+          {
+            "text": "120 g de pollo/bistec/pescado",
+            "options": [
+              {
+                "equivalent_id": "protein_poa.pollo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "equivalent_id": "protein_poa.carne_de_res",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "equivalent_id": "protein_poa.pescado",
+                "qty": 120,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "text": "1 taza de verdura cocida",
+            "options": [
+              {
+                "equivalent_id": "veg.verdura_cocida",
+                "qty": 1,
+                "unit": "tza"
+              }
+            ]
+          },
+          {
+            "text": "½ pera o 1 manzana",
+            "options": [
+              {
+                "equivalent_id": "fruit.pera",
+                "qty": 0.5,
+                "unit": "pza"
+              },
+              {
+                "equivalent_id": "fruit.manzana",
+                "qty": 1,
+                "unit": "pza"
+              }
+            ]
+          },
+          {
+            "text": "2 cdta de aceite",
+            "options": [
+              {
+                "equivalent_id": "fat_sp.aceite_vegetal",
+                "qty": 2,
+                "unit": "cdta"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "colacion_2",
+      "label": "Colación",
+      "source_label": "Colación 2",
+      "kind": "snack",
+      "time": "19:00",
+      "target": {
+        "fruit": 1
+      },
+      "example": {
+        "title": "Manzana",
+        "items": [
+          {
+            "text": "1 manzana / ½ mango",
+            "options": [
+              {
+                "equivalent_id": "fruit.manzana",
+                "qty": 1,
+                "unit": "pza"
+              },
+              {
+                "equivalent_id": "fruit.mango_ataulfo",
+                "qty": 0.5,
+                "unit": "pza"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "cena",
+      "label": "Cena",
+      "source_label": "Cena 2",
+      "kind": "meal",
+      "time": "21:00",
+      "target": {
+        "carb_sg": 3,
+        "protein_poa": 3,
+        "veg": 1,
+        "fat_sp": 2
+      },
+      "example": {
+        "title": "Hamburguesa casera",
+        "items": [
+          {
+            "text": "1 pan de hamburguesa / 3 tortillas de maíz",
+            "options": [
+              {
+                "equivalent_id": "carb_sg.bollo_de_hamburguesa",
+                "qty": 1,
+                "unit": "pza"
+              },
+              {
+                "equivalent_id": "carb_sg.tortilla_de_maiz",
+                "qty": 3,
+                "unit": "pza"
+              }
+            ]
+          },
+          {
+            "text": "90 g de carne o bistec / pollo",
+            "options": [
+              {
+                "equivalent_id": "protein_poa.carne_de_res",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "equivalent_id": "protein_poa.pollo",
+                "qty": 90,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "text": "½ taza de verdura",
+            "options": [
+              {
+                "equivalent_id": "veg.verdura_cocida",
+                "qty": 0.5,
+                "unit": "tza"
+              }
+            ]
+          },
+          {
+            "text": "2 cdtas de aceite",
+            "options": [
+              {
+                "equivalent_id": "fat_sp.aceite_vegetal",
+                "qty": 2,
+                "unit": "cdta"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "equivalents": [
+    {
+      "id": "carb_sg.amaranto",
+      "type": "carb_sg",
+      "food": "amaranto",
+      "qty": 0.25,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.arroz_cocido",
+      "type": "carb_sg",
+      "food": "arroz cocido",
+      "qty": 0.25,
+      "unit": "tza",
+      "aliases": [
+        "arroz",
+        "arroz blanco"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.quinoa_cocida",
+      "type": "carb_sg",
+      "food": "quinoa cocida",
+      "qty": 0.25,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.granola",
+      "type": "carb_sg",
+      "food": "granola",
+      "qty": 2,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.tapioca",
+      "type": "carb_sg",
+      "food": "tapioca",
+      "qty": 2,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.trigo",
+      "type": "carb_sg",
+      "food": "trigo",
+      "qty": 2,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.arroz_integral",
+      "type": "carb_sg",
+      "food": "arroz integral",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.camote",
+      "type": "carb_sg",
+      "food": "camote",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.cereal",
+      "type": "carb_sg",
+      "food": "cereal",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.couscous",
+      "type": "carb_sg",
+      "food": "couscous",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.avena_en_hojuelas",
+      "type": "carb_sg",
+      "food": "avena en hojuelas",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [
+        "avena"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.pasta_cocida",
+      "type": "carb_sg",
+      "food": "pasta cocida",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.elote_desgranado",
+      "type": "carb_sg",
+      "food": "elote desgranado",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.papa_cocida",
+      "type": "carb_sg",
+      "food": "papa cocida",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.tortilla_de_maiz",
+      "type": "carb_sg",
+      "food": "tortilla de maíz",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [
+        "tortilla",
+        "tortillas",
+        "tortilla de maiz"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.tortilla_de_nopal",
+      "type": "carb_sg",
+      "food": "tortilla de nopal",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.salmas",
+      "type": "carb_sg",
+      "food": "salmas",
+      "qty": 1,
+      "unit": "paquete",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.palomitas",
+      "type": "carb_sg",
+      "food": "palomitas",
+      "qty": 2.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.palanqueta_de_amaranto",
+      "type": "carb_sg",
+      "food": "palanqueta de amaranto",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.birote",
+      "type": "carb_sg",
+      "food": "birote",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.bolillo_sin_migajon",
+      "type": "carb_sg",
+      "food": "bolillo sin migajón",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.bollo_de_hamburguesa",
+      "type": "carb_sg",
+      "food": "bollo de hamburguesa",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [
+        "pan de hamburguesa"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.telera",
+      "type": "carb_sg",
+      "food": "telera",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [
+        "pan de torta"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.bagel",
+      "type": "carb_sg",
+      "food": "bagel",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.crepa",
+      "type": "carb_sg",
+      "food": "crepa",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.pan_de_caja",
+      "type": "carb_sg",
+      "food": "pan de caja",
+      "qty": 1,
+      "unit": "reb",
+      "aliases": [
+        "pan integral",
+        "pan blanco",
+        "pan"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.pan_tostado",
+      "type": "carb_sg",
+      "food": "pan tostado",
+      "qty": 1,
+      "unit": "reb",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.galleta_maria",
+      "type": "carb_sg",
+      "food": "galleta maría",
+      "qty": 5,
+      "unit": "pza",
+      "aliases": [
+        "galletas marías",
+        "maría"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.pretzel",
+      "type": "carb_sg",
+      "food": "pretzel",
+      "qty": 5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.galleta_habanera",
+      "type": "carb_sg",
+      "food": "galleta habanera",
+      "qty": 5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.galleta_salada",
+      "type": "carb_sg",
+      "food": "galleta salada",
+      "qty": 5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.barra_de_cereal",
+      "type": "carb_sg",
+      "food": "barra de cereal",
+      "qty": 1,
+      "unit": "barra",
+      "aliases": [],
+      "note": "menos de 90 kcal",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.media_noche",
+      "type": "carb_sg",
+      "food": "media noche",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_sg.galleta_para_sopa",
+      "type": "carb_sg",
+      "food": "galleta para sopa",
+      "qty": 14,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_cg.bisquet",
+      "type": "carb_cg",
+      "food": "bísquet",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_cg.cuernito",
+      "type": "carb_cg",
+      "food": "cuernito",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_cg.bigote_de_chocolate",
+      "type": "carb_cg",
+      "food": "bigote de chocolate",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_cg.tortilla_de_harina",
+      "type": "carb_cg",
+      "food": "tortilla de harina",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_cg.tostada",
+      "type": "carb_cg",
+      "food": "tostada",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "carb_cg.pan_dulce",
+      "type": "carb_cg",
+      "food": "pan dulce",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [
+        "concha",
+        "dona",
+        "cuerno"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.huevo",
+      "type": "protein_poa",
+      "food": "huevo",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.clara_de_huevo",
+      "type": "protein_poa",
+      "food": "clara de huevo",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [
+        "claras"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_cottage",
+      "type": "protein_poa",
+      "food": "queso cottage",
+      "qty": 3,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.requeson",
+      "type": "protein_poa",
+      "food": "requesón",
+      "qty": 3,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.ricota_reducida_en_grasa",
+      "type": "protein_poa",
+      "food": "ricota reducida en grasa",
+      "qty": 3,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_parmesano_rallado",
+      "type": "protein_poa",
+      "food": "queso parmesano rallado",
+      "qty": 3,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.pollo",
+      "type": "protein_poa",
+      "food": "pollo",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [
+        "pechuga de pollo",
+        "pollo deshebrado",
+        "pechuga"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.carne_de_res",
+      "type": "protein_poa",
+      "food": "carne de res",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [
+        "carne",
+        "bistec",
+        "res",
+        "carne molida",
+        "bistec de res"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.pescado",
+      "type": "protein_poa",
+      "food": "pescado",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [
+        "filete de pescado",
+        "tilapia"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.atun_fresco",
+      "type": "protein_poa",
+      "food": "atún fresco",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.cecina",
+      "type": "protein_poa",
+      "food": "cecina",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.salmon",
+      "type": "protein_poa",
+      "food": "salmón",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.filete_de_mojarra",
+      "type": "protein_poa",
+      "food": "filete de mojarra",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.arrachera",
+      "type": "protein_poa",
+      "food": "arrachera",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_panela",
+      "type": "protein_poa",
+      "food": "queso panela",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [
+        "panela"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_cheddar_bajo_en_grasa",
+      "type": "protein_poa",
+      "food": "queso cheddar bajo en grasa",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_oaxaca",
+      "type": "protein_poa",
+      "food": "queso oaxaca",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_de_cabra",
+      "type": "protein_poa",
+      "food": "queso de cabra",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.tofu",
+      "type": "protein_poa",
+      "food": "tofu",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_fresco",
+      "type": "protein_poa",
+      "food": "queso fresco",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_blanco",
+      "type": "protein_poa",
+      "food": "queso blanco",
+      "qty": 30,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.atun_drenado",
+      "type": "protein_poa",
+      "food": "atún drenado",
+      "qty": 0.3333,
+      "unit": "lata",
+      "aliases": [
+        "atún en lata",
+        "lata de atún"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.sardina",
+      "type": "protein_poa",
+      "food": "sardina",
+      "qty": 3,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.chuleta_ahumada",
+      "type": "protein_poa",
+      "food": "chuleta ahumada",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.pechuga_de_pavo",
+      "type": "protein_poa",
+      "food": "pechuga de pavo",
+      "qty": 2,
+      "unit": "reb",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_mozzarella_bajo_en_grasa",
+      "type": "protein_poa",
+      "food": "queso mozzarella bajo en grasa",
+      "qty": 1,
+      "unit": "reb",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_monterrey_bajo_en_grasa",
+      "type": "protein_poa",
+      "food": "queso monterrey bajo en grasa",
+      "qty": 1,
+      "unit": "reb",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.queso_holandes_bajo_en_grasa",
+      "type": "protein_poa",
+      "food": "queso holandés bajo en grasa",
+      "qty": 1,
+      "unit": "reb",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.camaron",
+      "type": "protein_poa",
+      "food": "camarón",
+      "qty": 5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.surimi",
+      "type": "protein_poa",
+      "food": "surimi",
+      "qty": 0.6667,
+      "unit": "barra",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "protein_poa.salchicha",
+      "type": "protein_poa",
+      "food": "salchicha",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "dairy.leche_de_soya",
+      "type": "dairy",
+      "food": "leche de soya",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "dairy.leche_de_vaca_descremada",
+      "type": "dairy",
+      "food": "leche de vaca descremada",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [
+        "leche",
+        "leche light",
+        "latte",
+        "leche descremada"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "dairy.yogurt_descremado",
+      "type": "dairy",
+      "food": "yogurt descremado",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [
+        "yogur",
+        "yogurt natural",
+        "yogurt natural descremado",
+        "yogur natural",
+        "yogurt"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "dairy.leche_evaporada",
+      "type": "dairy",
+      "food": "leche evaporada",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.alubia",
+      "type": "legume",
+      "food": "alubia",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.alverjon",
+      "type": "legume",
+      "food": "alverjón",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.frijol",
+      "type": "legume",
+      "food": "frijol",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [
+        "frijoles",
+        "frijoles de la olla"
+      ],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.garbanzo",
+      "type": "legume",
+      "food": "garbanzo",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.haba",
+      "type": "legume",
+      "food": "haba",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.lenteja",
+      "type": "legume",
+      "food": "lenteja",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.soya_cocida",
+      "type": "legume",
+      "food": "soya cocida",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "legume.frijol_molido",
+      "type": "legume",
+      "food": "frijol molido",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.zarzamora",
+      "type": "fruit",
+      "food": "zarzamora",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.frambuesa",
+      "type": "fruit",
+      "food": "frambuesa",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.mora",
+      "type": "fruit",
+      "food": "mora",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.fresa",
+      "type": "fruit",
+      "food": "fresa",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.melon",
+      "type": "fruit",
+      "food": "melón",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.papaya",
+      "type": "fruit",
+      "food": "papaya",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.sandia",
+      "type": "fruit",
+      "food": "sandía",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.pina",
+      "type": "fruit",
+      "food": "piña",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.uva",
+      "type": "fruit",
+      "food": "uva",
+      "qty": 18,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.cereza",
+      "type": "fruit",
+      "food": "cereza",
+      "qty": 18,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.ciruela",
+      "type": "fruit",
+      "food": "ciruela",
+      "qty": 3,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.guayaba",
+      "type": "fruit",
+      "food": "guayaba",
+      "qty": 3,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.platano_dominico",
+      "type": "fruit",
+      "food": "plátano dominico",
+      "qty": 3,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.durazno_amarillo",
+      "type": "fruit",
+      "food": "durazno amarillo",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.granada_china",
+      "type": "fruit",
+      "food": "granada china",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.higo",
+      "type": "fruit",
+      "food": "higo",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.mandarina",
+      "type": "fruit",
+      "food": "mandarina",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.naranja",
+      "type": "fruit",
+      "food": "naranja",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.tuna",
+      "type": "fruit",
+      "food": "tuna",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.granada_roja",
+      "type": "fruit",
+      "food": "granada roja",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.manzana",
+      "type": "fruit",
+      "food": "manzana",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.toronja",
+      "type": "fruit",
+      "food": "toronja",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.kiwi",
+      "type": "fruit",
+      "food": "kiwi",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.mango_ataulfo",
+      "type": "fruit",
+      "food": "mango ataúlfo",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [
+        "mango"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.pera",
+      "type": "fruit",
+      "food": "pera",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.platano",
+      "type": "fruit",
+      "food": "plátano",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [
+        "plátano tabasco"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.lichi",
+      "type": "fruit",
+      "food": "lichi",
+      "qty": 12,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.mamey",
+      "type": "fruit",
+      "food": "mamey",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.pasita",
+      "type": "fruit",
+      "food": "pasita",
+      "qty": 10,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fruit.ciruela_pasa",
+      "type": "fruit",
+      "food": "ciruela pasa",
+      "qty": 10,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.coliflor",
+      "type": "veg",
+      "food": "coliflor",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.ejote",
+      "type": "veg",
+      "food": "ejote",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.pimiento_cocido",
+      "type": "veg",
+      "food": "pimiento cocido",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.setas",
+      "type": "veg",
+      "food": "setas",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.verdolagas",
+      "type": "veg",
+      "food": "verdolagas",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.berenjena",
+      "type": "veg",
+      "food": "berenjena",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.brocoli",
+      "type": "veg",
+      "food": "brócoli",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.calabacita",
+      "type": "veg",
+      "food": "calabacita",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [
+        "calabacitas"
+      ],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.champinon",
+      "type": "veg",
+      "food": "champiñón",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.chayote",
+      "type": "veg",
+      "food": "chayote",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.chicharo",
+      "type": "veg",
+      "food": "chícharo",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": "cocido",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.verdura_cruda",
+      "type": "veg",
+      "food": "verdura cruda",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.espinaca",
+      "type": "veg",
+      "food": "espinaca",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.flor_de_calabaza",
+      "type": "veg",
+      "food": "flor de calabaza",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.lechuga",
+      "type": "veg",
+      "food": "lechuga",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.acelga",
+      "type": "veg",
+      "food": "acelga",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.apio",
+      "type": "veg",
+      "food": "apio",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.arugula",
+      "type": "veg",
+      "food": "arúgula",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.berro",
+      "type": "veg",
+      "food": "berro",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.col",
+      "type": "veg",
+      "food": "col",
+      "qty": 2,
+      "unit": "tza",
+      "aliases": [],
+      "note": "crudo",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.hongos_crudos",
+      "type": "veg",
+      "food": "hongos crudos",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.jicama",
+      "type": "veg",
+      "food": "jícama",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.zanahoria",
+      "type": "veg",
+      "food": "zanahoria",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.betabel",
+      "type": "veg",
+      "food": "betabel",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.germen",
+      "type": "veg",
+      "food": "germen",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.jitomate_saladet",
+      "type": "veg",
+      "food": "jitomate saladet",
+      "qty": 2,
+      "unit": "pza",
+      "aliases": [
+        "jitomate",
+        "tomate"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.pepino",
+      "type": "veg",
+      "food": "pepino",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.pimiento_crudo",
+      "type": "veg",
+      "food": "pimiento crudo",
+      "qty": 1,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "veg.verdura_cocida",
+      "type": "veg",
+      "food": "verdura cocida",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [
+        "verdura",
+        "verduras",
+        "verduras al vapor",
+        "verdura al vapor",
+        "verduras cocidas"
+      ],
+      "note": "cualquiera",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.azucar",
+      "type": "sugar_sg",
+      "food": "azúcar",
+      "qty": 2,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.leche_condensada",
+      "type": "sugar_sg",
+      "food": "leche condensada",
+      "qty": 2,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.mermelada",
+      "type": "sugar_sg",
+      "food": "mermelada",
+      "qty": 2,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.catsup",
+      "type": "sugar_sg",
+      "food": "cátsup",
+      "qty": 2,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.cajeta",
+      "type": "sugar_sg",
+      "food": "cajeta",
+      "qty": 2,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.ate",
+      "type": "sugar_sg",
+      "food": "ate",
+      "qty": 13,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.gelatina_de_agua",
+      "type": "sugar_sg",
+      "food": "gelatina de agua",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.gomita",
+      "type": "sugar_sg",
+      "food": "gomita",
+      "qty": 3,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.malvavisco",
+      "type": "sugar_sg",
+      "food": "malvavisco",
+      "qty": 3,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.jugo_de_frutas",
+      "type": "sugar_sg",
+      "food": "jugo de frutas",
+      "qty": 0.3333,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.nieve_de_fruta",
+      "type": "sugar_sg",
+      "food": "nieve de fruta",
+      "qty": 40,
+      "unit": "g",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.paleta_helada_de_agua",
+      "type": "sugar_sg",
+      "food": "paleta helada de agua",
+      "qty": 1,
+      "unit": "pza",
+      "aliases": [],
+      "note": "pequeña",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.refresco",
+      "type": "sugar_sg",
+      "food": "refresco",
+      "qty": 0.25,
+      "unit": "lata",
+      "aliases": [
+        "coca",
+        "coca-cola",
+        "coca cola",
+        "soda"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_sg.arandano_seco_con_azucar",
+      "type": "sugar_sg",
+      "food": "arándano seco con azúcar",
+      "qty": 0.5,
+      "unit": "tza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": "check_portion"
+    },
+    {
+      "id": "sugar_cg.mole",
+      "type": "sugar_cg",
+      "food": "mole",
+      "qty": 3,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_cg.flan",
+      "type": "sugar_cg",
+      "food": "flan",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_cg.gelatina_de_leche",
+      "type": "sugar_cg",
+      "food": "gelatina de leche",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_cg.natilla",
+      "type": "sugar_cg",
+      "food": "natilla",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "sugar_cg.chocolate",
+      "type": "sugar_cg",
+      "food": "chocolate",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aguacate",
+      "type": "fat_sp",
+      "food": "aguacate",
+      "qty": 0.3333,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aceituna_sin_hueso",
+      "type": "fat_sp",
+      "food": "aceituna sin hueso",
+      "qty": 8,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aceite_vegetal",
+      "type": "fat_sp",
+      "food": "aceite vegetal",
+      "qty": 1,
+      "unit": "cdta",
+      "aliases": [
+        "aceite"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aceite_de_oliva",
+      "type": "fat_sp",
+      "food": "aceite de oliva",
+      "qty": 1,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aceite_en_spray",
+      "type": "fat_sp",
+      "food": "aceite en spray",
+      "qty": 5,
+      "unit": "disparo",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.coco_rallado",
+      "type": "fat_sp",
+      "food": "coco rallado",
+      "qty": 1.5,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.cocoa",
+      "type": "fat_sp",
+      "food": "cocoa",
+      "qty": 1.5,
+      "unit": "cda",
+      "aliases": [],
+      "note": "más de 80%",
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aderezo",
+      "type": "fat_sp",
+      "food": "aderezo",
+      "qty": 0.5,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.aderezo_bajo_en_grasa",
+      "type": "fat_sp",
+      "food": "aderezo bajo en grasa",
+      "qty": 3,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.margarina",
+      "type": "fat_sp",
+      "food": "margarina",
+      "qty": 1,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.mantequilla",
+      "type": "fat_sp",
+      "food": "mantequilla",
+      "qty": 1,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.mayonesa",
+      "type": "fat_sp",
+      "food": "mayonesa",
+      "qty": 1,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.crema",
+      "type": "fat_sp",
+      "food": "crema",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.crema_para_cafe",
+      "type": "fat_sp",
+      "food": "crema para café",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.queso_crema",
+      "type": "fat_sp",
+      "food": "queso crema",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_sp.tocino",
+      "type": "fat_sp",
+      "food": "tocino",
+      "qty": 1,
+      "unit": "reb",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.ajonjoli",
+      "type": "fat_cp",
+      "food": "ajonjolí",
+      "qty": 4,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": "check_portion"
+    },
+    {
+      "id": "fat_cp.almendra",
+      "type": "fat_cp",
+      "food": "almendra",
+      "qty": 10,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.avellana",
+      "type": "fat_cp",
+      "food": "avellana",
+      "qty": 10,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.cacahuate",
+      "type": "fat_cp",
+      "food": "cacahuate",
+      "qty": 14,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.chia",
+      "type": "fat_cp",
+      "food": "chía",
+      "qty": 7,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": "check_portion"
+    },
+    {
+      "id": "fat_cp.harina_de_ajonjoli",
+      "type": "fat_cp",
+      "food": "harina de ajonjolí",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.harina_de_almendra",
+      "type": "fat_cp",
+      "food": "harina de almendra",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.harina_de_cacahuate",
+      "type": "fat_cp",
+      "food": "harina de cacahuate",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.crema_de_cacahuate",
+      "type": "fat_cp",
+      "food": "crema de cacahuate",
+      "qty": 2,
+      "unit": "cdta",
+      "aliases": [
+        "mantequilla de maní",
+        "mantequilla de mani",
+        "peanut butter"
+      ],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.nuez",
+      "type": "fat_cp",
+      "food": "nuez",
+      "qty": 7,
+      "unit": "mitad",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.pepitas_sin_cascara",
+      "type": "fat_cp",
+      "food": "pepitas sin cáscara",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.pinon",
+      "type": "fat_cp",
+      "food": "piñón",
+      "qty": 1,
+      "unit": "cda",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.pistache",
+      "type": "fat_cp",
+      "food": "pistache",
+      "qty": 18,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.semilla_de_girasol",
+      "type": "fat_cp",
+      "food": "semilla de girasol",
+      "qty": 4,
+      "unit": "cdta",
+      "aliases": [],
+      "note": null,
+      "source": "table",
+      "flag": null
+    },
+    {
+      "id": "fat_cp.chocolate_sin_azucar",
+      "type": "fat_cp",
+      "food": "chocolate sin azúcar",
+      "qty": 0.5,
+      "unit": "pza",
+      "aliases": [],
+      "note": null,
+      "source": "example",
+      "flag": null
+    }
+  ],
+  "free_foods": [
+    "agua",
+    "agua mineral",
+    "refresco zero",
+    "hierbabuena",
+    "menta",
+    "jamaica sin azúcar",
+    "hierbas de olor",
+    "jengibre",
+    "té",
+    "café",
+    "mostaza",
+    "salsa de soya",
+    "salsa inglesa",
+    "pimienta",
+    "perejil",
+    "sal",
+    "vainilla",
+    "vinagre",
+    "chile en polvo",
+    "edulcorante",
+    "gelatina light",
+    "levadura"
+  ],
+  "swaps": [
+    {
+      "kind": "decompose",
+      "from": "carb_cg",
+      "to": {
+        "carb_sg": 1,
+        "fat_sp": 1
+      },
+      "confirmed": false,
+      "source": "default"
+    },
+    {
+      "kind": "decompose",
+      "from": "sugar_cg",
+      "to": {
+        "sugar_sg": 1,
+        "fat_sp": 1
+      },
+      "confirmed": false,
+      "source": "default"
+    },
+    {
+      "kind": "substitute",
+      "from": "fat_cp",
+      "to": {
+        "fat_sp": 1
+      },
+      "confirmed": false,
+      "source": "default"
+    },
+    {
+      "kind": "substitute",
+      "from": "fat_sp",
+      "to": {
+        "fat_cp": 1
+      },
+      "confirmed": false,
+      "source": "default"
+    }
+  ],
+  "rules": {
+    "rebalance_within_day": "unknown"
+  }
+}
