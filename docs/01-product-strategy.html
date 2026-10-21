@@ -1,0 +1,936 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fichas Product Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+/* Layout: one reading column (46rem) inside a 72rem frame; "phone shelves" break out to the full frame and scroll sideways on phones. */
+:root{
+  --paper:#FBF7FA; --surface:#FFFFFF; --sunk:#F4EAF1; --ink:#241B26; --ink-2:#6B5E6E; --line:#EADFE7;
+  --rosa:#E4007C; --rosa-text:#C2006A; --on-rosa:#FFFFFF; --wash:#FDE8F3; --gold:#F2B705;
+  --bezel:#241B26; --bud:#9BCFA8; --center:#EADCCB; --soil:#E9DACD; --seed:#B98E6A;
+  --t-carb:#F5A524; --t-prot:#7C5CFF; --t-dairy:#3BA3F5; --t-fruit:#F0525A; --t-veg:#22B573;
+  --t-fat:#6E9A2C; --t-fatp:#A47148; --t-sugar:#C08CF5; --t-leg:#B5523B;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-app:"Nunito",ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#151016; --surface:#201822; --sunk:#2A202C; --ink:#F6EEF5; --ink-2:#B8ABB8; --line:#3A2E3C;
+    --rosa:#E4007C; --rosa-text:#FF5AA8; --on-rosa:#FFFFFF; --wash:#3A1430; --gold:#F2B705;
+    --bezel:#050306; --bud:#4F7D5B; --center:#5A4A3E; --soil:#3B2F2A; --seed:#8A6A50;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#151016; --surface:#201822; --sunk:#2A202C; --ink:#F6EEF5; --ink-2:#B8ABB8; --line:#3A2E3C;
+  --rosa:#E4007C; --rosa-text:#FF5AA8; --on-rosa:#FFFFFF; --wash:#3A1430; --gold:#F2B705;
+  --bezel:#050306; --bud:#4F7D5B; --center:#5A4A3E; --soil:#3B2F2A; --seed:#8A6A50;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 var(--f-body)}
+a{color:var(--rosa-text);text-underline-offset:3px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--rosa);outline-offset:3px;border-radius:6px}
+.frame{max-width:72rem;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:28px 72px}
+.col{max-width:46rem}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.06}
+h1{font-size:clamp(3.6rem,11vw,7.2rem);font-weight:800;letter-spacing:-.035em}
+h2{font-size:clamp(1.75rem,4.4vw,2.6rem);font-weight:750;letter-spacing:-.02em}
+h3{font-size:1.12rem;font-weight:700;letter-spacing:-.005em;line-height:1.2}
+p{margin:0}
+ul,ol{margin:0;padding:0}
+.label{font:600 .74rem/1.2 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.dek{color:var(--ink-2);font-size:1.06rem;max-width:40rem}
+.stack{display:flex;flex-direction:column;gap:14px}
+section{border-top:1px solid var(--line);padding-block:56px 8px;display:flex;flex-direction:column;gap:28px}
+section>header{display:flex;flex-direction:column;gap:10px}
+.small{font-size:.9rem;color:var(--ink-2)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- top ---------- */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:18px}
+.top .label b{color:var(--ink);font-weight:700}
+.nav{display:flex;flex-wrap:wrap;gap:6px}
+.nav a{font:600 .82rem/1 var(--f-body);color:var(--ink-2);text-decoration:none;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.nav a:hover{color:var(--ink);border-color:var(--ink-2)}
+
+/* ---------- hero ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(24px,5vw,64px);align-items:center;padding-block:34px 56px}
+.hero-copy{display:flex;flex-direction:column;gap:22px;min-width:0}
+.hero h1 .dot{color:var(--rosa)}
+.lead{font-size:clamp(1.12rem,2.2vw,1.34rem);line-height:1.5;max-width:34rem}
+.signature{display:flex;gap:8px;flex-wrap:wrap}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--ink-2);font-size:.92rem}
+.facts span{display:inline-flex;gap:6px;align-items:center}
+.facts b{color:var(--ink);font-weight:600}
+.callouts{display:flex;flex-direction:column;gap:12px;max-width:30rem}
+.callouts li{list-style:none;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;font-size:.98rem}
+.callouts li i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--rosa);color:var(--on-rosa);font:800 .78rem/1 var(--f-app);margin-top:1px}
+@media (max-width:820px){.hero{grid-template-columns:1fr}.hero .phone{justify-self:center}}
+
+/* ---------- idea grid ---------- */
+.idea{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.idea>div{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 20px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.idea p{color:var(--ink-2)}
+.idea .vis{display:flex;gap:6px;align-items:center;min-height:30px}
+@media (max-width:640px){.idea{grid-template-columns:1fr}}
+
+/* ---------- tokens ---------- */
+.toks{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;vertical-align:middle}
+.tg{display:inline-flex;gap:2px}
+.tk{--c:var(--t-carb);position:relative;width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:11.5px;line-height:1;border:1.5px dashed color-mix(in srgb,var(--c) 60%,transparent);background:color-mix(in srgb,var(--c) 12%,var(--surface))}
+.tk>b{font-weight:400;filter:grayscale(.7);opacity:.42}
+.tk.on{border:2px solid var(--c);background:color-mix(in srgb,var(--c) 28%,var(--surface))}
+.tk.on>b{filter:none;opacity:1}
+.tk.plus::after{content:"+";position:absolute;top:-6px;right:-6px;width:13px;height:13px;border-radius:50%;background:var(--ink);color:var(--paper);font:900 10px/13px var(--f-app);text-align:center}
+.tk.s{width:16px;height:16px;font-size:8.5px}
+.tk.s.on{border-width:1.5px}
+.tk.l{width:30px;height:30px;font-size:15px}
+.tk.xl{width:40px;height:40px;font-size:20px}
+.carb{--c:var(--t-carb)} .prot{--c:var(--t-prot)} .dairy{--c:var(--t-dairy)} .fruit{--c:var(--t-fruit)}
+.veg{--c:var(--t-veg)} .fat{--c:var(--t-fat)} .fatp{--c:var(--t-fatp)} .sugar{--c:var(--t-sugar)} .leg{--c:var(--t-leg)}
+
+/* ---------- plan table ---------- */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.95rem}
+th,td{text-align:left;vertical-align:top;padding:14px 16px;border-bottom:1px solid var(--line)}
+th{font:600 .74rem/1.2 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.slot b{display:block;font-family:var(--f-display);font-size:1.08rem;font-weight:700}
+td.slot span{color:var(--ink-2);font-size:.86rem}
+td.ex{color:var(--ink-2);min-width:220px}
+tr.total td{background:var(--sunk);font-weight:600}
+.equiv{display:grid;grid-template-columns:repeat(auto-fill,minmax(15.5rem,1fr));gap:12px}
+.equiv>div{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:var(--surface);display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:start}
+.equiv h3{font-size:1rem;align-self:center}
+.equiv p{grid-column:1 / -1;color:var(--ink-2);font-size:.92rem;line-height:1.45}
+.alsoplan{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:.88rem}
+.check{border:1.5px solid var(--rosa);background:var(--wash);border-radius:20px;padding:20px clamp(16px,3vw,26px);display:flex;flex-direction:column;gap:12px}
+.check ol{display:flex;flex-direction:column;gap:10px;padding-left:1.3rem}
+.check li::marker{font-weight:700;color:var(--rosa-text)}
+
+/* ---------- concept tiles ---------- */
+.concepts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.concepts>div{border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px;background:var(--surface);min-width:0}
+.concepts .vis{height:46px;display:flex;align-items:center;gap:6px}
+.concepts p{color:var(--ink-2);font-size:.95rem}
+.concepts .es{font:700 .78rem/1 var(--f-app);color:var(--rosa-text);letter-spacing:.02em}
+@media (max-width:860px){.concepts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:540px){.concepts{grid-template-columns:1fr}}
+.mini-card{display:flex;flex-direction:column;gap:3px;border:1px solid var(--line);border-radius:10px;padding:5px 8px;font:800 10px/1.1 var(--f-app);background:var(--paper)}
+.mini-btn{display:inline-block;background:var(--rosa);color:var(--on-rosa);border-radius:7px;padding:3px 6px;font:800 9px/1 var(--f-app)}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 9px;font:700 11px/1 var(--f-app);border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.chip.sel{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+/* ---------- flow ---------- */
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.flow .step{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 14px;min-width:9.5rem}
+.flow .step b{font-family:var(--f-display);font-size:1.02rem}
+.flow .step span{font-size:.84rem;color:var(--ink-2)}
+.flow .arr{color:var(--ink-2);font-size:1.2rem}
+
+/* ---------- phones ---------- */
+.shelf{display:flex;gap:26px;overflow-x:auto;padding:6px 4px 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+@media (min-width:1080px){.shelf{justify-content:center;flex-wrap:wrap;overflow:visible}}
+.shot{flex:0 0 auto;display:flex;flex-direction:column;gap:12px;scroll-snap-align:center;width:320px;max-width:100%}
+.shot figcaption{font-size:.92rem;color:var(--ink-2);padding-inline:6px}
+.shot figcaption b{color:var(--ink);font-weight:600}
+figure{margin:0}
+.phone{width:320px;max-width:100%;border-radius:46px;padding:10px;background:var(--bezel);box-shadow:0 0 0 1px var(--line),0 28px 60px -30px rgba(36,27,38,.55)}
+.screen{position:relative;height:650px;border-radius:36px;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--f-app);display:flex;flex-direction:column}
+.sb{display:flex;justify-content:space-between;align-items:center;padding:13px 24px 2px;font:800 12px/1 var(--f-app)}
+.sb i{display:inline-block;width:22px;height:10px;border-radius:3px;border:1.5px solid var(--ink);position:relative}
+.sb i::after{content:"";position:absolute;inset:1.5px 6px 1.5px 1.5px;background:var(--ink);border-radius:1px}
+.app-h{display:flex;justify-content:space-between;align-items:flex-end;padding:12px 16px 8px}
+.app-h b{display:block;font:900 17px/1.1 var(--f-app)}
+.app-h small{font:700 11px/1.2 var(--f-app);color:var(--ink-2)}
+.dots{display:flex;gap:3px;align-items:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.f{background:var(--rosa)}
+.dots i.h{background:linear-gradient(90deg,var(--rosa) 50%,var(--line) 50%)}
+.dots i.t{background:transparent;box-shadow:inset 0 0 0 1.5px var(--rosa)}
+.dots small{margin-left:5px;font:800 11px/1 var(--f-app);color:var(--ink-2)}
+.card{margin:4px 12px 8px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:13px 13px 11px;display:flex;flex-direction:column;gap:10px}
+.card-top{display:flex;justify-content:space-between;align-items:baseline}
+.card-top b{font:900 19px/1 var(--f-app)}
+.card-top span{font:800 11px/1 var(--f-app);color:var(--ink-2)}
+.sugg{display:flex;flex-direction:column;gap:4px;padding:9px 10px;background:var(--sunk);border-radius:14px}
+.sugg b{font:900 14px/1.15 var(--f-app);display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.sugg b em{font:800 10px/1 var(--f-app);font-style:normal;color:var(--rosa-text)}
+.sugg p{font:700 11.5px/1.35 var(--f-app);color:var(--ink-2)}
+.btn{display:flex;justify-content:center;align-items:center;gap:6px;height:44px;border-radius:15px;background:var(--rosa);color:var(--on-rosa);font:900 15px/1 var(--f-app)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.sm{height:34px;font-size:12.5px;border-radius:11px}
+.acts{display:flex;justify-content:space-around;font:800 12px/1 var(--f-app);color:var(--ink-2)}
+.rows{list-style:none;margin:0 12px;display:flex;flex-direction:column}
+.rows li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--line)}
+.rows li:last-child{border-bottom:0}
+.rows .n{font:800 12.5px/1.1 var(--f-app);white-space:nowrap}
+.rows .n small{display:block;font:700 10px/1.2 var(--f-app);color:var(--ink-2)}
+.rows .n.done::before{content:"✓ ";color:var(--rosa-text)}
+.ask{margin:auto 12px 8px;display:flex;align-items:center;gap:8px;height:42px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);padding:0 12px;font:800 12.5px/1 var(--f-app);color:var(--ink-2)}
+.ask::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--rosa)}
+.tabs{display:flex;justify-content:space-around;padding:9px 10px 16px;border-top:1px solid var(--line);background:var(--surface);font:800 11px/1 var(--f-app);color:var(--ink-2)}
+.tabs span{display:flex;flex-direction:column;align-items:center;gap:5px}
+.tabs span::before{content:"";width:20px;height:20px;border-radius:7px;background:var(--line)}
+.tabs span.on{color:var(--ink)}
+.tabs span.on::before{background:var(--rosa)}
+.dim{position:absolute;inset:0;background:rgba(20,12,20,.38)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:10px 14px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 -12px 34px rgba(0,0,0,.18)}
+.grab{width:38px;height:4px;border-radius:9px;background:var(--line);align-self:center}
+.input{border:1.5px solid var(--rosa);border-radius:13px;padding:10px 11px;font:800 13px/1.2 var(--f-app);background:var(--paper)}
+.input::after{content:"|";color:var(--rosa);margin-left:1px}
+.slotchips{display:flex;gap:5px;flex-wrap:wrap}
+.items{display:flex;flex-direction:column;gap:5px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;font:800 11.5px/1.2 var(--f-app);padding:6px 8px;border-radius:10px;background:var(--sunk)}
+.item small{color:var(--ink-2);font-weight:700}
+.vs{display:flex;flex-direction:column;gap:6px;padding:9px;border:1px dashed var(--line);border-radius:13px}
+.vs .row{display:flex;justify-content:space-between;align-items:center;font:800 11px/1 var(--f-app);color:var(--ink-2)}
+.line{font:900 13px/1.3 var(--f-app)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.link{text-align:center;font:800 11.5px/1 var(--f-app);color:var(--ink-2)}
+.seg{display:flex;margin:4px 12px 2px;padding:3px;border-radius:12px;background:var(--sunk);font:900 12px/1 var(--f-app)}
+.seg span{flex:1;text-align:center;padding:8px 0;border-radius:9px;color:var(--ink-2)}
+.seg span.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.pantry{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px 2px}
+.h-in{padding:8px 16px 2px;font:900 15px/1.2 var(--f-app)}
+.h-in small{display:block;font:700 11px/1.3 var(--f-app);color:var(--ink-2)}
+.idea-c{margin:6px 12px 0;padding:10px 11px;border:1px solid var(--line);border-radius:16px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.idea-c b{font:900 13.5px/1.1 var(--f-app);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.idea-c b em{font:800 9.5px/1 var(--f-app);font-style:normal;color:var(--rosa-text);border:1px solid currentColor;border-radius:999px;padding:3px 6px}
+.idea-c p{font:700 11px/1.3 var(--f-app);color:var(--ink-2)}
+.close-top{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 16px 8px;text-align:center;position:relative}
+.close-top .big{position:relative;display:grid;place-items:center}
+.spark{position:absolute;color:var(--gold);font-size:14px}
+.close-top b{font:900 20px/1.1 var(--f-app)}
+.close-top p{font:800 12.5px/1.3 var(--f-app);color:var(--ink-2)}
+.tom{margin:4px 12px 0;padding:12px;border:1px solid var(--line);border-radius:20px;background:var(--surface);display:flex;flex-direction:column;gap:7px}
+.tom h4{margin:0;font:900 14px/1 var(--f-app);display:flex;justify-content:space-between}
+.tom h4 small{font:800 10.5px/1 var(--f-app);color:var(--ink-2)}
+.tom ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.tom li{display:flex;justify-content:space-between;gap:8px;font:800 11.5px/1.2 var(--f-app)}
+.tom li span:first-child{color:var(--ink-2);min-width:62px}
+.tom li span:last-child{text-align:right}
+.garden{display:grid;grid-template-columns:repeat(5,1fr);gap:4px 2px;padding:6px 12px 2px}
+.garden span{display:grid;place-items:center;aspect-ratio:1;max-width:100%}
+.garden span.today{border-radius:14px;box-shadow:inset 0 0 0 1.5px var(--rosa)}
+.stamps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:4px 16px}
+.stamps span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:17px;border:1.5px dashed var(--line);color:var(--ink-2)}
+.stamps span.got{border:2px solid var(--gold);background:color-mix(in srgb,var(--gold) 16%,var(--surface))}
+.stamps span.hid{font:900 13px/1 var(--f-app)}
+.lvl{margin:6px 16px 0;display:flex;flex-direction:column;gap:6px}
+.lvl .bar{height:9px;border-radius:9px;background:var(--sunk);overflow:hidden}
+.lvl .bar i{display:block;height:100%;width:62%;background:var(--rosa);border-radius:9px}
+.lvl div{display:flex;justify-content:space-between;font:800 11px/1 var(--f-app);color:var(--ink-2)}
+.lvl div b{color:var(--ink);font-weight:900}
+.diff{margin:4px 12px;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden}
+.diff>div{display:flex;flex-direction:column;gap:6px;padding:10px 11px;border-bottom:1px solid var(--line)}
+.diff>div:last-child{border-bottom:0}
+.diff .hd{display:flex;justify-content:space-between;font:900 12.5px/1 var(--f-app)}
+.diff .hd small{font:800 10.5px/1 var(--f-app);color:var(--ink-2)}
+.diff .hd em{font-style:normal;font:900 10.5px/1 var(--f-app);color:var(--rosa-text)}
+.diff .chg{background:var(--wash)}
+.when{display:flex;gap:6px;align-items:center;padding:6px 14px;font:800 11.5px/1 var(--f-app);color:var(--ink-2)}
+
+/* ---------- fast ---------- */
+.fast{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:start}
+@media (max-width:860px){.fast{grid-template-columns:1fr}}
+.auto{list-style:none;display:flex;flex-direction:column;gap:12px}
+.auto li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px}
+.auto li::before{content:"";width:10px;height:10px;margin-top:8px;border-radius:50%;background:var(--rosa)}
+.auto b{font-weight:600}
+.budget table{min-width:0}
+.budget td.n,.budget th.n{text-align:right;white-space:nowrap}
+.budget td.n{font-variant-numeric:tabular-nums;font-weight:600}
+
+/* ---------- loops ---------- */
+.loops{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.loops>div{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.loops .when{padding:0;font:600 .74rem/1.2 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--rosa-text)}
+.loops .vis{min-height:64px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.loops p{color:var(--ink-2);font-size:.95rem}
+@media (max-width:960px){.loops{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:540px){.loops{grid-template-columns:1fr}}
+.never{display:flex;flex-wrap:wrap;gap:8px}
+.never span{border:1px dashed var(--ink-2);border-radius:999px;padding:7px 12px;font-size:.9rem;color:var(--ink-2)}
+.never span s{color:var(--ink)}
+
+/* ---------- days ---------- */
+.days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:820px){.days{grid-template-columns:1fr}}
+.day{border:1px solid var(--line);border-radius:22px;background:var(--surface);padding:20px clamp(16px,3vw,24px);display:flex;flex-direction:column;gap:14px;min-width:0}
+.day header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tl{list-style:none;display:flex;flex-direction:column}
+.tl li{display:grid;grid-template-columns:3.4rem minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.tl time{font:700 .86rem/1.5 var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.tl q{font-family:var(--f-app);font-weight:800;quotes:"“" "”"}
+.tl .s{display:inline-block;font:700 .78rem/1 var(--f-body);color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:3px 7px;margin-left:4px;white-space:nowrap}
+.day .sum{background:var(--sunk);border-radius:14px;padding:12px 14px;font-size:.95rem}
+
+/* ---------- voice ---------- */
+.voice{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:12px}
+.toast{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:18px;padding:14px 16px;min-width:0}
+.toast .moment{font:600 .72rem/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.toast b{font:900 1.06rem/1.3 var(--f-app)}
+.toast span{color:var(--ink-2);font-size:.92rem}
+.rules{display:flex;flex-wrap:wrap;gap:8px}
+.rules span{background:var(--ink);color:var(--paper);border-radius:999px;padding:8px 14px;font-weight:600;font-size:.92rem}
+
+/* ---------- lists ---------- */
+.steps{counter-reset:s;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:720px){.steps{grid-template-columns:1fr}}
+.steps li{counter-increment:s;display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px}
+.steps li::before{content:counter(s);font:800 1.35rem/1 var(--f-display);color:var(--rosa-text)}
+.steps b{display:block;font-weight:700}
+.steps span{color:var(--ink-2);font-size:.94rem}
+.out{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 28px}
+@media (max-width:720px){.out{grid-template-columns:1fr}}
+.out li{padding:10px 0;border-top:1px solid var(--line)}
+.out b{display:block;font-weight:600}
+.out span{color:var(--ink-2);font-size:.94rem}
+.why{list-style:none;display:flex;flex-direction:column;gap:14px}
+.why li{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding-left:16px;border-left:3px solid var(--line)}
+.why b{font-weight:600}
+.why span{color:var(--ink-2);font-size:.93rem}
+details{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:14px 18px}
+summary{cursor:pointer;font-weight:600}
+details ol{margin-top:12px;padding-left:1.3rem;display:flex;flex-direction:column;gap:6px;font-size:.92rem;color:var(--ink-2)}
+.confirm{counter-reset:q;list-style:none;display:flex;flex-direction:column;gap:12px}
+.confirm li{counter-increment:q;display:grid;grid-template-columns:2rem minmax(0,1fr);gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.confirm li::before{content:counter(q);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--rosa);color:var(--on-rosa);font:800 .9rem/1 var(--f-app)}
+.confirm b{font-weight:600}
+.confirm span{color:var(--ink-2)}
+.foot{border-top:1px solid var(--line);margin-top:56px;padding-top:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--ink-2);font-size:.9rem}
+code{font:600 .88em/1 ui-monospace,"SF Mono",Menlo,monospace;background:var(--sunk);padding:2px 6px;border-radius:6px}
+
+@media (prefers-reduced-motion: no-preference){
+  .sway{animation:sway 4s ease-in-out infinite;transform-origin:50% 90%}
+  @keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+}
+</style>
+
+<div class="frame">
+
+  <div class="top">
+    <p class="label">Stage 1 · Document 1 of 2 · <b>Product strategy</b> · for your approval</p>
+    <nav class="nav" aria-label="Sections">
+      <a href="#plan">Your plan</a><a href="#day">A day</a><a href="#fast">Effortless</a><a href="#pull">Why you'll open it</a><a href="#voice">Voice</a><a href="#out">Left out</a><a href="#confirm">Please confirm</a>
+    </nav>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-copy">
+      <h1>Fichas<span class="dot">.</span></h1>
+      <div class="signature toks" data-t="carb:1,prot:1,dairy:1,fruit:1,veg:1,fat:1,fatp:1" data-on="all" data-size="l"></div>
+      <p class="lead">Your nutritionist's plan, turned into game tokens (<i>fichas</i>). The app does the thinking: it opens on the right meal with a dish that already fits your plan. You tap once. Every meal you log grows a flower in your garden.</p>
+      <div class="facts">
+        <span>Plan read: <b>08 Oct 2026</b></span>
+        <span>Eating moments: <b>5 a day</b></span>
+        <span>Reading time: <b>5 minutes</b></span>
+      </div>
+      <ul class="callouts">
+        <li><i>1</i><span>Opens on the meal that matches the time of day.</span></li>
+        <li><i>2</i><span>Each token is one unit of your plan. Hollow ones are still to eat.</span></li>
+        <li><i>3</i><span>Your usual dish, already portioned to fit those tokens.</span></li>
+        <li><i>4</i><span>One tap logs it and the tokens pop full.</span></li>
+        <li><i>5</i><span>Type or dictate anything to check how it counts, before or after eating.</span></li>
+      </ul>
+    </div>
+
+    <figure class="phone" aria-label="Mockup of the Today screen">
+      <div class="screen">
+        <div class="sb"><span>16:52</span><i></i></div>
+        <div class="app-h">
+          <div><b>Jue 15 oct</b><small>Temporada 1 · día 8</small></div>
+          <div class="dots" aria-label="5 of the last 7 days logged"><i class="f"></i><i class="f"></i><i class="h"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="t"></i><small>5/7</small></div>
+        </div>
+        <div class="card">
+          <div class="card-top"><b>Comida</b><span>5 pm</span></div>
+          <div class="toks" data-t="carb:2,prot:4,fruit:1,veg:2,fat:2"></div>
+          <div class="sugg">
+            <b>Tacos de pollo <em>tu clásico</em></b>
+            <p>2 tortillas · 120 g pollo · 1 tz verdura · 1 manzana · 2 cdta aceite</p>
+          </div>
+          <div class="btn">✓ Me lo comí</div>
+          <div class="acts"><span>↻ Otra</span><span>✎ Ajustar</span></div>
+        </div>
+        <ul class="rows">
+          <li><span class="n done">Desayuno</span><span class="toks" data-t="carb:2,prot:3,veg:1,fat:2" data-on="all" data-size="s"></span></li>
+          <li><span class="n done">Colación</span><span class="toks" data-t="dairy:1,fruit:1,fatp:1" data-on="all" data-size="s"></span></li>
+          <li><span class="n">Colación<small>7 pm</small></span><span class="toks" data-t="fruit:1" data-size="s"></span></li>
+          <li><span class="n">Cena<small>9 pm</small></span><span class="toks" data-t="carb:3,prot:3,veg:1,fat:2" data-size="s"></span></li>
+        </ul>
+        <div class="ask">¿Qué vas a comer?</div>
+        <div class="tabs"><span class="on">Hoy</span><span>Cocina</span><span>Historia</span></div>
+      </div>
+    </figure>
+  </div>
+
+  <!-- IDEA -->
+  <section id="idea" aria-labelledby="h-idea">
+    <header>
+      <h2 id="h-idea">The idea in 30 seconds</h2>
+      <p class="dek">The hard part of a plan like yours is the thinking at every meal: what can I have, what does it equal, does this count. The app takes that thinking away, so the only thing left for you is a tap that feels good.</p>
+    </header>
+    <div class="idea">
+      <div>
+        <div class="vis"><span class="toks" data-t="carb:2,prot:2" data-on="carb:2" data-size="l"></span></div>
+        <h3>Your plan becomes tokens</h3>
+        <p>Each unit (1 carb, 1 protein…) is a colored token. A meal is a row of tokens. Eating fills them. You never count.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="mini-card">Tacos de pollo <span class="mini-btn">✓ Me lo comí</span></span></div>
+        <h3>The app decides, you confirm</h3>
+        <p>It suggests your usual dish, sized to your plan. Not today? “Otra” shows the next best. Decisions are made before you're hungry.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="chip">torta de jamón</span><span class="small">→</span><span class="toks" data-t="carb:2" data-on="all" data-plus="carb:1"></span></div>
+        <h3>Say it, see it</h3>
+        <p>Type or dictate anything, like “torta de jamón”. In about two seconds you see how it counts and whether you're over or under.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="flower" data-f='{"p":["prot","fruit","prot","fruit","carb"],"gold":true}' data-s="44"></span><span class="flower" data-f='{"p":["prot","fruit","-","fruit","carb"]}' data-s="44"></span><span class="flower" data-f='{"p":["-","-","-","-","-"]}' data-s="44"></span></div>
+        <h3>A game you can't lose</h3>
+        <p>Each day grows a flower; each logged meal opens a petal. A missed day stays a bud, never a dead plant. Every new plan starts a fresh season.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section id="plan" aria-labelledby="h-plan">
+    <header>
+      <p class="label">Please check every number</p>
+      <h2 id="h-plan">Your plan, as I read it</h2>
+      <p class="dek">From the PDF dated 08 Oct 2026. Five eating moments a day. This table is exactly what the app will hold you to, so if anything is off, tell me.</p>
+    </header>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Moment</th><th>Time</th><th>Tokens</th><th>Your nutritionist's example</th></tr></thead>
+        <tbody>
+          <tr><td class="slot"><b>Desayuno</b><span>breakfast</span></td><td class="num">11:00</td><td><span class="toks" data-t="carb:2,prot:3,veg:1,fat:2" data-on="all"></span></td><td class="ex">2 tortillas de maíz · 3 huevos · ½ tz verdura · 1 cdta aceite + ⅓ aguacate</td></tr>
+          <tr><td class="slot"><b>Colación</b><span>snack 1</span></td><td class="num">13:00</td><td><span class="toks" data-t="dairy:1,fruit:1,fatp:1" data-on="all"></span></td><td class="ex">1 tz leche (latte) · 1 manzana · ½ chocolate sin azúcar</td></tr>
+          <tr><td class="slot"><b>Comida</b><span>lunch</span></td><td class="num">17:00</td><td><span class="toks" data-t="carb:2,prot:4,fruit:1,veg:2,fat:2" data-on="all"></span></td><td class="ex">2 tortillas · 120 g pollo, bistec o pescado · 1 tz verdura cocida · ½ pera o 1 manzana · 2 cdta aceite</td></tr>
+          <tr><td class="slot"><b>Colación</b><span>snack 2</span></td><td class="num">19:00</td><td><span class="toks" data-t="fruit:1" data-on="all"></span></td><td class="ex">1 manzana o ½ mango</td></tr>
+          <tr><td class="slot"><b>Cena</b><span>dinner</span></td><td class="num">21:00</td><td><span class="toks" data-t="carb:3,prot:3,veg:1,fat:2" data-on="all"></span></td><td class="ex">1 pan de hamburguesa o 3 tortillas · 90 g carne, bistec o pollo · ½ tz verdura · 2 cdtas aceite</td></tr>
+          <tr class="total"><td class="slot"><b>Day total</b></td><td></td><td colspan="2" class="num">7 🫓 carbs · 10 🍗 protein · 1 🥛 dairy · 3 🍎 fruit · 4 🥦 veg · 6 🥑 fat · 1 🥜 fat with protein</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="stack">
+      <h3>What one token equals (a few of the ~190 foods in your table)</h3>
+      <div class="equiv">
+        <div><span class="tk carb on l"><b>🫓</b></span><h3>1 carb</h3><p>1 tortilla de maíz · 2 tortillas de nopal · ¼ tz arroz cocido · ½ tz avena · 1 rebanada de pan · ⅓ bolillo sin migajón</p></div>
+        <div><span class="tk prot on l"><b>🍗</b></span><h3>1 protein</h3><p>1 huevo · 2 claras · 30 g pollo, carne o pescado · 30 g panela · ⅓ lata de atún · 2 rebanadas de pechuga de pavo</p></div>
+        <div><span class="tk dairy on l"><b>🥛</b></span><h3>1 dairy</h3><p>1 tz leche (vaca o soya) · 1 tz yogurt descremado · ⅓ tz leche evaporada</p></div>
+        <div><span class="tk fruit on l"><b>🍎</b></span><h3>1 fruit</h3><p>1 manzana · ½ mango · ½ plátano · 1 tz papaya, melón o fresas · 18 uvas · 2 mandarinas</p></div>
+        <div><span class="tk veg on l"><b>🥦</b></span><h3>1 veg</h3><p>½ tz verdura cocida · 2 tz verdura cruda · 2 jitomates · 1 tz pepino</p></div>
+        <div><span class="tk fat on l"><b>🥑</b></span><h3>1 fat</h3><p>⅓ aguacate · 1 cdta aceite · 1 cdta mayonesa · 1 cda crema · 8 aceitunas</p></div>
+        <div><span class="tk fatp on l"><b>🥜</b></span><h3>1 fat with protein</h3><p>10 almendras · 14 cacahuates · 2 cdtas crema de cacahuate · 18 pistaches</p></div>
+        <div><span class="pill">Free</span><h3>Doesn't count</h3><p>Café, té, agua mineral, refresco zero, jamaica, mostaza, salsa inglesa y de soya, especias, edulcorante, gelatina light.</p></div>
+      </div>
+      <p class="small">Also in your table, but with zero tokens in your current plan: legumes, sugars, and “con grasa” carbs (tortilla de harina, tostada, pan dulce). The app still knows how to count them.</p>
+    </div>
+
+    <div class="stack">
+      <h3>Also on your plan</h3>
+      <div class="alsoplan"><span class="pill">💧 3 L of fluids a day</span><span class="pill">🏃 Exercise 5 of 7 days, 45–60 min</span><span class="pill">📝 See the doctor · drink kefir</span></div>
+      <p class="small">Shown in the app's plan view. Not tracked in the first version (see “Left out on purpose”).</p>
+    </div>
+
+    <div class="check" role="note" aria-label="Things to confirm about the plan">
+      <h3>Six things I noticed, please confirm</h3>
+      <ol>
+        <li>Your brief said 1 cup of rice = 1 carb. <b>Your plan says ¼ cup of cooked rice = 1 carb</b>, and 2 nopal tortillas = 1. I follow the plan.</li>
+        <li>“Con grasa” foods (flour tortilla, tostada, pan dulce) aren't in your daily tokens. I'll count each as <b>1 carb + 1 fat</b>, the standard exchange rule. Worth a yes from your nutritionist.</li>
+        <li>I'll let <b>nuts and seeds 🥜 swap 1:1 with regular fats 🥑</b> (almonds instead of oil, avocado instead of the chocolate). Same: worth a yes.</li>
+        <li><b>Units stay in their meal.</b> A big lunch doesn't shrink dinner, unless your nutritionist says moving units within the day is fine. Then I switch on “cuadrar el día”.</li>
+        <li>Three portions look like typos: <b>7 tbsp chia, 4 tbsp sesame, ½ cup dried cranberries</b> = 1 token each. I'll use them as written; worth asking.</li>
+        <li>“½ chocolate sin azúcar” counts as <b>1 🥜</b> in your 1 pm snack, as your nutritionist wrote it.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- CONCEPTS -->
+  <section id="concepts" aria-labelledby="h-concepts">
+    <header>
+      <h2 id="h-concepts">Six ideas hold the whole app</h2>
+    </header>
+    <div class="concepts">
+      <div>
+        <div class="vis"><span class="tk carb l"><b>🫓</b></span><span class="tk carb on l"><b>🫓</b></span><span class="tk carb on plus l"><b>🫓</b></span></div>
+        <span class="es">FICHAS</span><h3>Tokens</h3>
+        <p>Every unit of your plan, colored by food group. Hollow = still to eat. Full = eaten. A “+” = extra, shown calmly, never in red.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="mini-card">Comida · 5 pm<span class="mini-btn">✓ Me lo comí</span></span></div>
+        <span class="es">LA TARJETA</span><h3>The meal card</h3>
+        <p>The app opens on the meal that fits the time, with a dish ready. It learns your real meal times and your favorites.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="chip">Tacos de pollo ×12</span><span class="chip">Huevos con nopales ×7</span></div>
+        <span class="es">TUS PLATOS</span><h3>Your dishes</h3>
+        <p>Every meal you log becomes a one-tap card. The collection builds itself, and it's what makes tomorrow faster.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="chip sel">huevo</span><span class="chip sel">tortillas</span><span class="chip">pollo</span><span class="chip">+</span></div>
+        <span class="es">COCINA</span><h3>Your kitchen</h3>
+        <p>Tell it what you have and get three dishes that fit. Mark something “se acabó” and it lands on the shopping list.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="chip sel">Temporada 2</span><span class="small">new plan, clean slate</span></div>
+        <span class="es">TEMPORADAS</span><h3>Seasons</h3>
+        <p>Each new plan from your nutritionist starts a new season: a fresh garden, new stamps to collect, and a recap of the last one.</p>
+      </div>
+      <div>
+        <div class="vis"><span class="flower sway" data-f='{"p":["carb","prot","fruit","veg","prot"],"gold":true}' data-s="46"></span></div>
+        <span class="es">EL JARDÍN</span><h3>Your garden</h3>
+        <p>One flower per day, one petal per meal, colored by what you ate. Over weeks it becomes a picture of your effort.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DAY -->
+  <section id="day" aria-labelledby="h-day">
+    <header>
+      <h2 id="h-day">The core experience</h2>
+      <p class="dek">Most days you only ever touch the first screen. Everything else is one tap away when you need it.</p>
+    </header>
+    <div class="flow" aria-label="Core loop">
+      <div class="step"><b>Open</b><span>under 1 second</span></div><span class="arr" aria-hidden="true">→</span>
+      <div class="step"><b>See your meal</b><span>tokens + a dish that fits</span></div><span class="arr" aria-hidden="true">→</span>
+      <div class="step"><b>Tap ✓</b><span>or say what you ate</span></div><span class="arr" aria-hidden="true">→</span>
+      <div class="step"><b>Pop &amp; grow</b><span>tokens fill, a petal opens</span></div>
+    </div>
+
+    <div class="shelf">
+      <figure class="shot">
+        <div class="phone" aria-label="Mockup: checking a meal before eating">
+          <div class="screen">
+            <div class="sb"><span>16:41</span><i></i></div>
+            <div class="app-h"><div><b>Jue 15 oct</b><small>Temporada 1 · día 8</small></div></div>
+            <div class="card" style="opacity:.6">
+              <div class="card-top"><b>Comida</b><span>5 pm</span></div>
+              <div class="toks" data-t="carb:2,prot:4,fruit:1,veg:2,fat:2"></div>
+            </div>
+            <div class="dim"></div>
+            <div class="sheet">
+              <div class="grab"></div>
+              <div class="input">tacos de pollo con 3 tortillas y verduras</div>
+              <div class="slotchips"><span class="chip sel">Comida</span><span class="chip">Cena</span><span class="chip">Extra</span></div>
+              <div class="items">
+                <div class="item"><span>3 tortillas de maíz</span><span class="toks" data-t="carb:3" data-on="all" data-size="s"></span></div>
+                <div class="item"><span>120 g pollo <small>supuse</small></span><span class="toks" data-t="prot:4" data-on="all" data-size="s"></span></div>
+                <div class="item"><span>1 tz verdura cocida</span><span class="toks" data-t="veg:2" data-on="all" data-size="s"></span></div>
+                <div class="item"><span>2 cdta aceite <small>supuse</small></span><span class="toks" data-t="fat:2" data-on="all" data-size="s"></span></div>
+              </div>
+              <div class="vs">
+                <div class="row"><span>vs. tu Comida</span></div>
+                <div class="toks" data-t="carb:2,prot:4,fruit:1,veg:2,fat:2" data-on="carb:2,prot:4,veg:2,fat:2" data-plus="carb:1"></div>
+              </div>
+              <p class="line">Un carbo de más. Con 2 tortillas queda exacto.</p>
+              <div class="two"><span class="btn ghost sm">Que cuadre</span><span class="btn sm">Anotar</span></div>
+              <div class="link">Solo checaba</div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Check before you eat.</b> Type or dictate. Guessed amounts are marked and tappable. “Que cuadre” trims it to fit your plan in one tap.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone" aria-label="Mockup: what can I make from my kitchen">
+          <div class="screen">
+            <div class="sb"><span>20:47</span><i></i></div>
+            <div class="seg"><span class="on">Tengo</span><span>Me falta · 3</span></div>
+            <div class="pantry"><span class="chip sel">huevo</span><span class="chip sel">tortillas</span><span class="chip sel">pollo</span><span class="chip sel">panela</span><span class="chip sel">jitomate</span><span class="chip sel">calabacitas</span><span class="chip sel">aguacate</span><span class="chip">+ agrega</span></div>
+            <div class="h-in">¿Qué me hago?<small>Para tu Cena</small></div>
+            <div style="padding:2px 16px"><span class="toks" data-t="carb:3,prot:3,veg:1,fat:2" data-size="s"></span></div>
+            <div class="idea-c"><b>Huevos a la mexicana <em>cabe exacto</em></b><p>3 tortillas · 3 huevos · 2 jitomates · 2 cdta aceite</p></div>
+            <div class="idea-c"><b>Quesadillas de panela <em>cabe exacto</em></b><p>3 tortillas · 90 g panela · ½ tz calabacitas · ⅔ aguacate</p></div>
+            <div class="idea-c"><b>Tacos de pollo <em>tu clásico</em></b><p>3 tortillas · 90 g pollo · 2 jitomates · ⅔ aguacate</p></div>
+            <div style="margin:auto 12px 10px"><div class="btn">✓ Me hago el primero</div></div>
+            <div class="tabs"><span>Hoy</span><span class="on">Cocina</span><span>Historia</span></div>
+          </div>
+        </div>
+        <figcaption><b>What can I make?</b> Your kitchen is remembered between visits. Three options at most, each already sized to the meal.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone" aria-label="Mockup: closing the day">
+          <div class="screen">
+            <div class="sb"><span>21:38</span><i></i></div>
+            <div class="close-top">
+              <div class="big"><span class="flower sway" data-f='{"p":["prot","fruit","prot","fruit","carb"],"gold":true}' data-s="132"></span><span class="spark" style="top:8px;left:-4px">✦</span><span class="spark" style="top:30px;right:-10px">✦</span><span class="spark" style="bottom:12px;left:6px">✦</span></div>
+              <b>Día redondo</b>
+              <p>Día cerrado. Mañana ya está armado.</p>
+              <div class="dots" aria-label="6 of the last 7 days logged"><i class="f"></i><i class="h"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><small>6/7</small></div>
+            </div>
+            <div class="tom">
+              <h4>Mañana <small>vie 16 oct</small></h4>
+              <ul>
+                <li><span>Desayuno</span><span>Huevos con tortillas</span></li>
+                <li><span>Colación</span><span>Latte y manzana</span></li>
+                <li><span>Comida</span><span>Pescado con arroz</span></li>
+                <li><span>Colación</span><span>Mango</span></li>
+                <li><span>Cena</span><span>Hamburguesa casera</span></li>
+              </ul>
+              <div class="two"><span class="btn ghost sm">Cambiar</span><span class="btn sm">Así ✓</span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>The evening ritual.</b> Today's flower blooms into your garden, then tomorrow is planned for you. One tap to accept.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- FAST -->
+  <section id="fast" aria-labelledby="h-fast">
+    <header>
+      <h2 id="h-fast">How it stays fast and effortless</h2>
+      <p class="dek">Rule of thumb for the whole build: if a screen makes you think, it gets redesigned. Defaults do the work; every action can be undone, so nothing asks “are you sure?”.</p>
+    </header>
+    <div class="fast">
+      <div class="stack">
+        <h3>What it does for you, automatically</h3>
+        <ul class="auto">
+          <li><span><b>Opens on the right meal</b> for the time of day, and learns your real meal times.</span></li>
+          <li><span><b>Suggests your usual dish</b>, or your nutritionist's example until it knows you.</span></li>
+          <li><span><b>Re-portions your favorites</b> when a new plan changes the numbers. Three tortillas become two by themselves.</span></li>
+          <li><span><b>Counts any food from plain words</b>, including tacos, tortas and restaurant plates.</span></li>
+          <li><span><b>Fits a meal to your plan</b> in one tap (“Que cuadre”).</span></li>
+          <li><span><b>Plans tomorrow</b> each evening; you just accept.</span></li>
+          <li><span><b>Keeps your kitchen and shopping list</b> in sync: what runs out goes on the list.</span></li>
+          <li><span><b>Reads each new plan PDF or photo</b> and shows you only what changed.</span></li>
+          <li><span><b>Works offline</b> and syncs by itself.</span></li>
+          <li><span><b>Reminds you only when you forget</b>, at your real meal times, two a day at most, and goes quiet if you ignore it.</span></li>
+        </ul>
+      </div>
+      <div class="stack budget">
+        <h3>Time budget per action</h3>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Action</th><th class="n">Taps</th><th class="n">Time</th></tr></thead>
+            <tbody>
+              <tr><td>See what you can eat now, in real food</td><td class="n">0</td><td class="n">1 s</td></tr>
+              <tr><td>Log your usual</td><td class="n">1</td><td class="n">2 s</td></tr>
+              <tr><td>Log a dish you've had before</td><td class="n">2</td><td class="n">5 s</td></tr>
+              <tr><td>Check or log anything new (type or dictate)</td><td class="n">2 + words</td><td class="n">10 s</td></tr>
+              <tr><td>“¿Qué me hago?” from your kitchen</td><td class="n">1</td><td class="n">2 s</td></tr>
+              <tr><td>Accept tomorrow's menu</td><td class="n">1</td><td class="n">3 s</td></tr>
+              <tr><td>Undo anything</td><td class="n">1</td><td class="n">1 s</td></tr>
+              <tr><td>New plan, every ~15 days</td><td class="n">≈ 6</td><td class="n">90 s</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">These are acceptance tests, not goals. If a build is slower, it isn't done.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PULL -->
+  <section id="pull" aria-labelledby="h-pull">
+    <header>
+      <h2 id="h-pull">Why you'll want to open it</h2>
+      <p class="dek">The fastest action in the app is also its most satisfying one, so speed and reward pull in the same direction. Four loops, from one second to months. Every reward goes to logging, planning and coming back, never to eating less.</p>
+    </header>
+    <div class="loops">
+      <div>
+        <span class="when">Every log · 1 second</span>
+        <div class="vis"><span class="toks" data-t="prot:3,fruit:1" data-on="all" data-size="l"></span><span class="spark" style="position:static">✦</span></div>
+        <h3>The pop</h3>
+        <p>Tokens fill one by one with a rising sound and a tap of haptics, then one short friendly line. Now and then, an unannounced surprise.</p>
+      </div>
+      <div>
+        <span class="when">Every evening · 10 seconds</span>
+        <div class="vis"><span class="flower" data-f='{"p":["carb","fruit","prot","fruit","prot"],"gold":true}' data-s="58"></span></div>
+        <h3>Closing the day</h3>
+        <p>Today's flower blooms into your garden and tomorrow's menu is ready. A small ritual that ends the day with a decision already made.</p>
+      </div>
+      <div>
+        <span class="when">Every new plan · ~15 days</span>
+        <div class="vis"><span class="stamps" style="padding:0;grid-template-columns:repeat(4,26px);gap:5px"><span class="got" style="font-size:12px">🥄</span><span class="got" style="font-size:12px">🏠</span><span class="got" style="font-size:12px">👋</span><span class="hid">?</span></span></div>
+        <h3>Seasons and stamps</h3>
+        <p>A fresh garden and a sheet of stamps to collect, some of them hidden. At the end, a recap you can show your nutritionist.</p>
+      </div>
+      <div>
+        <span class="when">Over months · lifetime</span>
+        <div class="vis"><span class="chip sel">Nivel 6</span><span class="chip">🌼 cempasúchil</span><span class="chip">🌸 dalia</span></div>
+        <h3>Levels that never drop</h3>
+        <p>Meals logged unlock flower styles (dalia, cempasúchil, nochebuena) and color themes. Nothing ever goes down.</p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>What it never does</h3>
+      <div class="never"><span><s>Streaks you can lose</s></span><span><s>Red for overeating</s></span><span><s>“Cheat”, “bad food”, “exceeded”</s></span><span><s>Rewards for eating less than the plan</s></span><span><s>Guilt notifications</s></span><span><s>Comparing you to anyone</s></span><span><s>Calories</s></span></div>
+      <p class="small">Instead of a streak, you see the last seven days as dots. A missed day just rolls off after a week. Coming back is celebrated, and missed meals can be filled in the next morning with full credit.</p>
+    </div>
+
+    <div class="shelf">
+      <figure class="shot">
+        <div class="phone" aria-label="Mockup: the season garden">
+          <div class="screen">
+            <div class="sb"><span>09:12</span><i></i></div>
+            <div class="h-in" style="padding-top:12px">Temporada 1<small>8 oct – 22 oct · día 9 de 15</small></div>
+            <div class="garden">
+              <span class="flower" data-f='{"p":["prot","fruit","prot","fruit","carb"],"gold":true}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["prot","fruit","prot","fruit","carb"]}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["prot","dairy","prot","-","carb"]}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["carb","fruit","prot",".","prot"]}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["prot","fruit","carb","fruit","carb"],"gold":true}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["-","-","-","-","-"]}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["-","-","prot","fruit","carb"]}' data-s="50"></span>
+              <span class="flower" data-f='{"p":["prot","fruit","prot","fruit","carb"],"gold":true}' data-s="50"></span>
+              <span class="flower today sway" data-f='{"p":["prot","-","-","-","-"]}' data-s="50"></span>
+              <span class="flower" data-f='{"seed":true}' data-s="50"></span>
+              <span class="flower" data-f='{"seed":true}' data-s="50"></span>
+              <span class="flower" data-f='{"seed":true}' data-s="50"></span>
+              <span class="flower" data-f='{"seed":true}' data-s="50"></span>
+              <span class="flower" data-f='{"seed":true}' data-s="50"></span>
+              <span class="flower" data-f='{"seed":true}' data-s="50"></span>
+            </div>
+            <div class="h-in" style="font-size:13px">Estampas <small>4 de 8 · y algunas escondidas</small></div>
+            <div class="stamps"><span class="got">🥄</span><span class="got">🏠</span><span class="got">⭐</span><span class="got">👋</span><span>🗓️</span><span>🌱</span><span>🍳</span><span class="hid">?</span></div>
+            <div class="lvl"><div><b>Nivel 4</b><span>12 comidas para el 5</span></div><div class="bar"><i></i></div></div>
+            <div class="tabs" style="margin-top:auto"><span>Hoy</span><span>Cocina</span><span class="on">Historia</span></div>
+          </div>
+        </div>
+        <figcaption><b>Your season at a glance.</b> Day 6 was skipped: it's a bud, not a dead plant. Day 7 is the comeback. The ring marks today.</figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone" aria-label="Mockup: reviewing a new plan">
+          <div class="screen">
+            <div class="sb"><span>18:05</span><i></i></div>
+            <div class="h-in" style="padding-top:12px">Plan nuevo<small>Leído de tu PDF · 3 cambios</small></div>
+            <div class="diff">
+              <div><div class="hd"><span>Desayuno</span><small>sin cambios</small></div><span class="toks" data-t="carb:2,prot:3,veg:1,fat:2" data-on="all" data-size="s"></span></div>
+              <div><div class="hd"><span>Colación</span><small>sin cambios</small></div><span class="toks" data-t="dairy:1,fruit:1,fatp:1" data-on="all" data-size="s"></span></div>
+              <div class="chg"><div class="hd"><span>Comida</span><em>+1 🫓</em></div><span class="toks" data-t="carb:2,prot:4,fruit:1,veg:2,fat:2" data-on="all" data-plus="carb:1" data-size="s"></span></div>
+              <div><div class="hd"><span>Colación</span><small>sin cambios</small></div><span class="toks" data-t="fruit:1" data-on="all" data-size="s"></span></div>
+              <div class="chg"><div class="hd"><span>Cena</span><em>−1 🥑 · −1 🫓</em></div><span class="toks" data-t="carb:2,prot:3,veg:1,fat:1" data-on="all" data-size="s"></span></div>
+            </div>
+            <div class="when">Empieza: <span class="chip">Hoy</span><span class="chip sel">Mañana</span></div>
+            <div class="when">Báscula de tu nutrióloga: <span class="chip">— kg</span></div>
+            <div style="margin:auto 12px 18px"><div class="btn">Se ve bien ✓</div></div>
+          </div>
+        </div>
+        <figcaption><b>New plan, new season.</b> Upload the PDF or snap a photo. You review only what changed. Past plans and logs stay untouched.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- WALKTHROUGH -->
+  <section id="walkthrough" aria-labelledby="h-walk">
+    <header>
+      <h2 id="h-walk">A typical day, and a bad one</h2>
+      <p class="dek">The bad day matters more. People quit tracking right after the meals they feel bad about, so that's where the app has to be at its kindest.</p>
+    </header>
+    <div class="days">
+      <article class="day">
+        <header><h3>A typical Thursday</h3><span class="small">≈ 30 s in the app all day</span></header>
+        <ol class="tl">
+          <li><time>10:58</time><span>Opens the app. Breakfast card shows “Huevos con tortillas”, sized to the plan. One tap. Tokens pop: <q>Buen arranque.</q></span></li>
+          <li><time>13:05</time><span>Latte and apple: one tap from the snack row.</span></li>
+          <li><time>16:40</time><span>At a fonda. Types “pollo con arroz y frijoles”. Sees one carb over (the rice). Taps “Que cuadre”: ½ cup of rice instead. Logs it. <span class="s">9 s</span></span></li>
+          <li><time>19:10</time><span>Apple: one tap.</span></li>
+          <li><time>20:55</time><span>Opens “Cocina”: has eggs, tortillas, tomatoes. Picks “Huevos a la mexicana”. Done.</span></li>
+          <li><time>21:35</time><span>Day close: a five-petal flower with a gold center blooms. Tomorrow's menu: “Así ✓”.</span></li>
+        </ol>
+      </article>
+      <article class="day">
+        <header><h3>A bad Saturday</h3><span class="small">and the days after</span></header>
+        <ol class="tl">
+          <li><time>Sat 14:30</time><span>Forgot breakfast and the snack. One gentle nudge: <q>¿Comida como siempre? Un toque y listo.</q> Ignored. That's fine.</span></li>
+          <li><time>18:00</time><span>Party: tacos al pastor and cake. Types it. Extras show as calm “+” tokens, no red, no sad sound: <q>Día de fiesta. Anotado, eso es lo que cuenta.</q> A hidden stamp appears: “Sin filtro”.</span></li>
+          <li><time>21:00</time><span>The dinner card is unchanged and clean. One meal doesn't ruin a day.</span></li>
+          <li><time>Sun 11:00</time><span>“¿Y ayer?” card: taps “lo de siempre” for the forgotten breakfast. It counts fully; Saturday's flower opens one more petal.</span></li>
+          <li><time>Mon–Tue</time><span>No logs at all. At most two nudges a day, then the app goes quiet for that meal.</span></li>
+          <li><time>Wed 11:00</time><span>Opens the app: <q>¡Volviste! Justo a tiempo para la que sigue.</q> The “Volviste” stamp. No mention of the gap; the week shows 3 of 7 dots and breakfast is ready.</span></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <!-- VOICE -->
+  <section id="voice" aria-labelledby="h-voice">
+    <header>
+      <h2 id="h-voice">How it talks</h2>
+      <p class="dek">A quick-witted friend who's on your side. The app speaks casual Mexican Spanish, because your plan, your food and your nutritionist do. English glosses are only here for review.</p>
+    </header>
+    <div class="rules"><span>10 words or fewer</span><span>Warm, never clinical</span><span>Never judges food or you</span><span>Celebrates logging and comebacks</span></div>
+    <div class="voice">
+      <div class="toast"><span class="moment">Meal on plan</span><b>¡Eso! Comida en plan.</b><span>Yes! Lunch on plan.</span></div>
+      <div class="toast"><span class="moment">First log of the day</span><b>Buen arranque.</b><span>Good start.</span></div>
+      <div class="toast"><span class="moment">One carb over</span><b>Un carbo de más. Sin drama: borrón y cuenta nueva.</b><span>One carb over. No drama: fresh start.</span></div>
+      <div class="toast"><span class="moment">A big, messy meal</span><b>Día de fiesta. Anotado, eso es lo que cuenta.</b><span>Party day. Logged, and that's what counts.</span></div>
+      <div class="toast"><span class="moment">Something left</span><b>Te quedó una fruta. Es tuya si se te antoja.</b><span>One fruit left. Yours if you want it.</span></div>
+      <div class="toast"><span class="moment">Free food</span><b>Libre. No cuenta.</b><span>Free. Doesn't count.</span></div>
+      <div class="toast"><span class="moment">Back after missed days</span><b>¡Volviste! Justo a tiempo para la que sigue.</b><span>You're back! Right on time for the next one.</span></div>
+      <div class="toast"><span class="moment">Closing the day</span><b>Día cerrado. Mañana ya está armado.</b><span>Day closed. Tomorrow's already sorted.</span></div>
+      <div class="toast"><span class="moment">New plan</span><b>Temporada 2. Plan nuevo, hoja en blanco.</b><span>Season 2. New plan, clean slate.</span></div>
+      <div class="toast"><span class="moment">Reminder</span><b>¿Comida como siempre? Un toque y listo.</b><span>Lunch as usual? One tap and done.</span></div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" aria-labelledby="h-features">
+    <header>
+      <h2 id="h-features">What gets built, in order</h2>
+      <p class="dek">Each step ships working and gets checked against the time budgets before the next one starts. Step 3 is ready before your next appointment (about 22 Oct).</p>
+    </header>
+    <ol class="steps">
+      <li><span><b>Core loop</b><span>Open, see your tokens and a dish that fits, log in one tap. Installable, works offline.</span></span></li>
+      <li><span><b>Say it, see it</b><span>Type or dictate any food; see how it counts; “fit it to my plan”.</span></span></li>
+      <li><span><b>New plan, new season</b><span>Upload the PDF or a photo; review only the changes; history stays intact.</span></span></li>
+      <li><span><b>The game</b><span>Day close, tomorrow's menu, garden, stamps, levels, comebacks.</span></span></li>
+      <li><span><b>Kitchen</b><span>What you have → three dishes that fit; automatic shopping list.</span></span></li>
+      <li><span><b>Nudges</b><span>Reminders only when you forget, at your real meal times, two a day at most.</span></span></li>
+      <li><span><b>Story and check-in</b><span>Season recaps, weight at check-ins, a one-page report for your nutritionist.</span></span></li>
+      <li><span><b>Polish</b><span>Optional photo logging, speed and accessibility pass, backups.</span></span></li>
+    </ol>
+  </section>
+
+  <!-- OUT -->
+  <section id="out" aria-labelledby="h-out">
+    <header>
+      <h2 id="h-out">Left out on purpose</h2>
+      <p class="dek">Each of these adds taps, words or pressure. Several are what most diet apps are built around.</p>
+    </header>
+    <ul class="out">
+      <li><b>Calories and macros</b><span>Your plan speaks tokens. Numbers add thinking and are linked to obsessive tracking.</span></li>
+      <li><b>Streaks you can lose</b><span>Broken streaks make people quit. You get rolling week dots instead.</span></li>
+      <li><b>Red colors, grades, “cheat meals”</b><span>Shame makes people stop logging the meals that matter most.</span></li>
+      <li><b>Rewards for eating less</b><span>The plan is the target. Under-eating is never celebrated.</span></li>
+      <li><b>A chatbot coach</b><span>Slow and wordy. The AI works silently in the background.</span></li>
+      <li><b>Barcode scanner and food search</b><span>Typing “yogurt griego” is faster than browsing a database.</span></li>
+      <li><b>Photo-first logging</b><span>Photos feel easy, but studies show people log less with them. Photos come later as an option.</span></li>
+      <li><b>Daily weigh-ins</b><span>Weight is optional and asked only at your nutritionist check-ins.</span></li>
+      <li><b>Water and exercise tracking (for now)</b><span>Shown in your plan, not tracked. Easy to add once the core habit is solid.</span></li>
+      <li><b>Leaderboards, social feeds, app-icon badges</b><span>Comparison and red badges create urgency, not habits.</span></li>
+    </ul>
+  </section>
+
+  <!-- SCIENCE -->
+  <section id="science" aria-labelledby="h-science">
+    <header>
+      <h2 id="h-science">Why this works</h2>
+      <p class="dek">I reviewed meta-analyses, trials and design research before deciding anything. The short version:</p>
+    </header>
+    <ul class="why">
+      <li><b>Logging often matters more than logging carefully.</b><span>People who opened their food diary more times a day lost more weight, while minutes spent didn't matter. Logging at least two eating moments a day is the best adherence marker.</span></li>
+      <li><b>Most lost weight comes back, and appetite is why.</b><span>Appetite rises by roughly 100 kcal a day for every kilo lost, and hunger hormones stay shifted for at least a year. What wins is a routine light enough to keep for years.</span></li>
+      <li><b>Habits form from repetition in the same moment, and survive a missed day.</b><span>About two months on average; one miss barely matters. Long gaps do, which is why comebacks are celebrated.</span></li>
+      <li><b>All-or-nothing thinking predicts regain.</b><span>Flexible control does better than rigid rules, and self-compassion after a slip reduces overeating. Hence calm “+” tokens and a clean next meal.</span></li>
+      <li><b>Deciding before you're hungry leads to better choices.</b><span>Ordering ahead cuts calories; structured meal plans with shopping lists improved weight loss. Hence tomorrow's menu.</span></li>
+      <li><b>Making the right thing easy beats telling you about it.</b><span>Convenience nudges work about three times better than information. Hence pre-portioned suggestions and “Que cuadre”.</span></li>
+      <li><b>Surprise and feedback keep motivation yours; expected prizes erode it.</b><span>So rewards are visual and unannounced, never points to “earn”.</span></li>
+      <li><b>Game mechanics help a little, and only when they serve the real behavior.</b><span>Here every mechanic rewards logging, planning or coming back. Broken streaks reduce return rates, so there are none to break.</span></li>
+      <li><b>Fresh starts boost motivation.</b><span>Your plan changes every 15 days, a built-in fresh start. Seasons use it.</span></li>
+      <li><b>Notifications help modestly and wear off.</b><span>So: few, well-timed, and quiet when ignored.</span></li>
+      <li><b>Food pictures trigger cravings.</b><span>The app uses token icons, not glossy food photos.</span></li>
+    </ul>
+    <details>
+      <summary>Sources (24)</summary>
+      <ol>
+        <li>Harvey et al. 2019, “Log Often, Lose More”, <i>Obesity</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30801989/">PubMed</a></li>
+        <li>Turner-McGrievy et al. 2019, adherence to mobile dietary self-monitoring, <i>J Acad Nutr Diet</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6856872">PMC</a></li>
+        <li>Burke, Wang &amp; Sevick 2011, self-monitoring in weight loss, systematic review. <a href="https://pubmed.ncbi.nlm.nih.gov/21185970/">PubMed</a></li>
+        <li>Anderson et al. 2001, long-term weight-loss maintenance, meta-analysis, <i>Am J Clin Nutr</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/11684524/">PubMed</a></li>
+        <li>Polidori et al. 2016, “How strongly does appetite counter weight loss?”, <i>Obesity</i>. <a href="https://deepblue.lib.umich.edu/items/5b51d78b-d365-47b9-a640-4851974eb21f">Deep Blue</a></li>
+        <li>Sumithran et al. 2011, long-term persistence of hormonal adaptations to weight loss, <i>NEJM</i>. <a href="https://doi.org/10.1056/NEJMoa1105816">DOI</a></li>
+        <li>Thomas et al. 2014, 10-year weight-loss maintenance, National Weight Control Registry, <i>Am J Prev Med</i>. <a href="https://sciencedaily.com/releases/2014/01/140106115351.htm">Summary</a></li>
+        <li>Lally et al. 2010, how habits form in the real world, <i>Eur J Soc Psychol</i>. <a href="https://www.surrey.ac.uk/news/does-it-really-take-66-days-form-habit-we-asked-expert-dr-pippa-lally">Author interview</a></li>
+        <li>Palascha et al. 2015, black-and-white thinking and weight regain, <i>J Health Psychol</i>. <a href="https://research.wur.nl/en/publications/how-does-thinking-in-black-and-white-terms-relate-to-eating-behav/">WUR</a></li>
+        <li>Westenhoefer 1999, flexible vs rigid dietary control, <i>Int J Eat Disord</i>. <a href="https://reposit.haw-hamburg.de/handle/20.500.12738/4242">Record</a></li>
+        <li>Adams &amp; Leary 2007, self-compassion and eating, <i>J Soc Clin Psychol</i>. <a href="https://doi.org/10.1521/jscp.2007.26.10.1120">DOI</a></li>
+        <li>VanEpps, Downs &amp; Loewenstein 2016, advance ordering for healthier eating, <i>J Marketing Research</i>. <a href="https://chibe.upenn.edu/publications/advance-ordering-for-healthier-eating-field-experiments-on-the-relationship-between-the-meal-order-consumption-time-delay-and-meal-content">CHIBE</a></li>
+        <li>Wing et al. 1996, structured meal plans vs food provision, <i>Int J Obes</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/8788323/">PubMed</a></li>
+        <li>Cadario &amp; Chandon 2020, which healthy-eating nudges work best, <i>Marketing Science</i>. <a href="https://pubsonline.informs.org/doi/suppl/10.1287/mksc.2018.1128">INFORMS</a></li>
+        <li>Deci, Koestner &amp; Ryan 1999, rewards and intrinsic motivation, <i>Psychol Bull</i>. <a href="https://depts.washington.edu/techdocs/papers/deciExtrinsicRewardsAndIntrinsicMotivation99.pdf">PDF</a></li>
+        <li>Gamified health apps and weight, meta-analysis of 36 RCTs, <i>eClinicalMedicine</i> 2024. <a href="https://pubmed.ncbi.nlm.nih.gov/39764571/">PubMed</a></li>
+        <li>Mazeas et al. 2022, gamification and physical activity, meta-analysis of RCTs, <i>JMIR</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8767479/">PMC</a></li>
+        <li>Silverman &amp; Barasch 2023, how broken streaks affect decisions, <i>J Consumer Research</i>. <a href="https://www.colorado.edu/business/faculty-research/2023/04/19/or-track-how-broken-streaks-affect-consumer-decisions">Summary</a></li>
+        <li>Dai, Milkman &amp; Riis 2014, the fresh start effect, <i>Management Science</i>. <a href="https://doi.org/10.1287/mnsc.2014.1901">DOI</a></li>
+        <li>Cordeiro et al. 2015, barriers and negative nudges in food journaling, <i>CHI</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4755274">PMC</a></li>
+        <li>Silverman et al. 2022, misconceptions about logging food with photos versus text, <i>J Assoc Consumer Research</i>. <a href="https://udspace.udel.edu/handle/19716/34163">Record</a></li>
+        <li>Bidargaddi et al. 2018, push notifications micro-randomized trial, <i>JMIR mHealth</i>. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6293241/">PMC</a></li>
+        <li>Klasnja et al. 2019, HeartSteps micro-randomized trial (prompt effects fade), <i>Ann Behav Med</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6401341">PMC</a></li>
+        <li>Boswell &amp; Kober 2016, food cue reactivity and craving predict eating, <i>Obesity Reviews</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6042864">PMC</a></li>
+      </ol>
+    </details>
+  </section>
+
+  <!-- CONFIRM -->
+  <section id="confirm" aria-labelledby="h-confirm">
+    <header>
+      <p class="label">Before I build anything</p>
+      <h2 id="h-confirm">Please confirm</h2>
+      <p class="dek">Reply with the numbers you'd change. Silence on a point means I go with what's written.</p>
+    </header>
+    <ol class="confirm">
+      <li><span><b>The app speaks casual Mexican Spanish.</b> <span>Your plan, foods and nutritionist are in Spanish. Prefer English? It's one file of text.</span></span></li>
+      <li><span><b>The plan reading above is right:</b> <span>times, tokens per meal, and day totals.</span></span></li>
+      <li><span><b>The nutritionist questions:</b> <span>“con grasa” = carb + fat; nuts ↔ fats 1:1; can units move between meals; the three odd portions. Until you hear back, the safe defaults apply.</span></span></li>
+      <li><span><b>Working name “Fichas”.</b> <span>Rename it anytime.</span></span></li>
+      <li><span><b>Designed for iPhone first,</b> <span>the stricter platform for web apps. Android works too. Tell me if you're on Android.</span></span></li>
+      <li><span><b>Water and exercise are shown, not tracked, in v1.</b> <span>Weight is optional and asked only at nutritionist check-ins.</span></span></li>
+      <li><span><b>Running cost:</b> <span>Cloudflare's free tier, plus about US$1–2 a month of AI. Your VPS and email aren't needed.</span></span></li>
+    </ol>
+  </section>
+
+  <div class="foot">
+    <span>Fichas · Stage 1 · Document 1 of 2</span>
+    <span>Build spec: <code>docs/02-technical-roadmap.md</code></span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var EMO={carb:"🫓",prot:"🍗",dairy:"🥛",fruit:"🍎",veg:"🥦",fat:"🥑",fatp:"🥜",sugar:"🍬",leg:"🫘"};
+  var NAME={carb:"carb",prot:"protein",dairy:"dairy",fruit:"fruit",veg:"veg",fat:"fat",fatp:"fat with protein",sugar:"sugar",leg:"legume"};
+  var SIZE={s:" s",l:" l",xl:" xl"};
+  function parse(str){var o={};(str||"").split(",").forEach(function(p){var kv=p.split(":");if(kv[0]&&kv[1])o[kv[0].trim()]=parseFloat(kv[1]);});return o;}
+  document.querySelectorAll(".toks[data-t]").forEach(function(el){
+    var groups=parse(el.dataset.t), plus=parse(el.dataset.plus), size=SIZE[el.dataset.size]||"";
+    var all=el.dataset.on==="all", on=all?groups:parse(el.dataset.on);
+    var html="", label=[];
+    Object.keys(groups).forEach(function(t){
+      var n=groups[t], f=on[t]||0, g="";
+      for(var i=0;i<n;i++){g+='<span class="tk '+t+size+(i<f?" on":"")+'"><b>'+EMO[t]+"</b></span>";}
+      for(var j=0;j<(plus[t]||0);j++){g+='<span class="tk '+t+size+' on plus"><b>'+EMO[t]+"</b></span>";}
+      html+='<span class="tg">'+g+"</span>";
+      label.push(n+" "+NAME[t]+(plus[t]?" plus "+plus[t]+" extra":""));
+    });
+    el.innerHTML=html;
+    el.setAttribute("role","img");
+    el.setAttribute("aria-label",label.join(", "));
+  });
+  var COL={carb:"var(--t-carb)",prot:"var(--t-prot)",dairy:"var(--t-dairy)",fruit:"var(--t-fruit)",veg:"var(--t-veg)",fat:"var(--t-fat)",fatp:"var(--t-fatp)"};
+  function flower(spec,size){
+    if(spec.seed){
+      return '<svg viewBox="-30 -30 60 60" width="'+size+'" height="'+size+'" aria-hidden="true"><path d="M-15 14 Q0 0 15 14 Z" fill="var(--soil)"/><ellipse cx="0" cy="8" rx="3" ry="2.2" fill="var(--seed)"/></svg>';
+    }
+    var n=spec.p.length, petals="";
+    spec.p.forEach(function(c,i){
+      var a=(i*360/n).toFixed(1);
+      if(c==="-"){petals+='<ellipse cx="0" cy="-9.5" rx="4.4" ry="8" transform="rotate('+a+')" fill="var(--bud)"/>';}
+      else if(c==="."){petals+='<circle cx="0" cy="-9" r="2.4" transform="rotate('+a+')" fill="var(--line)"/>';}
+      else{petals+='<ellipse cx="0" cy="-13.5" rx="7.6" ry="13" transform="rotate('+a+')" fill="'+COL[c]+'" fill-opacity=".92"/>';}
+    });
+    var center='<circle r="'+(spec.gold?7.2:6)+'" fill="'+(spec.gold?"var(--gold)":"var(--center)")+'"/>';
+    return '<svg viewBox="-30 -30 60 60" width="'+size+'" height="'+size+'" aria-hidden="true">'+petals+center+"</svg>";
+  }
+  document.querySelectorAll(".flower[data-f]").forEach(function(el){
+    try{el.innerHTML=flower(JSON.parse(el.dataset.f),el.dataset.s||48);}catch(e){}
+  });
+})();
+</script>
