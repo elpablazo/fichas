@@ -1,0 +1,393 @@
+[
+  {
+    "id": 1,
+    "text": "2 tortillas de maíz",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 2
+    },
+    "free": false
+  },
+  {
+    "id": 2,
+    "text": "3 huevos revueltos con una cucharadita de aceite",
+    "kind": "exact",
+    "expected": {
+      "protein_poa": 3,
+      "fat_sp": 1
+    },
+    "free": false
+  },
+  {
+    "id": 3,
+    "text": "120 g de pechuga de pollo",
+    "kind": "exact",
+    "expected": {
+      "protein_poa": 4
+    },
+    "free": false
+  },
+  {
+    "id": 4,
+    "text": "una manzana",
+    "kind": "exact",
+    "expected": {
+      "fruit": 1
+    },
+    "free": false
+  },
+  {
+    "id": 5,
+    "text": "media taza de arroz",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 2
+    },
+    "free": false
+  },
+  {
+    "id": 6,
+    "text": "1 taza de arroz integral",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 3
+    },
+    "free": false
+  },
+  {
+    "id": 7,
+    "text": "un bolillo sin migajón",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 3
+    },
+    "free": false
+  },
+  {
+    "id": 8,
+    "text": "2 rebanadas de pan de caja",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 2
+    },
+    "free": false
+  },
+  {
+    "id": 9,
+    "text": "un plátano",
+    "kind": "exact",
+    "expected": {
+      "fruit": 2
+    },
+    "free": false
+  },
+  {
+    "id": 10,
+    "text": "un mango ataúlfo",
+    "kind": "exact",
+    "expected": {
+      "fruit": 2
+    },
+    "free": false
+  },
+  {
+    "id": 11,
+    "text": "18 uvas",
+    "kind": "exact",
+    "expected": {
+      "fruit": 1
+    },
+    "free": false
+  },
+  {
+    "id": 12,
+    "text": "una taza de papaya",
+    "kind": "exact",
+    "expected": {
+      "fruit": 1
+    },
+    "free": false
+  },
+  {
+    "id": 13,
+    "text": "una taza de leche descremada",
+    "kind": "exact",
+    "expected": {
+      "dairy": 1
+    },
+    "free": false
+  },
+  {
+    "id": 14,
+    "text": "una taza de yogurt natural descremado",
+    "kind": "exact",
+    "expected": {
+      "dairy": 1
+    },
+    "free": false
+  },
+  {
+    "id": 15,
+    "text": "media taza de frijoles de la olla",
+    "kind": "exact",
+    "expected": {
+      "legume": 1
+    },
+    "free": false
+  },
+  {
+    "id": 16,
+    "text": "un tercio de aguacate",
+    "kind": "exact",
+    "expected": {
+      "fat_sp": 1
+    },
+    "free": false
+  },
+  {
+    "id": 17,
+    "text": "un aguacate entero",
+    "kind": "exact",
+    "expected": {
+      "fat_sp": 3
+    },
+    "free": false
+  },
+  {
+    "id": 18,
+    "text": "10 almendras",
+    "kind": "exact",
+    "expected": {
+      "fat_cp": 1
+    },
+    "free": false
+  },
+  {
+    "id": 19,
+    "text": "20 almendras",
+    "kind": "exact",
+    "expected": {
+      "fat_cp": 2
+    },
+    "free": false
+  },
+  {
+    "id": 20,
+    "text": "2 cucharaditas de crema de cacahuate",
+    "kind": "exact",
+    "expected": {
+      "fat_cp": 1
+    },
+    "free": false
+  },
+  {
+    "id": 21,
+    "text": "café americano",
+    "kind": "exact",
+    "expected": {},
+    "free": true
+  },
+  {
+    "id": 22,
+    "text": "coca zero",
+    "kind": "exact",
+    "expected": {},
+    "free": true
+  },
+  {
+    "id": 23,
+    "text": "una lata de atún drenado",
+    "kind": "exact",
+    "expected": {
+      "protein_poa": 3
+    },
+    "free": false
+  },
+  {
+    "id": 24,
+    "text": "90 g de queso panela",
+    "kind": "exact",
+    "expected": {
+      "protein_poa": 3
+    },
+    "free": false
+  },
+  {
+    "id": 25,
+    "text": "2 tortillas de harina",
+    "kind": "exact",
+    "expected": {
+      "carb_cg": 2
+    },
+    "free": false
+  },
+  {
+    "id": 26,
+    "text": "una tostada",
+    "kind": "exact",
+    "expected": {
+      "carb_cg": 1
+    },
+    "free": false
+  },
+  {
+    "id": 27,
+    "text": "una concha",
+    "kind": "exact",
+    "expected": {
+      "carb_cg": 3
+    },
+    "free": false
+  },
+  {
+    "id": 28,
+    "text": "una taza de verduras al vapor",
+    "kind": "exact",
+    "expected": {
+      "veg": 2
+    },
+    "free": false
+  },
+  {
+    "id": 29,
+    "text": "5 galletas marías",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 1
+    },
+    "free": false
+  },
+  {
+    "id": 30,
+    "text": "2 claras de huevo",
+    "kind": "exact",
+    "expected": {
+      "protein_poa": 1
+    },
+    "free": false
+  },
+  {
+    "id": 31,
+    "text": "una lata de refresco",
+    "kind": "exact",
+    "expected": {
+      "sugar_sg": 4
+    },
+    "free": false
+  },
+  {
+    "id": 32,
+    "text": "media taza de avena con una taza de leche",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 1,
+      "dairy": 1
+    },
+    "free": false
+  },
+  {
+    "id": 33,
+    "text": "1 taza de pepino con limón y chile en polvo",
+    "kind": "exact",
+    "expected": {
+      "veg": 1
+    },
+    "free": false
+  },
+  {
+    "id": 34,
+    "text": "5 tazas de palomitas naturales",
+    "kind": "exact",
+    "expected": {
+      "carb_sg": 2
+    },
+    "free": false
+  },
+  {
+    "id": 35,
+    "text": "quesadilla de queso oaxaca en tortilla de maíz",
+    "kind": "composite",
+    "expected": {
+      "carb_sg": 1,
+      "protein_poa": [
+        1,
+        2
+      ]
+    },
+    "free": false
+  },
+  {
+    "id": 36,
+    "text": "ensalada de lechuga con jitomate",
+    "kind": "composite",
+    "expected": {
+      "veg": [
+        1,
+        2
+      ]
+    },
+    "free": false
+  },
+  {
+    "id": 37,
+    "text": "torta de jamón con queso y mayonesa",
+    "kind": "composite",
+    "expected": {
+      "carb_sg": 3,
+      "protein_poa": [
+        1.5,
+        3
+      ],
+      "fat_sp": [
+        1,
+        2
+      ]
+    },
+    "free": false
+  },
+  {
+    "id": 38,
+    "text": "3 tacos de bistec",
+    "kind": "composite",
+    "expected": {
+      "carb_sg": 3,
+      "protein_poa": [
+        2,
+        4
+      ]
+    },
+    "free": false
+  },
+  {
+    "id": 39,
+    "text": "un vaso de jugo de naranja",
+    "kind": "composite",
+    "expected": {
+      "sugar_sg": [
+        2,
+        4
+      ]
+    },
+    "free": false
+  },
+  {
+    "id": 40,
+    "text": "un plato de pozole de pollo",
+    "kind": "composite",
+    "expected": {
+      "carb_sg": [
+        1.5,
+        3
+      ],
+      "protein_poa": [
+        2,
+        3
+      ],
+      "veg": [
+        0,
+        1
+      ]
+    },
+    "free": false
+  }
+]
