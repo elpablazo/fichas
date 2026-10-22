@@ -100,6 +100,8 @@ test('unsupported dictation keeps the keyboard path usable', async ({ context },
   await expect(page.getByText('Usa el micrófono de tu teclado.')).toBeVisible();
   await expect(page.getByTestId('describe-input')).toBeFocused();
   await page.getByTestId('describe-input').fill('una manzana');
+  // Return starts the next dish; Return on an empty line hides the keyboard.
+  await page.getByTestId('describe-input').press('Enter');
   await page.getByTestId('describe-input').press('Enter');
   await expect(page.getByTestId('preview')).toBeVisible();
   await expect(page.getByTestId('describe-input')).not.toBeFocused();
@@ -123,8 +125,10 @@ test('photo → detected text → adjust/remove → explicit approval → D1 syn
   await expect(page.getByText('Revisa lo detectado antes de anotar.')).toBeVisible();
   await expect(page.getByTestId('describe-input')).toHaveValue('2 tortillas, 120 g pollo');
   expect(await logs(page, day)).toHaveLength(0);
+  await page.getByRole('button', { name: 'Editar: 2 tortillas', exact: true }).click();
   await page.getByRole('button', { name: 'Más: 2 tortillas', exact: true }).click();
   await expect(page.getByTestId('preview')).toContainText('3 tortillas');
+  await page.getByRole('button', { name: 'Editar: 120 g pollo', exact: true }).click();
   await page.getByRole('button', { name: 'Quitar: 120 g pollo', exact: true }).click();
   await expect(page.getByTestId('preview')).not.toContainText('120 g pollo');
   await expect(page.getByTestId('describe-input')).toHaveValue('3 tortillas');
@@ -223,6 +227,8 @@ test('denied microphone access preserves editable keyboard input', async ({ cont
   await expect(page.getByText('Usa el micrófono de tu teclado.')).toBeVisible();
   await expect(page.getByTestId('dictate')).toHaveAttribute('aria-pressed', 'false');
   await page.getByTestId('describe-input').fill('una manzana');
+  // Return starts the next dish; Return on an empty line hides the keyboard.
+  await page.getByTestId('describe-input').press('Enter');
   await page.getByTestId('describe-input').press('Enter');
   await expect(page.getByTestId('preview')).toBeVisible();
   expect(await logs(page, day)).toHaveLength(0);

@@ -109,10 +109,10 @@ test('A5 · describe and log: the app shows it understood at once, AI fills port
     // Live understanding: the phrase shows at once with its food groups, then real portions replace it.
     const phrase = page.getByTestId('pending-phrase');
     await expect(phrase).toBeVisible({ timeout: 300 });
-    await expect(phrase.locator('.tok-1')).toHaveCount(2);
+    await expect(phrase.locator('svg.sprite')).toHaveCount(2);
     await expect(page.getByTestId('preview').locator('li')).toHaveCount(5);
     previews.push(Date.now() - previewStart);
-    await expect(page.getByTestId('status-line')).toHaveText('+1 🫓 sobre tu comida');
+    await expect(page.getByTestId('status-line')).toContainText('de más en tu comida');
     await taps.tap(page.getByTestId('log'));
     await expect(toast(page)).toBeVisible();
     times.push(Date.now() - start);
@@ -153,7 +153,7 @@ test('A7 · "Ajustar" makes a craving exact (1 tap) and highlights what changed'
     await openToday(page);
     await page.getByTestId('craving').click();
     await page.getByTestId('describe-input').fill(LUNCH);
-    await expect(page.getByTestId('status-line')).toHaveText('+1 🫓 sobre tu comida');
+    await expect(page.getByTestId('status-line')).toContainText('de más en tu comida');
     await expect(page.getByTestId('impact')).toContainText('Con 2 tortillas queda justo.');
     const taps = new Taps();
     const start = Date.now();

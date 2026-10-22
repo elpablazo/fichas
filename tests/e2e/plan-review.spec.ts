@@ -207,5 +207,5 @@ test('confirmed changed targets automatically re-portion the suggestion and keep
   await page.goto('/historia/plan/plan-2026-10-08');
   await expect(page.getByRole('heading', { name: 'Mi plan', exact: true })).toBeVisible();
   const lunch = page.locator('section[aria-label="Tus tiempos"] > div').filter({ hasText: 'Comida' });
-  await expect(lunch.locator('.tok').filter({ hasText: '🫓' })).toHaveCount(2);
+  await expect(lunch.locator('.tok:has(use[href="#g-carb_sg"])')).toHaveCount(2);
 });

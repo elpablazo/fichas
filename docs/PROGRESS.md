@@ -398,3 +398,10 @@ Hoy rebuilt around two moments (decide before a meal, record after it); spec and
 - **Faster logged moment:** Today no longer reads layout before the first frame after a log (banner height is measured after paint; sparkles and sound start one frame later). Tap → logged moment, 4× throttled: ~100 ms → ~60 ms.
 - **Pre-existing test fixes:** the season-report share test (stale since 1.1.1), a telemetry fake-clock race and a weight test that read only the first sync page.
 - **Not done here:** deployment (`npm run deploy`) and a live JEV call — the sandbox had no Cloudflare credentials and could not reach `api.typesafe.ai`; `verify:production` now checks JEV after deploying.
+
+## 2.0.0 — Invernadero
+
+Rediseño completo (ver [05-fichas-2.md](05-fichas-2.md)): sistema de diseño y sprites propios, tubos graduados con anillo, Describir por platillos con comparación contra el plan y el día, hora de lo comido, causas ("de más" con su origen), cierre del día con aprendizaje y resumen nocturno por push, "Tu alimentación", link para la nutrióloga, jardín vivo con ecosistema, momento de anotar con fichas voladoras, aviso de actualización y "Novedades".
+
+- **Tests:** unit 205, worker 83; e2e Pixel 7 actualizados a los flujos nuevos (filas de platillo se abren con "Editar", exportar bajo "Como texto", novedades). Local: Chromium 1194 con un config propio (`private/`, no se sube).
+- **No verificado:** IA real (JEV/OpenRouter), WebKit/iPhone, despliegue; capturas del jardín solo para Linux.

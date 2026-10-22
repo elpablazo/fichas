@@ -46,7 +46,7 @@ test('installed app upgrading from an older Today shows what is new once; a new 
   await fresh.addInitScript(() => Object.defineProperty(navigator, 'standalone', { value: true }));
   await openToday(fresh);
   await fresh.waitForTimeout(1500);
-  await expect(fresh.getByRole('dialog', { name: 'Fichas, más simple' })).toHaveCount(0);
+  await expect(fresh.getByRole('dialog', { name: 'Novedades' })).toHaveCount(0);
   await fresh.close();
 
   const page = await newPage(context, dayFor(info, 140, 1), '12:00');
@@ -55,13 +55,15 @@ test('installed app upgrading from an older Today shows what is new once; a new 
     // A 0.8 Today snapshot, written once before the first 1.0 boot.
     if (!sessionStorage.getItem('e2e:upgraded')) {
       sessionStorage.setItem('e2e:upgraded', '1');
+      // The context shares storage with the fresh device above: this one never recorded a version.
+      localStorage.removeItem('version:seen');
       localStorage.setItem('today:snapshot', JSON.stringify({ v: 2 }));
     }
   });
   await openToday(page);
-  const news = page.getByRole('dialog', { name: 'Fichas, más simple' });
+  const news = page.getByRole('dialog', { name: 'Novedades' });
   await expect(news).toBeVisible();
-  await news.getByRole('button', { name: 'Entendido', exact: true }).click();
+  await news.getByRole('button', { name: 'Va', exact: true }).click();
   await expect(news).toHaveCount(0);
   await page.reload();
   await page.locator('[data-card]').waitFor();

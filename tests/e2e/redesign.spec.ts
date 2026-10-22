@@ -240,11 +240,13 @@ test('export meals: pick a date range and get the dishes, not the exchange units
   await page.goto('/progreso');
   await page.getByTestId('nutri-export').click();
   const sheet = page.getByRole('dialog');
+  // The link is the main path; the text version sits under "Como texto".
+  await sheet.getByTestId('export-text-toggle').click();
   await expect(sheet.getByTestId('export-summary')).toContainText('1 comida en 1 día');
   await expect(sheet).toContainText('Pollo con arroz');
   await expect(sheet).not.toContainText('carb_');
   await sheet.getByTestId('export-to').fill(addDays(day, -3));
   await sheet.getByTestId('export-from').fill(addDays(day, -5));
   await expect(sheet.getByTestId('export-summary')).toContainText('No hay comidas');
-  await expect(sheet.getByTestId('export-share')).toBeDisabled();
+  await expect(sheet.getByTestId('export-share')).toHaveCount(0);
 });

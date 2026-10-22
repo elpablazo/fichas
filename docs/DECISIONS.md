@@ -212,3 +212,15 @@ The owner asked to simplify Hoy around two moments (decide before a meal, record
 - **Copy lint bans first-person app phrases.** Owner-voice buttons stay. Unused strings from the old flow were deleted.
 - **Today word budget 20 → 25** (browser test), because the pace line is words by design.
 - **Initial JS stays within budget:** 89.3 KB of 90 KB gzip (DayMeter and NowCard are on the first paint; Describe stays lazy).
+
+## 2.0 (Invernadero)
+
+Spec completa en [05-fichas-2.md](05-fichas-2.md). Decisiones que conviene recordar:
+
+- **El sistema de diseño es de marca, no un tema:** el rosa deja de ser el default (migración única), pero sigue disponible.
+- **Las causas se calculan, no se adivinan:** un "de más" se atribuye a lo comido fuera de las comidas del plan y a las comidas que se pasaron de su parte; lo planeado nunca es causa.
+- **El resumen nocturno reserva un lugar del tope diario** para que los avisos de comida no lo desplacen, y su enlace nombra el día.
+- **El link de la nutrióloga nunca muestra fichas**; el token se guarda con hash y la página no usa scripts.
+- **El ecosistema del jardín solo suma** dentro de la temporada.
+- **El momento de anotar vive en un módulo diferido** para no gastar el presupuesto de JS inicial.
+- **Copy:** `copy:lint` bloquea las etiquetas retiradas ("lo de siempre", "que cuadre") y las frases en primera persona de la app.

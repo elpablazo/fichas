@@ -118,7 +118,7 @@ export function SkyTrack({
               key={s.key}
               class={`sky-stop${s.minutes === null ? ' is-extra' : ''}${i === index ? ' is-on' : ''}`}
               style={`left:${x(i)}%;top:${y(i)}px`}
-              data-slot={s.key}
+              data-sky={s.key}
             >
               <input
                 type="radio"

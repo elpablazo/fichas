@@ -124,8 +124,9 @@ test('A9 · change a portion of a logged meal (≤ 3 taps), the verdict updates 
     const taps = new Taps();
     const t0 = Date.now();
     await taps.tap(page.locator('[data-slot=comida] button').first());
+    await taps.tap(page.getByTestId('logged-meal').getByRole('button', { name: /^Editar:.*tortilla/ }));
     await taps.tap(page.getByTestId('logged-meal').getByRole('button', { name: /^Más:.*tortilla/ }));
-    await expect(page.locator('[data-slot=comida]')).toContainText('+1');
+    await expect(page.locator('[data-slot=comida]')).toContainText('de más');
     times.push(Date.now() - t0);
     expect(taps.n).toBeLessThanOrEqual(3);
     await page.close();
