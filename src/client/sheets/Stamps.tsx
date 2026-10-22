@@ -1,6 +1,7 @@
 import { Lock } from 'lucide-preact';
 import { STAMPS } from '../../shared/game/stamps';
 import { Sheet } from '../components/Sheet';
+import { StampIcon } from '../components/StampIcon';
 import { gameCopy } from '../copy/es-MX';
 import { achievements, activePlan } from '../state/signals';
 import { closeSheet } from '../state/ui';
@@ -25,15 +26,15 @@ export function StampGrid() {
             data-earned={got}
           >
             <span
-              class={`grid h-14 w-14 place-items-center rounded-full text-[28px] ${got ? 'anim-stamp' : ''}`}
+              class={`grid h-14 w-14 place-items-center rounded-full ${got ? 'anim-stamp' : 'text-ink-3'}`}
               style={
                 got
-                  ? 'background: var(--surface); box-shadow: 0 0 0 3px var(--gold), 0 4px 10px rgb(0 0 0 / 10%)'
-                  : 'background: var(--surface-3); filter: grayscale(1); opacity: .55'
+                  ? 'background: var(--surface); color: var(--gold-ink); box-shadow: 0 0 0 3px var(--gold), 0 4px 10px rgb(0 0 0 / 10%)'
+                  : 'background: var(--surface-3); opacity: .7'
               }
               aria-hidden="true"
             >
-              {secret ? <Lock size={22} /> : s.emoji}
+              {secret ? <Lock size={22} /> : <StampIcon k={s.key} />}
             </span>
             <span class={`mt-2 text-[13px] font-bold leading-4 ${got ? '' : 'text-ink-2'}`}>
               {secret ? gameCopy.undiscovered : s.name}

@@ -4,6 +4,7 @@ import {
   ChefHat,
   ChevronRight,
   CircleCheckBig,
+  HelpCircle,
   Mic,
   Plus,
   Share2,
@@ -28,6 +29,7 @@ import { computeStatus } from '../../shared/domain/status';
 import { type PantryRow, TYPE_KEYS, type TypeKey } from '../../shared/domain/types';
 import { equivalentById, unitsOfItems } from '../../shared/domain/units';
 import { logMeal, targetFor } from '../actions';
+import { TypeIcon } from '../components/Sprite';
 import { Empty, ScreenHeader, Segmented } from '../components/ui';
 import { buttons, gameCopy, lines, titles, typeLabels } from '../copy/es-MX';
 import { kitchenCopy } from '../copy/more';
@@ -212,11 +214,7 @@ export default function Kitchen() {
                           onChange={() => void buyItem(item)}
                         />
                         <span class="flex-1 font-semibold first-letter:uppercase">{item.label}</span>
-                        {t && (
-                          <span class="text-[18px]" aria-hidden="true">
-                            {typeLabels[t].emoji}
-                          </span>
-                        )}
+                        {t && <TypeIcon type={t} size={22} />}
                       </label>
                     </li>
                   );
@@ -381,9 +379,7 @@ export default function Kitchen() {
                   .map((t) => (
                     <section key={t} class="card mb-3 overflow-hidden">
                       <h3 class="kicker flex items-center gap-2 px-4 pt-3 pb-1">
-                        <span aria-hidden="true" class="text-[16px]">
-                          {t === 'none' ? '❔' : typeLabels[t].emoji}
-                        </span>
+                        {t === 'none' ? <HelpCircle size={18} aria-hidden="true" /> : <TypeIcon type={t} size={20} />}
                         {t === 'none' ? kitchenCopy.unlinked : typeLabels[t].group}
                       </h3>
                       <ul class="divide px-4">

@@ -42,6 +42,7 @@ export const CHANGELOG: Release[] = [
       { icon: 'flower', text: 'Un jardín vivo: con tus flores llegan mariposas, abejas y pájaros.' },
       { icon: 'spark', text: 'Flores con más detalle y un herbario con siluetas por descubrir.' },
       { icon: 'link', text: 'Un enlace para tu nutri: qué comiste y a qué hora.' },
+      { icon: 'spark', text: 'Fichas, estampas y avisos con íconos propios; sin conexión se nota.' },
       { icon: 'refresh', text: 'Cuando hay versión nueva, un toque y se actualiza.' },
     ],
   },

@@ -20,6 +20,8 @@ export interface Moment {
   text: string;
   emoji: string;
   kind: 'stamp' | 'level' | 'species' | 'bloom' | 'surprise' | 'comeback';
+  /** The stamp's key, for its icon. */
+  stamp?: string;
   species?: string;
   fact?: string;
   rare?: boolean;
@@ -28,6 +30,7 @@ export const moment = signal<Moment | null>(null);
 const moments: Moment[] = [];
 
 let momentTimer: ReturnType<typeof setTimeout> | undefined;
+let shownAt = 0;
 
 function drainMoments() {
   if (moment.value || !moments.length) return;
@@ -35,6 +38,7 @@ function drainMoments() {
     momentTimer = setTimeout(drainMoments, 500);
     return;
   }
+  shownAt = Date.now();
   moment.value = moments.shift() ?? null;
   momentTimer = setTimeout(dismissMoment, moment.value?.fact ? 4200 : 2800);
 }
@@ -101,6 +105,15 @@ export async function dismissRecap() {
 
 export function startGame() {
   let checkingSeason = false;
+  // A sheet opened over a moment: the moment steps aside (and comes back after if it was barely seen).
+  effect(() => {
+    if (!sheet.value || !moment.peek()) return;
+    const m = moment.peek();
+    clearTimeout(momentTimer);
+    moment.value = null;
+    if (m && Date.now() - shownAt < 1500) moments.unshift(m);
+    momentTimer = setTimeout(drainMoments, 500);
+  });
   effect(() => {
     const current = activePlan.value,
       day = today.value;

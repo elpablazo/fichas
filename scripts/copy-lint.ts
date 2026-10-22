@@ -65,7 +65,11 @@ const FIRST_PERSON = [
   'te recomiendo',
   'te sugiero',
   ' toco ',
+  'te digo',
+  'no encuentro',
 ];
+/** Labels the owner retired for being ambiguous (they hide what gets logged). */
+const RETIRED = ['lo de siempre', 'que cuadre', 'solo checaba'];
 /** Keys that are fixed strings for a single, rare moment (not pools that repeat). */
 const NOT_POOLS = new Set([
   'push.title.slot',
@@ -151,6 +155,7 @@ for (const [key, raw] of entries) {
     if (key.startsWith('weight.') && b === 'peso ideal') continue;
     if (f.includes(b)) errors.push(`${key}: banned "${b}" — "${raw}"`);
   }
+  for (const r of RETIRED) if (f.includes(r)) errors.push(`${key}: retired label "${r}" — "${raw}"`);
   for (const p of FIRST_PERSON)
     if (` ${f} `.includes(p)) errors.push(`${key}: app speaking in first person "${p.trim()}" — "${raw}"`);
   if ((raw.match(/!/g) ?? []).length > 1) errors.push(`${key}: more than one "!" — "${raw}"`);

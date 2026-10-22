@@ -531,7 +531,8 @@
   }
   .tok > .e {
     display: block;
-    transform: translateY(0.5px);
+    width: 64%;
+    height: 64%;
   }
   .tok-0 {
     background: color-mix(in srgb, var(--c) 9%, var(--surface-2));
@@ -763,6 +764,24 @@
   }
   .ring-count::after {
     content: counter(n);
+  }
+  .offline-pill {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    padding: 6px 12px;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--surface);
+    box-shadow: var(--e2);
   }
   .is-receiving .meter-fill {
     transition-delay: 480ms;

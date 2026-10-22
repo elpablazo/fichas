@@ -6,6 +6,7 @@ import { norm } from '../../shared/domain/text';
 import { tokensFor } from '../../shared/domain/tokens';
 import type { TypeKey, Units } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
+import { Txt, TypeIcon } from '../components/Sprite';
 import { TokenRow, tokensA11y } from '../components/Token';
 import { ScreenHeader } from '../components/ui';
 import { buttons, labels, lines, titles, typeLabels } from '../copy/es-MX';
@@ -121,7 +122,7 @@ export default function PlanView({ planId }: { planId?: string }) {
                   onClick={() => setOpen(open === t ? null : t)}
                 >
                   <span class={`tok tok-1 t-${t}`} style="--s:28px" aria-hidden="true">
-                    <span class="e">{typeLabels[t].emoji}</span>
+                    <TypeIcon type={t} class="e" />
                   </span>
                   <span class="flex-1 font-semibold">{typeLabels[t].group}</span>
                   <span class="caption num">{list.length}</span>
@@ -196,7 +197,7 @@ export default function PlanView({ planId }: { planId?: string }) {
         {d.swaps.map((r, i) => (
           <div key={i} class="flex items-baseline justify-between gap-2 py-3">
             <span class="secondary">
-              {fill(swapLabels[r.kind], { from: unitsText({ [r.from]: 1 }), to: unitsText(r.to) })}
+              <Txt>{fill(swapLabels[r.kind], { from: unitsText({ [r.from]: 1 }), to: unitsText(r.to) })}</Txt>
             </span>
             <span class={`badge shrink-0 ${r.confirmed ? 'leaf' : ''}`}>
               {r.confirmed ? lines.swapConfirmed : lines.swapPending}

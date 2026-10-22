@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'preact/hooks';
+import type { ComponentChildren } from 'preact';
+import { useEffect, useErrorBoundary, useState } from 'preact/hooks';
 import { TabBar } from './components/Chrome';
 import { SheetLeaving } from './components/Sheet';
 import { Toast } from './components/Toast';
 import { UpdateToast } from './components/UpdateToast';
+import { labels } from './copy/es-MX';
 import { paired } from './db/sync';
 import { moment } from './game';
 import { lazyView } from './lazy';
@@ -10,6 +12,7 @@ import { Today } from './screens/Today';
 import { dayVM, shownDay } from './state/selectors';
 import { today } from './state/signals';
 import { openDescribe, route, type SheetState, sheet } from './state/ui';
+import { reportError } from './telemetry';
 
 const Pair = lazyView(() => import('./screens/Pair'));
 const Progress = lazyView(() => import('./screens/Progress'));
@@ -151,6 +154,28 @@ function addMeal() {
   openDescribe({ slot: open ?? (isToday ? undefined : 'extra'), day: isToday ? undefined : day });
 }
 
+/** A screen or sheet that fails to render shows a way out instead of a blank page; changing screens retries. */
+function Boundary({ reset, children }: { reset: string; children: ComponentChildren }) {
+  const [error, retry] = useErrorBoundary((e: unknown) =>
+    reportError(String(e), (e as Error | null)?.stack ?? null, 'render'),
+  );
+  useEffect(() => {
+    if (error) retry();
+  }, [reset]);
+  if (!error) return <>{children}</>;
+  return (
+    <main class="app-main">
+      <section class="card mt-6 p-5 text-center" role="alert">
+        <p class="title">{labels.crashTitle}</p>
+        <p class="secondary muted mt-1">{labels.crashSub}</p>
+        <button type="button" class="btn btn-primary mt-4 w-full" onClick={() => location.reload()}>
+          {labels.reload}
+        </button>
+      </section>
+    </main>
+  );
+}
+
 export function App() {
   if (paired.value === 'no') return <Pair />;
   const r = route.value;
@@ -181,8 +206,10 @@ export function App() {
         class="pointer-events-none fixed top-0 left-0 h-px w-px opacity-0"
         style="font-size:16px"
       />
-      {screen}
-      <SheetHost />
+      <Boundary reset={r}>{screen}</Boundary>
+      <Boundary reset={sheet.value?.kind ?? ''}>
+        <SheetHost />
+      </Boundary>
       <Toast />
       <UpdateToast />
       {moment.value && <GameMoment />}

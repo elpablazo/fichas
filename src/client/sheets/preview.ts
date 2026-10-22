@@ -62,7 +62,7 @@ export function previewModel(
   const tokens = tokensFor(target, r.normalized);
   if (r.status === 'on') return { tokens, status: 'on', line: pools['describe.fits'][0], canFit: false };
   const fitted = fitTo(items, target, plan, slot);
-  // Offer "Que cuadre" only when a small fix (≤ 3 changes) reaches the plan; otherwise it would rewrite the meal.
+  // Offer the fix hint only when a small fix (≤ 3 changes) reaches the plan; otherwise it would rewrite the meal.
   const fitOk =
     computeStatus(unitsOfItems(fitted.items, plan), target, plan.swaps).status === 'on' &&
     fitted.changes.length > 0 &&

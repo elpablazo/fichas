@@ -43,6 +43,7 @@ function Group({ title, children }: { title: string; children: ComponentChildren
 export default function Settings() {
   const s = settings.value;
   const [sessions, setSessions] = useState<SessionInfo[] | null>(null);
+  const [allDevices, setAllDevices] = useState(false);
   const load = async () => {
     try {
       const res = await api('/api/auth/sessions');
@@ -136,7 +137,10 @@ export default function Settings() {
 
       {sessions && (
         <Group title={titles.devices}>
-          {sessions.map((x) => (
+          {(allDevices
+            ? sessions
+            : sessions.filter((x) => x.current).concat(sessions.filter((x) => !x.current).slice(0, 3))
+          ).map((x) => (
             <div key={x.id} class="row">
               <span class="row-icon">
                 <Smartphone size={18} aria-hidden="true" />
@@ -152,6 +156,15 @@ export default function Settings() {
               )}
             </div>
           ))}
+          {!allDevices && sessions.length > 4 && (
+            <button
+              type="button"
+              class="row press justify-center font-bold text-accent-ink"
+              onClick={() => setAllDevices(true)}
+            >
+              {buttons.seeAll}
+            </button>
+          )}
         </Group>
       )}
 

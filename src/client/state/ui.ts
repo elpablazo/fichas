@@ -127,6 +127,15 @@ export function startCelebration(slotKey: string, ms = 1800): void {
   }, ms);
 }
 
+/** Connection state (the tab bar says when there is none; logs still save locally). */
+export const online = signal(navigator.onLine);
+addEventListener('online', () => {
+  online.value = true;
+});
+addEventListener('offline', () => {
+  online.value = false;
+});
+
 /** When a log's coins took off: the tubes wait for them to land before rising. */
 export const landing = signal(0);
 

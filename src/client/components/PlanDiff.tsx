@@ -7,6 +7,7 @@ import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount, formatQty } from '../../shared/domain/units';
 import { labels, titles, typeLabels } from '../copy/es-MX';
 import { planLines } from '../copy/more';
+import { TypeIcon } from './Sprite';
 import { TokenRow, tokensA11y } from './Token';
 
 const portion = (e: Equivalent) => `${formatQty(e.qty)} ${unitText(e.unit, e.qty)}`.trim();
@@ -19,7 +20,7 @@ function Delta({ type, before, after }: { type: TypeKey; before: number; after: 
     <li class="diff-row">
       <span class="sr-only">{`${meta.label}: de ${formatCount(before)} a ${formatCount(after)}`}</span>
       <span class="diff-type" aria-hidden="true">
-        <span class="diff-emoji">{meta.emoji}</span> {meta.label}
+        <TypeIcon type={type} size={18} class="diff-emoji" /> {meta.label}
       </span>
       <span class="diff-vals num" aria-hidden="true">
         <span class="faint">{formatCount(before)}</span>
@@ -47,7 +48,7 @@ function Foods({ rows }: { rows: PlanDiff['equivalents'] }) {
             return (
               <li key={r.id} class="diff-food">
                 <span class="min-w-0">
-                  <span aria-hidden="true">{typeLabels[e.type].emoji}</span> {e.food}
+                  <TypeIcon type={e.type} size={18} class="inline-sprite" /> {e.food}
                 </span>
                 <span class="num shrink-0 secondary muted">
                   {r.before && r.after ? `${portion(r.before)} → ${portion(r.after)}` : portion(e)}

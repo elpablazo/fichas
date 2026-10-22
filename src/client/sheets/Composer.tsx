@@ -8,6 +8,7 @@ import { TYPE_KEYS } from '../../shared/domain/types';
 import { roundTo, typesOf, unitsOfItems } from '../../shared/domain/units';
 import { logMeal, updateLog } from '../actions';
 import { Sheet } from '../components/Sheet';
+import { TypeIcon } from '../components/Sprite';
 import { Stepper } from '../components/Stepper';
 import { TokenRow } from '../components/Token';
 import { buttons, labels, lines, titles, typeLabels } from '../copy/es-MX';
@@ -136,7 +137,13 @@ export default function Composer({ slot, day: dayProp, items: init = [], title: 
       <div class="no-scrollbar -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pt-0.5 pb-1" role="tablist">
         {tabTypes.map((t) => (
           <button key={t} type="button" role="tab" class="chip" aria-selected={tab === t} onClick={() => setTab(t)}>
-            {t === 'others' ? labels.others : `${typeLabels[t].emoji} ${typeLabels[t].short}`}
+            {t === 'others' ? (
+              labels.others
+            ) : (
+              <>
+                <TypeIcon type={t} size={18} /> {typeLabels[t].short}
+              </>
+            )}
           </button>
         ))}
       </div>
@@ -150,7 +157,7 @@ export default function Composer({ slot, day: dayProp, items: init = [], title: 
               aria-pressed={otherType === t}
               onClick={() => setOtherType(t)}
             >
-              {typeLabels[t].emoji} {typeLabels[t].short}
+              <TypeIcon type={t} size={18} /> {typeLabels[t].short}
             </button>
           ))}
         </div>

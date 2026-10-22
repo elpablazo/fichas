@@ -5,6 +5,7 @@ import { fill, itemLabel } from '../../shared/domain/format';
 import { norm } from '../../shared/domain/text';
 import { equivalentById } from '../../shared/domain/units';
 import { Sheet } from '../components/Sheet';
+import { TypeIcon } from '../components/Sprite';
 import { Segmented, SwitchRow } from '../components/ui';
 import { buttons, typeLabels } from '../copy/es-MX';
 import { kitchenCopy } from '../copy/more';
@@ -70,7 +71,7 @@ export default function FoodInfo({ id }: { id: string }) {
             {eqs.map((e) => (
               <li key={e.id} class="flex items-center gap-3 py-2.5">
                 <span class={`tok tok-1 t-${e.type}`} style="--s:30px" aria-hidden="true">
-                  <span class="e">{typeLabels[e.type].emoji}</span>
+                  <TypeIcon type={e.type} class="e" />
                 </span>
                 <span class="secondary">
                   {fill(kitchenCopy.oneToken, {
@@ -115,7 +116,7 @@ export default function FoodInfo({ id }: { id: string }) {
                       setRelink(false);
                     }}
                   >
-                    <span aria-hidden="true">{typeLabels[e.type].emoji}</span>
+                    <TypeIcon type={e.type} size={22} />
                     <span class="flex-1 font-semibold">{e.food}</span>
                     <Link2 size={18} class="text-accent-ink" aria-hidden="true" />
                   </button>

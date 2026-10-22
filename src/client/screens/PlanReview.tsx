@@ -17,6 +17,7 @@ import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount, formatQty } from '../../shared/domain/units';
 import { PlanDiffCard } from '../components/PlanDiff';
 import { SeasonStart } from '../components/SeasonStart';
+import { TypeIcon } from '../components/Sprite';
 import { Stepper } from '../components/Stepper';
 import { TokenRow, tokensA11y } from '../components/Token';
 import { buttons, labels, lines, titles, typeLabels } from '../copy/es-MX';
@@ -525,7 +526,7 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
                 return (
                   <div key={d.id} class="border-line flex items-center justify-between gap-3 border-t py-2">
                     <span class="min-w-0">
-                      <span aria-hidden="true">{typeLabels[(d[keep] as Equivalent).type].emoji}</span>{' '}
+                      <TypeIcon type={(d[keep] as Equivalent).type} size={18} class="inline-sprite" />{' '}
                       {itemLabel(
                         (d[keep] as Equivalent).food,
                         (d[keep] as Equivalent).qty,

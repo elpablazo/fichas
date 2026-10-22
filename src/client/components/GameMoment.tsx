@@ -6,6 +6,7 @@ import { tick } from '../feedback/haptics';
 import { playArpeggio, playBloom, playThunk } from '../feedback/sound';
 import { dismissMoment, moment } from '../game';
 import { Plant } from './Plant';
+import { StampIcon } from './StampIcon';
 
 export default function GameMoment() {
   const m = moment.value;
@@ -37,10 +38,11 @@ export default function GameMoment() {
           </span>
         ) : (
           <span
-            class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-surface text-[30px] anim-stamp"
+            class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-surface text-accent-ink anim-stamp"
+            style={m.kind === 'stamp' ? 'box-shadow: 0 0 0 3px var(--gold); color: var(--gold-ink)' : undefined}
             aria-hidden="true"
           >
-            {m.emoji}
+            <StampIcon k={m.stamp ?? m.kind} size={28} />
           </span>
         )}
         <span class="min-w-0 flex-1">

@@ -52,6 +52,13 @@ export function paceLines(vm: Pick<DayVM, 'status' | 'mode' | 'rows'>): { title:
   // Late in the day (one meal or none left), the missing groups are what closes it.
   const late = vm.mode === 'today' && s.done > 0 && open <= 1;
   const close = c.missing.length ? fill(paceCopy.closeSub, { list: gapList(c.missing) }) : null;
+  // A group already past the whole day's plan says what is over the day (the "+1" on its tube), not how far it
+  // runs ahead of the meals so far.
+  const ahead = s.ahead.map((g) => {
+    const m = s.meters.find((x) => x.type === g.type);
+    const over = m ? m.eaten - m.planned : 0;
+    return over >= 0.5 ? { ...g, n: Math.min(g.n, over) } : g;
+  });
   switch (s.pace) {
     case 'start':
       return vm.mode === 'past'
@@ -61,9 +68,9 @@ export function paceLines(vm: Pick<DayVM, 'status' | 'mode' | 'rows'>): { title:
       if (c.complete) return { title: paceCopy.roundTitle, sub: paceCopy.roundSub };
       return { title: paceCopy.onTitle, sub: (late && close) || paceCopy.onSub };
     case 'ahead':
-      if (c.complete) return { title: paceCopy.fullTitle, sub: fill(paceCopy.fullSub, { list: gapList(s.ahead) }) };
+      if (c.complete) return { title: paceCopy.fullTitle, sub: fill(paceCopy.fullSub, { list: gapList(ahead) }) };
       return {
-        title: fill(paceCopy.aheadTitle, { list: gapList(s.ahead) }),
+        title: fill(paceCopy.aheadTitle, { list: gapList(ahead) }),
         sub: advice ?? ((late && close) || paceCopy.keepSub),
       };
     case 'behind': {
@@ -81,7 +88,7 @@ export function paceLines(vm: Pick<DayVM, 'status' | 'mode' | 'rows'>): { title:
     }
     default:
       return {
-        title: fill(paceCopy.mixedTitle, { over: gapList(s.ahead.slice(0, 1)), under: gapList(s.behind.slice(0, 1)) }),
+        title: fill(paceCopy.mixedTitle, { over: gapList(ahead.slice(0, 1)), under: gapList(s.behind.slice(0, 1)) }),
         sub: advice ?? close,
       };
   }

@@ -2,10 +2,10 @@
 export const pushPools = {
   'push.title.slot': ['{slot}'],
   'push.body.slot': [
-    '¿{slot} como siempre? Un toque y listo.',
+    'Escríbelo como lo dirías y listo.',
     'Tu {slot} te espera.',
     '¿Ya comiste? Anotarlo toma un segundo.',
-    '¿Lo de siempre? Un toque.',
+    '¿Qué comiste? Dilo como hablas.',
     '{slot}: ya está lista tu sugerencia.',
   ],
   'push.title.plan': ['¿Plan nuevo?'],

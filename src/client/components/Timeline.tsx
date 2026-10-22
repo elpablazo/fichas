@@ -148,8 +148,14 @@ export function Timeline({ vm, onOpen, onLog, onExtra, onOpenExtras }: Props) {
               class="press flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-2xl text-left"
               onClick={onOpenExtras}
             >
-              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-ink-2">
-                <Plus size={17} aria-hidden="true" />
+              {/* Logged, outside the plan's meals: a soft check, not the "add" circle. */}
+              <span
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full"
+                style="background: var(--accent-soft); color: var(--accent-ink)"
+                role="img"
+                aria-label={a11y.logged}
+              >
+                <Check size={16} strokeWidth={3.2} aria-hidden="true" />
               </span>
               <span class="min-w-0 flex-1">
                 <span class="font-bold">{labels.extraSlot}</span>

@@ -22,7 +22,9 @@ export function Token({ t, size = 30, pop = false, delay = 0 }: TokenProps) {
       style={`--s:${s}px;animation-delay:${delay}ms`}
       aria-hidden="true"
     >
-      <span class="e">{typeLabels[t.type].emoji}</span>
+      <svg class="e" viewBox="0 0 32 32" aria-hidden="true">
+        <use href={`#g-${t.type}`} />
+      </svg>
     </span>
   );
 }

@@ -1,7 +1,7 @@
 // App chrome: the tab bar with the central "+" (log anything, from anywhere).
-import { ChartLine, CookingPot, Flower2, Plus, Sun } from 'lucide-preact';
+import { ChartLine, CloudOff, CookingPot, Flower2, Plus, Sun } from 'lucide-preact';
 import { labels } from '../copy/es-MX';
-import { kitchenSlot, navigate, route } from '../state/ui';
+import { kitchenSlot, navigate, online, route } from '../state/ui';
 
 const TABS = [
   { path: '/', label: labels.tabs.today, Icon: Sun },
@@ -15,6 +15,12 @@ export function TabBar({ onAdd }: { onAdd: () => void }) {
   const current = route.value;
   return (
     <nav class="tabbar fixed inset-x-0 bottom-0 z-30" aria-label="Fichas">
+      {!online.value && (
+        <p class="offline-pill" role="status">
+          <CloudOff size={15} aria-hidden="true" />
+          {labels.offline}
+        </p>
+      )}
       <div class="mx-auto grid max-w-[560px] grid-cols-5" style="height: var(--tabbar-h)">
         {TABS.map((t) => {
           if (!t)

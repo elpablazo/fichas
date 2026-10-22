@@ -92,6 +92,7 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
         Date.now(),
         show ? pickGame('stamp.earned', { name: stamp?.name ?? key }) : undefined,
         stamp?.emoji,
+        { stamp: key },
       );
     }
   }
