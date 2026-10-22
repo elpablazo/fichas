@@ -1,49 +1,14 @@
 // Synthesized marimba (Web Audio), never an error sound (§14.4). A wooden mallet: a sine body with a fast-
 // decaying 4th partial and a soft click, through a small echo so rewards feel warm rather than beepy.
-let ctx: AudioContext | null = null;
-let bus: GainNode | null = null;
-let click: AudioBuffer | null = null;
-export let soundOn = true;
-export function setSoundOn(v: boolean): void {
-  soundOn = v;
-}
+import { audio } from './audio';
 
 // C major pentatonic from C5.
 const NOTES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0];
 
-/** Creates the (suspended) context off the critical path; creating one costs ~150 ms on slow Android. */
-export function prepareAudio(): void {
-  if (ctx) return;
-  try {
-    ctx = new AudioContext();
-    bus = ctx.createGain();
-    bus.gain.value = 0.9;
-    const echo = ctx.createDelay(0.5);
-    echo.delayTime.value = 0.16;
-    const feedback = ctx.createGain();
-    feedback.gain.value = 0.22;
-    const wet = ctx.createGain();
-    wet.gain.value = 0.18;
-    bus.connect(ctx.destination);
-    bus.connect(echo);
-    echo.connect(feedback).connect(echo);
-    echo.connect(wet).connect(ctx.destination);
-    click = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.012), ctx.sampleRate);
-    const data = click.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) ** 3;
-  } catch {
-    ctx = null;
-  }
-}
-
-/** Call inside a tap: iOS only starts audio when resume() runs in a user gesture. */
-export function unlockAudio(): void {
-  prepareAudio();
-  if (ctx?.state === 'suspended') void ctx.resume().catch(() => {});
-}
-
 function mallet(freq: number, at: number, gain = 0.13, decay = 0.55): void {
-  if (!ctx || !bus) return;
+  const a = audio();
+  if (!a) return;
+  const { ctx, bus, click } = a;
   const body = ctx.createOscillator();
   const partial = ctx.createOscillator();
   const g1 = ctx.createGain();
@@ -78,8 +43,8 @@ function mallet(freq: number, at: number, gain = 0.13, decay = 0.55): void {
 }
 
 function now(): number | null {
-  if (!soundOn || !ctx) return null;
-  return ctx.currentTime + 0.01;
+  const a = audio();
+  return a ? a.ctx.currentTime + 0.01 : null;
 }
 
 /** One rising note per token (60 ms stagger); the last one an octave up when the meal is on plan. */

@@ -3,10 +3,11 @@
 import { CHANGELOG } from '../src/client/changelog';
 import * as core from '../src/client/copy/es-MX';
 import { gamePools } from '../src/client/copy/game';
+import { logPools } from '../src/client/copy/log';
 import * as more from '../src/client/copy/more';
 import { pushPools } from '../src/client/copy/push';
 
-const copy = { ...core, ...more, pools: { ...core.pools, ...gamePools, ...pushPools } };
+const copy = { ...core, ...more, pools: { ...core.pools, ...logPools, ...gamePools, ...pushPools } };
 
 const BANNED = [
   'trampa',

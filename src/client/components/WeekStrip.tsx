@@ -1,13 +1,13 @@
 // Day navigation: the week (Mon–Sun) around the shown day, each day with its plant. Tap a day to open it.
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-preact';
-import { useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { addDays, weekday } from '../../shared/domain/day';
 import { fill } from '../../shared/domain/format';
 import { flowerModel } from '../../shared/game/garden';
 import { a11y, dates, stageLabels } from '../copy/es-MX';
 import { levelBefore } from '../state/selectors';
 import { liveLogs, livePlans, planForDay, plans, settings } from '../state/signals';
-import { selectDay } from '../state/ui';
+import { landing, selectDay } from '../state/ui';
 import { MiniPlant } from './LazyPlant';
 
 /** Monday of the week that contains a day. */
@@ -15,8 +15,13 @@ export function weekStart(day: string): string {
   return addDays(day, -((weekday(day) + 6) % 7));
 }
 
+const RANK = ['soil', 'seed', 'sprout', 'bud', 'bloom', 'full', 'gold'];
+
 export function WeekStrip({ day, today }: { day: string; today: string }) {
   const input = useRef<HTMLInputElement>(null);
+  // Today's plant pops when a log makes it grow a stage (not when the app opens).
+  const seen = useRef<string | null>(null);
+  let todayStage: string | null = null;
   const first = livePlans.value.map((p) => p.starts_on ?? today).sort()[0] ?? today;
   const tomorrow = addDays(today, 1);
   const start = weekStart(day);
@@ -24,6 +29,9 @@ export function WeekStrip({ day, today }: { day: string; today: string }) {
   const pick = (d: string) => selectDay(d === today ? null : d);
   const clamp = (d: string) => (d > tomorrow ? today : d < first ? first : d);
   const closed = settings.value.last_closed_day;
+  useEffect(() => {
+    seen.current = todayStage;
+  });
   return (
     <div class="mb-4">
       <div class="flex items-stretch gap-0.5">
@@ -47,6 +55,13 @@ export function WeekStrip({ day, today }: { day: string; today: string }) {
                   closed: d < today || closed === d,
                 })
               : null;
+            const grew =
+              d === today &&
+              !!m &&
+              seen.current !== null &&
+              RANK.indexOf(m.stage) > RANK.indexOf(seen.current) &&
+              Date.now() - landing.value < 3000;
+            if (d === today) todayStage = m?.stage ?? null;
             return (
               <button
                 key={d}
@@ -79,7 +94,7 @@ export function WeekStrip({ day, today }: { day: string; today: string }) {
                   , {(m?.n ?? 0) === 1 ? a11y.dayMealsOne : fill(a11y.dayMeals, { n: m?.n ?? 0 })}
                   {m ? `, ${stageLabels[m.stage]}` : ''}
                 </span>
-                <span class={d > today ? 'opacity-60' : ''}>
+                <span key={m?.stage} class={d > today ? 'opacity-60' : grew ? 'anim-pop' : ''}>
                   <MiniPlant stage={m?.stage ?? 'soil'} species={m?.species ?? 'margarita'} size={26} />
                 </span>
               </button>

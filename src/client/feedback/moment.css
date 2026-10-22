@@ -1,0 +1,49 @@
+/* The log moment: coins flying into the tubes and the tube taking the hit. Loaded with feedback/moment.ts. */
+@layer components {
+  .reward-coin {
+    position: fixed;
+    z-index: 70;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow:
+      0 0 0 2.5px var(--c),
+      0 4px 10px rgb(0 0 0 / 18%);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+  .reward-coin svg {
+    width: 20px;
+    height: 20px;
+  }
+  .meter-tank.is-hit {
+    animation: meter-hit 520ms var(--spring);
+    transform-origin: 50% 100%;
+  }
+  .meter-tank.is-hit .meter-fill {
+    animation: meter-slosh 560ms ease-out;
+    transform-origin: 50% 100%;
+  }
+  @keyframes meter-hit {
+    30% {
+      transform: scale(1.1, 0.93);
+    }
+    60% {
+      transform: scale(0.97, 1.04);
+    }
+  }
+  @keyframes meter-slosh {
+    20% {
+      transform: skewY(6deg);
+    }
+    45% {
+      transform: skewY(-4deg);
+    }
+    70% {
+      transform: skewY(2deg);
+    }
+  }
+}

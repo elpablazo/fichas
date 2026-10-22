@@ -9,6 +9,7 @@ import { fill } from '../../shared/domain/format';
 import type { TypeKey, Units } from '../../shared/domain/types';
 import { formatCount } from '../../shared/domain/units';
 import { meterCopy, typeLabels } from '../copy/es-MX';
+import { landing } from '../state/ui';
 import { TypeIcon } from './Sprite';
 
 const EPS = 0.125;
@@ -68,10 +69,12 @@ export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, cl
 
   if (!meters.length) return null;
   const lg = size === 'lg';
+  // Right after a log the coins are in the air: the liquid rises as they land.
+  const receiving = !adding && Date.now() - landing.value < 1500;
   const tall = lg ? 88 : 54;
   return (
     <div
-      class={`meter-row ${lg ? '' : 'sm'} ${cls}`}
+      class={`meter-row ${lg ? '' : 'sm'}${receiving ? ' is-receiving' : ''} ${cls}`}
       style={`grid-template-columns: repeat(${meters.length}, minmax(0, 1fr))`}
       data-testid="day-meter"
     >
@@ -134,13 +137,20 @@ export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, cl
             key={m.type}
             type="button"
             class={`meter press t-${m.type}`}
+            data-type={m.type}
             aria-label={spoken(m, add, pace)}
             onClick={() => onType(m.type)}
           >
             {body}
           </button>
         ) : (
-          <span key={m.type} class={`meter t-${m.type}`} role="img" aria-label={spoken(m, add, pace)}>
+          <span
+            key={m.type}
+            class={`meter t-${m.type}`}
+            data-type={m.type}
+            role="img"
+            aria-label={spoken(m, add, pace)}
+          >
             {body}
           </span>
         );

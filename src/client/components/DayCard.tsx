@@ -133,7 +133,9 @@ export function DayCard({ vm, onOpen, onType }: { vm: DayVM; onOpen: () => void;
             class="shrink-0"
           >
             <span class="display num text-[17px] leading-none" data-testid="day-pct">
-              {c.pct}
+              {/* Counts up when a log moves it (a registered --n animates the number). */}
+              <span class="ring-count" style={`--n:${c.pct}`} aria-hidden="true" />
+              <span class="sr-only">{c.pct}</span>
               <span class="text-[11px]">%</span>
             </span>
           </Ring>

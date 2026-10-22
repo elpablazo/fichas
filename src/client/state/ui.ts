@@ -127,8 +127,8 @@ export function startCelebration(slotKey: string, ms = 1800): void {
   }, ms);
 }
 
-/** The plant on Today grows a stage: remembered so only a real change animates. */
-export const grewAt = signal(0);
+/** When a log's coins took off: the tubes wait for them to land before rising. */
+export const landing = signal(0);
 
 export const isStandalone = computed(
   () =>

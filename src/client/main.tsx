@@ -4,11 +4,12 @@ import { render } from 'preact';
 import { setSetting } from './actions';
 import { App, PREFETCH, PREFETCH_NOW } from './app';
 import { loadPlant } from './components/LazyPlant';
+import { loadLogCopy } from './copy/pick';
 import { db, getLocal, setLocal } from './db/dexie';
 import { restorePantryJournal } from './db/pantry-journal';
 import { firstPullDone, setSyncErrorReporter, startSync } from './db/sync';
+import { prepareAudio, setSoundOn, unlockAudio } from './feedback/audio';
 import { setHapticsOn } from './feedback/haptics';
-import { prepareAudio, setSoundOn, unlockAudio } from './feedback/sound';
 import { startGame } from './game';
 import { followPushLink } from './notifications';
 import { startClock } from './state/clock';
@@ -144,6 +145,8 @@ const idle = (fn: () => void) =>
   'requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 1200);
 idle(() => {
   for (const v of PREFETCH) void v.prefetch().catch(() => {});
+  void loadLogCopy().catch(() => {});
+  void import('./feedback/moment').catch(() => {});
   if (settings.value.sound) prepareAudio();
 });
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

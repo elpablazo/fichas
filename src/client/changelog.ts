@@ -35,6 +35,7 @@ export const CHANGELOG: Release[] = [
       { icon: 'sun', text: 'Elige la comida moviendo el sol, y la hora en que comiste.' },
       { icon: 'list', text: 'Un platillo por renglón: cada ingrediente queda en su platillo.' },
       { icon: 'plate', text: 'Al anotar ves tu comida contra su plan, lugar por lugar.' },
+      { icon: 'spark', text: 'Al anotar, cada ficha vuela a su tubo y tu anillo sube.' },
       { icon: 'search', text: 'Toca un tubo: qué lo llenó y cuánto es una ficha.' },
       { icon: 'bell', text: 'De noche, el cierre de tu día: qué faltó y qué sobró.' },
       { icon: 'chart', text: 'Tu alimentación: tus días al 100, tu día promedio y tus hábitos.' },

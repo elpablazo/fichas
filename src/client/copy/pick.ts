@@ -1,6 +1,7 @@
 // Copy picker: random variant from a pool, never one of the last 3 used for that key (§14.5).
 import { fill } from '../../shared/domain/format';
 import { type PoolKey, pools } from './es-MX';
+import type { LogPoolKey, logPools } from './log';
 
 const KEY = 'copy:recent';
 let recent: Record<string, number[]> = {};
@@ -38,4 +39,14 @@ export function pickFrom<K extends string>(
     // storage may be unavailable (private mode); the picker still works in memory
   }
   return fill(list[i] ?? '', vars);
+}
+
+let logs: typeof logPools | null = null;
+/** The lines after a log; prefetched at idle, so a meal saved later finds them ready. */
+export function loadLogCopy(): Promise<typeof logPools> {
+  return import('./log').then((m) => (logs = m.logPools));
+}
+
+export async function pickLog(key: LogPoolKey, vars: Record<string, string | number> = {}): Promise<string> {
+  return pickFrom(logs ?? (await loadLogCopy()), key, vars);
 }
