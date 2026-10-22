@@ -68,6 +68,7 @@ export type SheetState =
   | { kind: 'style' }
   | { kind: 'whats-new'; since?: string | null }
   | { kind: 'export-meals' }
+  | { kind: 'eating' }
   | null;
 
 export const sheet = signal<SheetState>(null);

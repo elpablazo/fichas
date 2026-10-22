@@ -10,19 +10,63 @@ import {
   TrendingUp,
 } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
+import { eatingSummary } from '../../shared/domain/eating';
 import { fill, shortDate } from '../../shared/domain/format';
 import { seasonReport } from '../../shared/domain/story';
 import { analyzeWeight, trendAt } from '../../shared/domain/weight';
+import { DayRings } from '../components/DayRings';
 import { ScreenHeader, SectionTitle, Segmented } from '../components/ui';
+import { weekStart } from '../components/WeekStrip';
 import { type Range, WeightChart } from '../components/WeightChart';
 import { buttons, titles } from '../copy/es-MX';
-import { storyCopy, weightCopy } from '../copy/more';
+import { eatingCopy, storyCopy, weightCopy } from '../copy/more';
 import { gardenLogs } from '../game';
-import { achievements, activePlan, today, weighins } from '../state/signals';
+import { achievements, activePlan, planForDay, plans, settings, today, weighins } from '../state/signals';
 import { navigate, openSheet } from '../state/ui';
 
 const kg1 = (n: number) => n.toFixed(1);
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(1)}`;
+
+/** This week as rings: how much of each day's plan was covered. Opens "Tu alimentación". */
+function EatingCard() {
+  const day = today.value;
+  const from = weekStart(day);
+  const s = useMemo(
+    () =>
+      eatingSummary({
+        from,
+        to: day,
+        today: day,
+        logs: gardenLogs.value,
+        planOf: (d) => planForDay(plans.value, d)?.data ?? null,
+        tz: settings.value.tz,
+        dayStartHour: settings.value.day_start_hour,
+      }),
+    [from, day, gardenLogs.value, plans.value, settings.value.tz, settings.value.day_start_hour],
+  );
+  const line =
+    s.full > 0
+      ? `${s.full} ${s.full === 1 ? eatingCopy.fullOne : eatingCopy.full} ${eatingCopy.thisWeek}`
+      : eatingCopy.fullNone;
+  return (
+    <button
+      type="button"
+      class="card press mb-4 block w-full p-4 text-left"
+      data-testid="eating-card"
+      aria-label={`${eatingCopy.title}. ${line}`}
+      onClick={() => openSheet({ kind: 'eating' })}
+    >
+      <span class="flex items-center justify-between gap-3">
+        <span class="kicker">{eatingCopy.title}</span>
+        <ChevronRight size={20} class="text-ink-3" aria-hidden="true" />
+      </span>
+      <span class="headline mt-0.5 block">{line}</span>
+      <span class="mt-3 block">
+        <DayRings days={s.days} today={day} size={36} />
+      </span>
+    </button>
+  );
+}
 
 export default function Progress() {
   const [range, setRange] = useState<Range>('m3');
@@ -82,6 +126,8 @@ export default function Progress() {
           </button>
         }
       />
+
+      {p && <EatingCard />}
 
       <section class="card mb-4 p-4" data-testid="weight-section">
         <div class="flex items-start justify-between gap-3">

@@ -114,6 +114,7 @@ for (const r of CHANGELOG) {
 flat('line.describe', copy.describeCopy);
 flat('line.day', copy.dayCopy);
 flat('line.dayClose', copy.dayCloseCopy);
+flat('line.eating', copy.eatingCopy);
 flat('line.garden', copy.gardenCopy);
 flat('line.stage', copy.stageLabels);
 flat('line.unlock', copy.unlockNames);

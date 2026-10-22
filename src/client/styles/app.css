@@ -1629,6 +1629,52 @@
     background: var(--ink);
   }
 
+  /* Days as rings on a calendar (Tu alimentación). */
+  .day-rings {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px 2px;
+    justify-items: center;
+  }
+  .day-rings-head {
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 16px;
+    color: var(--ink-3);
+  }
+  .day-rings-cell {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+  }
+  .day-ring {
+    display: grid;
+    border-radius: 999px;
+  }
+  .day-ring.is-today {
+    box-shadow:
+      0 0 0 2px var(--surface-2),
+      0 0 0 4px var(--ink);
+  }
+  .day-ring-n {
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--ink-2);
+  }
+  .day-ring.is-empty .day-ring-n,
+  .day-ring-future .day-ring-n {
+    color: var(--ink-3);
+  }
+  .day-ring-future {
+    display: grid;
+    place-items: center;
+    width: var(--ring);
+    height: var(--ring);
+    border-radius: 999px;
+    border: 2px dashed var(--line-2);
+  }
+
   /* ---------- Sprites ---------- */
   .sprite {
     display: inline-block;

@@ -34,6 +34,7 @@ const WeighIn = lazyView(() => import('./sheets/WeighIn'));
 const SeasonRecap = lazyView(() => import('./sheets/SeasonRecap'));
 const WhatsNew = lazyView(() => import('./sheets/WhatsNew'));
 const ExportMeals = lazyView(() => import('./sheets/ExportMeals'));
+const Eating = lazyView(() => import('./sheets/Eating'));
 const GameMoment = lazyView(() => import('./components/GameMoment'));
 
 /** The core loop's sheets: fetched right after the first paint, so they open instantly and offline. */
@@ -55,6 +56,7 @@ export const PREFETCH = [
   Style,
   SeasonRecap,
   ExportMeals,
+  Eating,
 ];
 
 function renderSheet(s: NonNullable<SheetState>) {
@@ -105,6 +107,8 @@ function renderSheet(s: NonNullable<SheetState>) {
       return <WhatsNew since={s.since} />;
     case 'export-meals':
       return <ExportMeals />;
+    case 'eating':
+      return <Eating />;
     default:
       return null;
   }

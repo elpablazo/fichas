@@ -420,3 +420,29 @@ export const dayCloseCopy = {
   tipStart: 'empieza {slot} con {n} {emoji}.',
   tipExtra: 'si se te antoja {food}, checa antes dónde cabe.',
 } as const;
+
+/** Tu alimentación (Progreso): the days at 100, the average day, meal habits, the most eaten foods. */
+export const eatingCopy = {
+  title: 'Tu alimentación',
+  ranges: { d7: '7 días', d30: '30 días', season: 'Temporada' },
+  fullOne: 'día al 100',
+  full: 'días al 100',
+  thisWeek: 'esta semana',
+  fullNone: 'Llena todos los grupos y el día llega a 100.',
+  avg: 'Tu día promedio',
+  avgOf: '{eaten} de {planned}',
+  short: 'Lo que más falta: {n} {emoji} al día.',
+  over: 'Lo que más sobra: {n} {emoji} al día.',
+  meals: 'Por comida',
+  plan: 'Plan {time}',
+  real: 'sueles comer ~{time}',
+  habitOver: '+{n} {emoji}',
+  habitShort: 'falta {n} {emoji}',
+  habitTimes: '{times} de {of} días',
+  mealOn: 'Justo',
+  extra: 'Fuera de comidas',
+  foods: 'Lo que más comes',
+  times: '×{n}',
+  empty: 'Anota unos días y aquí verás cómo comes.',
+  dayA11y: '{date}: {pct}%',
+} as const;

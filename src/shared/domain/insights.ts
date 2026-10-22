@@ -78,10 +78,14 @@ export function dayContributors(t: TypeKey, dayLogs: readonly LogRow[], plan: Pl
     .sort((a, b) => b.n - a.n);
 }
 
+/** Food name without the amount ("½ tz arroz" → "arroz"). */
+export function foodName(label: string): string {
+  return label.replace(/^\s*[\d½¼¾⅓⅔.,/]+\s*(tz|tza|cda|cdta|g|ml|reb|pza|lata|latas|paquete|barra)?\s*/i, '') || label;
+}
+
 /** "el pan de caja" style short name of a contributor, for "vino de …" lines. */
 export function contributorName(c: Contributor): string {
-  const name = c.label.replace(/^\s*[\d½¼¾⅓⅔.,/]+\s*(tz|tza|cda|cdta|g|ml|reb|pza|lata|latas|paquete|barra)?\s*/i, '');
-  return name || c.label;
+  return foodName(c.label);
 }
 
 /**

@@ -37,6 +37,7 @@ export const CHANGELOG: Release[] = [
       { icon: 'plate', text: 'Al anotar ves tu comida contra su plan, lugar por lugar.' },
       { icon: 'search', text: 'Toca un tubo: qué lo llenó y cuánto es una ficha.' },
       { icon: 'bell', text: 'De noche, el cierre de tu día: qué faltó y qué sobró.' },
+      { icon: 'chart', text: 'Tu alimentación: tus días al 100, tu día promedio y tus hábitos.' },
       { icon: 'link', text: 'Un enlace para tu nutri: qué comiste y a qué hora.' },
       { icon: 'refresh', text: 'Cuando hay versión nueva, un toque y se actualiza.' },
     ],
