@@ -17,6 +17,8 @@ export interface Meter {
   eaten: number;
   /** What the plan asked for in the meals already resolved: where the tank "should" be now. */
   expected: number;
+  /** Where each planned meal's share ends, in slot order (the day's total excluded): the tube's meal marks. */
+  marks: { slot: string; at: number }[];
   /** planned − eaten, never negative. */
   remaining: number;
   /** eaten − planned, never negative. */
@@ -64,11 +66,20 @@ export function dayStatus(plan: PlanData, dayLogs: LogRow[], balancing: boolean)
     const planned = balance.planned[t] ?? 0;
     const eaten = balance.eaten[t] ?? 0;
     if (planned < EPS && eaten < EPS) continue;
+    const marks: Meter['marks'] = [];
+    let at = 0;
+    for (const s of plan.slots) {
+      const n = s.target[t] ?? 0;
+      if (n < EPS) continue;
+      at += n;
+      if (at < planned - EPS) marks.push({ slot: s.key, at });
+    }
     meters.push({
       type: t,
       planned,
       eaten,
       expected: expected[t] ?? 0,
+      marks,
       remaining: Math.max(0, planned - eaten),
       over: Math.max(0, eaten - planned),
     });
@@ -99,6 +110,35 @@ export function dayStatus(plan: PlanData, dayLogs: LogRow[], balancing: boolean)
     total: plan.slots.length,
     balance,
   };
+}
+
+/** Groups worth catching up late in the day (more is welcome); the rest stay with their meals. */
+const CATCH_UP: readonly TypeKey[] = ['veg', 'fruit'];
+
+export interface Closing {
+  /** 0–100: each planned group counts the same, filled up to its plan (overs never add or subtract). */
+  pct: number;
+  /** Groups still short of the day's plan, catch-up groups first, then by amount. */
+  missing: PaceGap[];
+  /** Every planned group reached its plan. */
+  complete: boolean;
+  /** Complete and nothing over: día redondo. */
+  exact: boolean;
+}
+
+/** "Cerrar al 100": how much of the day's plan is already covered, and what's still missing. */
+export function closing(meters: readonly Pick<Meter, 'type' | 'planned' | 'eaten'>[]): Closing {
+  const planned = meters.filter((m) => m.planned >= NOTICE);
+  const pct = planned.length
+    ? Math.floor((planned.reduce((s, m) => s + Math.min(1, m.eaten / m.planned), 0) / planned.length) * 100 + EPS)
+    : 0;
+  const missing = planned
+    .map((m) => ({ type: m.type, n: m.planned - m.eaten }))
+    .filter((g) => g.n >= NOTICE)
+    .sort((a, b) => Number(CATCH_UP.includes(b.type)) - Number(CATCH_UP.includes(a.type)) || b.n - a.n);
+  const complete = missing.length === 0 && planned.length > 0;
+  const exact = complete && meters.every((m) => m.eaten - m.planned < NOTICE);
+  return { pct: complete ? 100 : Math.min(99, pct), missing, complete, exact };
 }
 
 /** A number of units of one type said as real food: "1 tortilla", "2 cdta aceite", "½ tz arroz". */

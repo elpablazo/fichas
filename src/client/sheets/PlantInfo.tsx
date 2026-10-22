@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-preact';
 import { dayLong, fill } from '../../shared/domain/format';
 import { bloomed, flowerModel } from '../../shared/game/garden';
 import { SPECIES_BY_ID } from '../../shared/game/species';
+import { speciesText } from '../../shared/game/species-text';
 import { Plant } from '../components/Plant';
 import { Sheet } from '../components/Sheet';
 import { buttons, stageLabels } from '../copy/es-MX';
@@ -28,9 +29,9 @@ export default function PlantInfo({ day }: { day: string }) {
         style="background: linear-gradient(180deg, var(--sky-2), var(--sky-1))"
       >
         <Plant stage={m.stage} species={m.species} size={150} sway={m.today} grow />
-        <p class="title">{sp ? sp.name : stageLabels[m.stage]}</p>
-        {sp && <p class="secondary muted italic">{sp.latin}</p>}
-        {sp && <p class="secondary mt-2 max-w-[32ch]">{sp.fact}</p>}
+        <p class="title">{sp ? speciesText(sp.id).name : stageLabels[m.stage]}</p>
+        {sp && <p class="secondary muted italic">{speciesText(sp.id).latin}</p>}
+        {sp && <p class="secondary mt-2 max-w-[32ch]">{speciesText(sp.id).fact}</p>}
         {!sp && m.today && <p class="secondary muted mt-1">{gardenCopy.secret}</p>}
         <p class="badge mt-3">
           {m.n === 0

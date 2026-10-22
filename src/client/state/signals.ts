@@ -51,7 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   haptics: true,
   notifications: { enabled: false, paused_until: null, quiet: ['22:30', '09:00'], slots: {} },
   rebalance: 'unknown',
-  style: { petal: 'clasica', theme: 'rosa', token: 'clasico', celebration: 'confeti' },
+  style: { petal: 'clasica', theme: 'invernadero', token: 'clasico', celebration: 'confeti' },
   onboarding: { install_hint: false, notif_asked: [], token_hint: false },
   last_closed_day: null,
 };

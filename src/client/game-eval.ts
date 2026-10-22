@@ -6,10 +6,11 @@ import type { AchievementRow, LogRow } from '../shared/domain/types';
 import { bloomed, flowerModel } from '../shared/game/garden';
 import { levelProgress } from '../shared/game/levels';
 import { isRare, SPECIES_BY_ID } from '../shared/game/species';
+import { speciesText } from '../shared/game/species-text';
 import { earnedStamps, STAMPS } from '../shared/game/stamps';
 import { calendarKey, isComeback, surpriseLogs } from '../shared/game/surprise';
+import { pickGame } from './copy/game';
 import { unlockFallback, unlockNames } from './copy/more';
-import { pick } from './copy/pick';
 import { db, getLocal, setLocal } from './db/dexie';
 import { writeRows } from './db/outbox';
 import type { Moment } from './game';
@@ -68,7 +69,7 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
       String(n),
       null,
       Date.now(),
-      hadProgress && recent.length && n === level ? pick('level.up', { n, unlock: unlockName(n) }) : undefined,
+      hadProgress && recent.length && n === level ? pickGame('level.up', { n, unlock: unlockName(n) }) : undefined,
     );
   }
   for (const p of allPlans.filter((p) => p.season !== null && p.status !== 'draft' && p.status !== 'discarded')) {
@@ -89,7 +90,7 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
         key,
         p.season,
         Date.now(),
-        show ? pick('stamp.earned', { name: stamp?.name ?? key }) : undefined,
+        show ? pickGame('stamp.earned', { name: stamp?.name ?? key }) : undefined,
         stamp?.emoji,
       );
     }
@@ -114,14 +115,14 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
       `species_${sp.id}`,
       null,
       Date.now(),
-      fresh ? pick(isRare(sp) ? 'species.rare' : 'species.new', { name: sp.name }) : undefined,
+      fresh ? pickGame(isRare(sp) ? 'species.rare' : 'species.new', { name: speciesText(sp.id).name }) : undefined,
       '🌸',
-      { kind: 'species', species: sp.id, fact: sp.fact, rare: isRare(sp) },
+      { kind: 'species', species: sp.id, fact: speciesText(sp.id).fact, rare: isRare(sp) },
     );
     if (!isNew && fresh && d === today.value && !(await getLocal(`bloom:${d}`, false))) {
       await setLocal(`bloom:${d}`, true);
       moments.push({
-        text: pick('species.bloom', { name: sp.name }),
+        text: pickGame('species.bloom', { name: speciesText(sp.id).name }),
         emoji: '🌸',
         kind: 'bloom',
         species: sp.id,
@@ -141,7 +142,7 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
       `meal_${l.id}`,
       null,
       l.created_at,
-      recent.some((r) => r.id === l.id) ? pick('surprise', { total: xp }) : undefined,
+      recent.some((r) => r.id === l.id) ? pickGame('surprise', { total: xp }) : undefined,
     );
   }
   for (const l of recent) {
@@ -151,7 +152,7 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
       !(await getLocal(`comeback:${l.day}`, false))
     ) {
       await setLocal(`comeback:${l.day}`, true);
-      moments.push({ text: pick('comeback'), emoji: '👋', kind: 'comeback' });
+      moments.push({ text: pickGame('comeback'), emoji: '👋', kind: 'comeback' });
     }
   }
   const holiday = calendarKey(today.value);
@@ -161,7 +162,7 @@ export async function evaluateRewards(boot: number, push: (m: Moment) => void): 
       holiday,
       null,
       Date.now(),
-      !ids.has(`surprise:${holiday}:life`) ? pick('surprise', { total: xp }) : undefined,
+      !ids.has(`surprise:${holiday}:life`) ? pickGame('surprise', { total: xp }) : undefined,
       '🌸',
     );
   await writeRows(earned.map((row) => ({ table: 'achievements', row })));

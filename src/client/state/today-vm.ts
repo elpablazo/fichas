@@ -94,7 +94,7 @@ export interface StatusVM {
 }
 
 export interface DayVM {
-  v: 4;
+  v: 5;
   tz: string;
   dayStartHour: number;
   day: string;
@@ -198,7 +198,7 @@ export function buildDayVM(input: DayInput): DayVM {
   const { plan, day, today } = input;
   const mode: DayVM['mode'] = day === today ? 'today' : day < today ? 'past' : 'future';
   const base: DayVM = {
-    v: 4,
+    v: 5,
     tz: input.tz,
     dayStartHour: input.dayStartHour,
     day,

@@ -30,6 +30,6 @@ export function nextUnlock(level: number) {
 }
 
 export function accents(level: number) {
-  const names = ['cobalto', 'bosque', 'uva', 'oceano'];
+  const names = ['cobalto', 'mandarina', 'uva', 'oceano'];
   return Array.from({ length: Math.max(0, level - 10) }, (_, i) => names[i] ?? `color_${i + 11}`);
 }

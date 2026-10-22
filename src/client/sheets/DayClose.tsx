@@ -4,13 +4,14 @@ import { fill } from '../../shared/domain/format';
 import { bloomed, flowerModel } from '../../shared/game/garden';
 import { casaLlena, diaRedondo } from '../../shared/game/momentum';
 import { SPECIES_BY_ID } from '../../shared/game/species';
+import { speciesText } from '../../shared/game/species-text';
 import { setSetting } from '../actions';
 import { Plant } from '../components/Plant';
 import { Sheet } from '../components/Sheet';
 import { TomorrowMenu } from '../components/TomorrowMenu';
 import { weekStart } from '../components/WeekStrip';
 import { buttons, gameCopy, stageLabels, titles } from '../copy/es-MX';
-import { pick } from '../copy/pick';
+import { pickGame } from '../copy/game';
 import { celebrateBig } from '../feedback/confetti';
 import { playChord } from '../feedback/sound';
 import { gardenLogs } from '../game';
@@ -25,7 +26,7 @@ export default function DayClose({ day }: { day: string }) {
   const [line] = useState(() => {
     if (!plan) return '';
     const logs = gardenLogs.value.filter((l) => l.day === day && !l.deleted_at);
-    return pick(
+    return pickGame(
       diaRedondo(plan.data, logs, plan.data.swaps)
         ? 'dayClose.round'
         : casaLlena(plan.data, logs)
@@ -56,7 +57,8 @@ export default function DayClose({ day }: { day: string }) {
         <Plant stage={m.stage} species={m.species} size={148} grow sway />
         <p class="title mt-1">{line}</p>
         <p class="secondary muted">
-          {species ? species.name : stageLabels[m.stage]} · {m.n === 1 ? gameCopy.xpOne : fill(gameCopy.xp, { n: m.n })}
+          {species ? speciesText(species.id).name : stageLabels[m.stage]} ·{' '}
+          {m.n === 1 ? gameCopy.xpOne : fill(gameCopy.xp, { n: m.n })}
         </p>
         <div class="mt-3 flex gap-1" aria-hidden="true">
           {Array.from({ length: 7 }, (_, i) => {

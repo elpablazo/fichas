@@ -15,7 +15,17 @@ export function pick(
   vars: Record<string, string | number> = {},
   rand: () => number = Math.random,
 ): string {
-  const list = pools[key] as readonly string[];
+  return pickFrom(pools, key, vars, rand);
+}
+
+/** The same picker over any set of pools (lazy screens bring their own). */
+export function pickFrom<K extends string>(
+  set: Record<K, readonly string[]>,
+  key: K,
+  vars: Record<string, string | number> = {},
+  rand: () => number = Math.random,
+): string {
+  const list = set[key];
   const last = recent[key] ?? [];
   const fresh = list.map((_, i) => i).filter((i) => !last.includes(i));
   const choices = fresh.length ? fresh : list.map((_, i) => i).filter((i) => i !== last[last.length - 1]);

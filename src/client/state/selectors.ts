@@ -76,7 +76,7 @@ const SNAPSHOT_KEY = 'today:snapshot';
 export function readSnapshot(): DayVM | null {
   try {
     const vm = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) ?? 'null') as DayVM | null;
-    if (vm?.v !== 4) return null;
+    if (vm?.v !== 5) return null;
     if (appDay(Date.now(), vm.tz, vm.dayStartHour) !== vm.day) return null;
     return vm;
   } catch {

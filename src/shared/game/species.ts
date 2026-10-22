@@ -18,9 +18,6 @@ export type PetalShape = 'ellipse' | 'pointed' | 'round' | 'notched';
 
 export interface Species {
   id: string;
-  name: string;
-  latin: string;
-  fact: string;
   /** Level that adds it to the pool; 0 = rare, -1 = seasonal. */
   level: number;
   shape: FlowerShape;
@@ -33,9 +30,6 @@ export interface Species {
 export const SPECIES: Species[] = [
   {
     id: 'margarita',
-    name: 'Margarita',
-    latin: 'Bellis perennis',
-    fact: 'Abre con el sol y se cierra al anochecer.',
     level: 1,
     shape: 'radial',
     petal: 'ellipse',
@@ -45,9 +39,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'girasol',
-    name: 'Girasol',
-    latin: 'Helianthus annuus',
-    fact: 'De joven, sigue al sol de este a oeste.',
     level: 1,
     shape: 'radial',
     petal: 'pointed',
@@ -57,9 +48,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'cosmos',
-    name: 'Mirasol',
-    latin: 'Cosmos bipinnatus',
-    fact: 'El cosmos es originario de México.',
     level: 1,
     shape: 'radial',
     petal: 'notched',
@@ -69,9 +57,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'tulipan',
-    name: 'Tulipán',
-    latin: 'Tulipa',
-    fact: 'Sigue creciendo aun después de cortado.',
     level: 1,
     shape: 'cup',
     petal: 'ellipse',
@@ -81,9 +66,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'dalia',
-    name: 'Dalia',
-    latin: 'Dahlia pinnata',
-    fact: 'Es la flor nacional de México.',
     level: 2,
     shape: 'radial',
     petal: 'pointed',
@@ -93,9 +75,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'lavanda',
-    name: 'Lavanda',
-    latin: 'Lavandula angustifolia',
-    fact: 'Su nombre viene del latín lavare: lavar.',
     level: 2,
     shape: 'spike',
     petal: 'round',
@@ -105,9 +84,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'nomeolvides',
-    name: 'Nomeolvides',
-    latin: 'Myosotis',
-    fact: 'Su nombre ya es una promesa.',
     level: 2,
     shape: 'cluster',
     petal: 'round',
@@ -117,9 +93,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'campanilla',
-    name: 'Campanilla',
-    latin: 'Ipomoea purpurea',
-    fact: 'Abre por la mañana y cierra por la tarde.',
     level: 4,
     shape: 'radial',
     petal: 'round',
@@ -129,9 +102,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'gerbera',
-    name: 'Gerbera',
-    latin: 'Gerbera jamesonii',
-    fact: 'Es pariente del girasol y la margarita.',
     level: 4,
     shape: 'radial',
     petal: 'ellipse',
@@ -141,9 +111,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'violeta',
-    name: 'Violeta',
-    latin: 'Viola odorata',
-    fact: 'Le dio su nombre a un color.',
     level: 4,
     shape: 'radial',
     petal: 'round',
@@ -153,9 +120,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'hortensia',
-    name: 'Hortensia',
-    latin: 'Hydrangea macrophylla',
-    fact: 'Su color cambia según el suelo.',
     level: 6,
     shape: 'cluster',
     petal: 'round',
@@ -165,9 +129,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'alcatraz',
-    name: 'Alcatraz',
-    latin: 'Zantedeschia aethiopica',
-    fact: 'Diego Rivera la pintó una y otra vez.',
     level: 6,
     shape: 'calla',
     petal: 'ellipse',
@@ -177,9 +138,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'amapola',
-    name: 'Amapola dorada',
-    latin: 'Eschscholzia californica',
-    fact: 'Cierra sus pétalos en los días nublados.',
     level: 6,
     shape: 'radial',
     petal: 'round',
@@ -189,9 +147,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'rosa',
-    name: 'Rosa',
-    latin: 'Rosa',
-    fact: 'Hay fósiles de rosa de 35 millones de años.',
     level: 8,
     shape: 'rose',
     petal: 'round',
@@ -201,9 +156,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'bugambilia',
-    name: 'Bugambilia',
-    latin: 'Bougainvillea',
-    fact: 'Su color está en las brácteas, no en la flor.',
     level: 8,
     shape: 'bract',
     petal: 'round',
@@ -213,9 +165,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'jacaranda',
-    name: 'Jacaranda',
-    latin: 'Jacaranda mimosifolia',
-    fact: 'Pinta de morado la CDMX en primavera.',
     level: 8,
     shape: 'cluster',
     petal: 'notched',
@@ -225,9 +174,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'nopal',
-    name: 'Flor de nopal',
-    latin: 'Opuntia ficus-indica',
-    fact: 'Cada flor dura apenas uno o dos días.',
     level: 10,
     shape: 'nopal',
     petal: 'ellipse',
@@ -237,9 +183,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'galan',
-    name: 'Galán de noche',
-    latin: 'Cestrum nocturnum',
-    fact: 'Solo perfuma de noche.',
     level: 10,
     shape: 'cluster',
     petal: 'pointed',
@@ -249,9 +192,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'orquidea',
-    name: 'Orquídea',
-    latin: 'Laelia anceps',
-    fact: 'Hay más de 25 mil especies de orquídea.',
     level: 0,
     shape: 'orchid',
     petal: 'ellipse',
@@ -261,9 +201,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'loto',
-    name: 'Loto',
-    latin: 'Nelumbo nucifera',
-    fact: 'Sus hojas repelen el agua y el lodo.',
     level: 0,
     shape: 'lotus',
     petal: 'pointed',
@@ -273,9 +210,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'magnolia',
-    name: 'Magnolia',
-    latin: 'Magnolia grandiflora',
-    fact: 'Ya existía antes que las abejas.',
     level: 0,
     shape: 'cup',
     petal: 'ellipse',
@@ -285,9 +219,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'cempasuchil',
-    name: 'Cempasúchil',
-    latin: 'Tagetes erecta',
-    fact: 'Guía a las almas en Día de Muertos.',
     level: -1,
     shape: 'radial',
     petal: 'round',
@@ -297,9 +228,6 @@ export const SPECIES: Species[] = [
   },
   {
     id: 'nochebuena',
-    name: 'Nochebuena',
-    latin: 'Euphorbia pulcherrima',
-    fact: 'Es de México; lo rosa son hojas.',
     level: -1,
     shape: 'radial',
     petal: 'pointed',

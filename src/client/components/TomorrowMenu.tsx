@@ -4,7 +4,7 @@ import { useState } from 'preact/hooks';
 import type { MenuRow } from '../../shared/domain/types';
 import { planTomorrow } from '../../shared/game/tomorrow';
 import { buttons, todayCopy } from '../copy/es-MX';
-import { pick } from '../copy/pick';
+import { pickGame } from '../copy/game';
 import { writeRows } from '../db/outbox';
 import { gardenLogs } from '../game';
 import { slotNames } from '../state/selectors';
@@ -51,7 +51,7 @@ export function TomorrowMenu({
     });
     try {
       await writeRows(rows.map((row) => ({ table: 'menus', row })));
-      showToast(pick('tomorrow.accepted'));
+      showToast(pickGame('tomorrow.accepted'));
       setChoices({});
       onSaved?.();
     } finally {

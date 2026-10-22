@@ -6,7 +6,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { Plugin } from 'vite';
 
-const PUBLIC_PRECACHE = /\.(webmanifest|png|svg)$/;
+const PUBLIC_PRECACHE = /\.(webmanifest|png|svg|woff2)$/;
 
 function hash(data: string | Uint8Array): string {
   return createHash('sha256').update(data).digest('hex').slice(0, 16);

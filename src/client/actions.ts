@@ -243,7 +243,12 @@ export async function deleteLog(prev: LogRow): Promise<void> {
 }
 
 /** Persist the occasion and retry request atomically. Unknown portions stay empty. */
-export async function logPendingDescription(text: string, slot: string, day = today.value): Promise<void> {
+export async function logPendingDescription(
+  text: string,
+  slot: string,
+  day = today.value,
+  eatenAt?: number,
+): Promise<void> {
   const plan = planForDay(plans.value, day);
   if (!plan) return;
   markUx('log:tap');
@@ -260,7 +265,7 @@ export async function logPendingDescription(text: string, slot: string, day = to
     items: [],
     source: 'describe',
     now,
-    eaten_at: day !== today.value ? plannedTime(slot, day) : undefined,
+    eaten_at: eatenAt ?? (day !== today.value ? plannedTime(slot, day) : undefined),
     target: targetFor(slot, day),
     slotLogs: liveLogs.value.filter((l) => l.day === day && l.slot === slot),
   });

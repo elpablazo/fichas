@@ -1,9 +1,10 @@
 import './styles/app.css';
 import { effect } from '@preact/signals';
 import { render } from 'preact';
+import { setSetting } from './actions';
 import { App, PREFETCH, PREFETCH_NOW } from './app';
 import { loadPlant } from './components/LazyPlant';
-import { db, getLocal } from './db/dexie';
+import { db, getLocal, setLocal } from './db/dexie';
 import { restorePantryJournal } from './db/pantry-journal';
 import { firstPullDone, setSyncErrorReporter, startSync } from './db/sync';
 import { setHapticsOn } from './feedback/haptics';
@@ -57,6 +58,19 @@ void fetch('/api/health')
     planReadingEnabled.value = health.planReading === true;
   })
   .catch(() => {});
+
+// 2.0: the old default theme (rosa mexicano) becomes Invernadero once; picking Rosa again stays possible.
+let themeMigrated = false;
+effect(() => {
+  if (themeMigrated || !dataReady.value || !firstPullDone.value) return;
+  themeMigrated = true;
+  const style = settings.peek().style;
+  void getLocal('theme:v2', false).then((done) => {
+    if (done) return;
+    void setLocal('theme:v2', true);
+    if (style.theme === 'rosa') void setSetting('style', { ...style, theme: 'invernadero' });
+  });
+});
 
 effect(() => {
   setSoundOn(settings.value.sound);

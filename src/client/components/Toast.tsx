@@ -16,8 +16,7 @@ export function Toast() {
     >
       <div
         key={t.id}
-        class="anim-toast pointer-events-auto relative flex max-w-[528px] flex-1 items-center gap-3 overflow-hidden rounded-[18px] py-1.5 pr-1.5 pl-4"
-        style="background: color-mix(in srgb, var(--ink) 94%, transparent); color: var(--bg); box-shadow: var(--e2)"
+        class="toast anim-toast pointer-events-auto relative flex max-w-[528px] flex-1 items-center gap-3 overflow-hidden rounded-[18px] py-1.5 pr-1.5 pl-4"
       >
         <CircleCheck size={20} aria-hidden="true" style="color: var(--gold)" />
         <span class="flex-1 py-2 font-semibold leading-5">{t.text}</span>

@@ -17,47 +17,63 @@ export class AiFailure extends Error {
   }
 }
 
+/** "Sándwich de pollo" as the model named it; empty or generic names leave the item on its own. */
+function dishOf(name: string): { dish?: string } {
+  const dish = name.trim().replace(/\s+/g, ' ').slice(0, 60);
+  return dish ? { dish: dish[0]?.toUpperCase() + dish.slice(1) } : {};
+}
+
+/** The model's one-line title, cut at a word boundary; generic titles ("Desayuno mixto") are dropped. */
+export function mealTitle(raw: string): string {
+  const t = raw.trim().replace(/\s+/g, ' ');
+  if (!t || /\b(mixt[oa]|variad[oa])\b/i.test(t) || /^(desayuno|comida|cena|colaci[oó]n|almuerzo)$/i.test(t)) return '';
+  if (t.length <= 48) return t;
+  return `${t.slice(0, 48).replace(/\s+\S*$/, '')}…`;
+}
+
 /** Trust the nutritionist table over every unit number supplied by a model. */
 export function mealItems(output: AiMealData, plan: PlanData, photo: boolean): LogItem[] {
-  return output.items.map((item) => {
-    const equivalent = equivalentById(plan, item.equivalent_id);
-    if (item.equivalent_id && !equivalent) throw new Error('Unknown equivalent.');
-    if (equivalent) {
-      const qty = convert(item.qty, item.unit, equivalent.unit);
-      if (qty === null) throw new Error('Incompatible units.');
-      return {
-        label: itemLabel(equivalent.food, item.qty, item.unit),
-        qty: item.qty,
-        unit: item.unit,
-        equivalent_id: equivalent.id,
-        units: UnitsSchema.parse({ [equivalent.type]: qty / equivalent.qty }),
-        estimated: photo,
-        assumed_qty: photo || item.assumed_qty,
-        free: false,
-      };
-    }
-    if (item.free) {
-      const freeNames = [...plan.free_foods, ...ZERO_CONDIMENTS].flatMap((name) => [name, ...(ALIASES[name] ?? [])]);
-      if (!freeNames.some((name) => norm(name) === norm(item.food))) {
-        throw new Error('Unknown free food.');
-      }
-      return freeItem(item.food);
-    }
-    const units: Units = {};
-    for (const entry of item.estimated_units) units[entry.type] = (units[entry.type] ?? 0) + entry.units;
-    UnitsSchema.parse(units);
-    if (!Object.values(units).some((n) => n > 0)) throw new Error('Missing estimated units.');
+  return output.items.map((item) => ({ ...mealItem(item, plan, photo), ...dishOf(item.dish) }));
+}
+
+function mealItem(item: AiMealData['items'][number], plan: PlanData, photo: boolean): LogItem {
+  const equivalent = equivalentById(plan, item.equivalent_id);
+  if (item.equivalent_id && !equivalent) throw new Error('Unknown equivalent.');
+  if (equivalent) {
+    const qty = convert(item.qty, item.unit, equivalent.unit);
+    if (qty === null) throw new Error('Incompatible units.');
     return {
-      label: itemLabel(item.food, item.qty, item.unit, false),
+      label: itemLabel(equivalent.food, item.qty, item.unit),
       qty: item.qty,
       unit: item.unit,
-      equivalent_id: null,
-      units,
-      estimated: true,
+      equivalent_id: equivalent.id,
+      units: UnitsSchema.parse({ [equivalent.type]: qty / equivalent.qty }),
+      estimated: photo,
       assumed_qty: photo || item.assumed_qty,
       free: false,
     };
-  });
+  }
+  if (item.free) {
+    const freeNames = [...plan.free_foods, ...ZERO_CONDIMENTS].flatMap((name) => [name, ...(ALIASES[name] ?? [])]);
+    if (!freeNames.some((name) => norm(name) === norm(item.food))) {
+      throw new Error('Unknown free food.');
+    }
+    return freeItem(item.food);
+  }
+  const units: Units = {};
+  for (const entry of item.estimated_units) units[entry.type] = (units[entry.type] ?? 0) + entry.units;
+  UnitsSchema.parse(units);
+  if (!Object.values(units).some((n) => n > 0)) throw new Error('Missing estimated units.');
+  return {
+    label: itemLabel(item.food, item.qty, item.unit, false),
+    qty: item.qty,
+    unit: item.unit,
+    equivalent_id: null,
+    units,
+    estimated: true,
+    assumed_qty: photo || item.assumed_qty,
+    free: false,
+  };
 }
 
 export async function reserveCall(env: Env): Promise<void> {
@@ -133,7 +149,7 @@ export async function runMealAi(
       const result = (await response.json()) as { choices?: { message?: { content?: string } }[] };
       const output = AiMeal.parse(JSON.parse(result.choices?.[0]?.message?.content ?? ''));
       return {
-        title: output.title.trim().split(/\s+/).slice(0, 4).join(' '),
+        title: mealTitle(output.title),
         items: mealItems(output, plan, photo),
         confidence: output.confidence,
         source: 'ai',

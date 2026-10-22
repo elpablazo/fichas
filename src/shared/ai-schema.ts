@@ -8,6 +8,7 @@ export const AiMeal = z.object({
   items: z
     .array(
       z.object({
+        dish: z.string().max(60),
         food: z.string().min(1).max(120),
         equivalent_id: z.string().max(120).nullable(),
         qty: z.number().positive().max(10000),

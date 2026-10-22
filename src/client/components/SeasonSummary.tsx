@@ -66,7 +66,7 @@ export function SeasonSummary({
           <img
             src={preview}
             alt={kind === 'recap' ? storyCopy.recap : storyCopy.report}
-            class="my-2 w-full rounded-[18px] shadow-[var(--e1)]"
+            class="my-2 w-full rounded-[18px] shadow-[0_0_0_1.5px_var(--edge)]"
           />
         ) : (
           <div class="my-2 aspect-[9/11] w-full animate-pulse rounded-[18px] bg-surface-2" />

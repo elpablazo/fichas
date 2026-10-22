@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { amountOf, dayStatus } from '../../../src/shared/domain/daystatus';
+import { amountOf, closing, dayStatus } from '../../../src/shared/domain/daystatus';
 import { equivalentById } from '../../../src/shared/domain/units';
 import { item, log, plan } from '../helpers';
 
@@ -70,5 +70,54 @@ describe('dayStatus', () => {
     expect(amountOf(tortilla, 1)).toBe('1 tortilla');
     expect(amountOf(tortilla, 2)).toBe('2 tortillas');
     expect(amountOf(oil, 1)).toBe('1 cdta aceite');
+  });
+});
+
+describe('meal marks and closing the day', () => {
+  it('marks where each meal share ends inside a tube', () => {
+    const s = dayStatus(plan, [], true);
+    // Carbs: desayuno 2, comida 2, cena 3 → marks at 2 and 4 (7 is the top).
+    expect(meter(s, 'carb_sg')?.marks).toEqual([
+      { slot: 'desayuno', at: 2 },
+      { slot: 'comida', at: 4 },
+    ]);
+    // Dairy only in one meal: no inner marks.
+    expect(meter(s, 'dairy')?.marks).toEqual([]);
+  });
+
+  it('counts each group the same and caps it at its plan', () => {
+    expect(closing([{ type: 'carb_sg', planned: 7, eaten: 0 }]).pct).toBe(0);
+    const c = closing([
+      { type: 'carb_sg', planned: 4, eaten: 8 },
+      { type: 'veg', planned: 4, eaten: 2 },
+    ]);
+    // carbs 100% (capped), veg 50% → 75%.
+    expect(c.pct).toBe(75);
+    expect(c.missing).toEqual([{ type: 'veg', n: 2 }]);
+    expect(c.complete).toBe(false);
+  });
+
+  it('lists catch-up groups first, then the largest gaps', () => {
+    const c = closing([
+      { type: 'protein_poa', planned: 10, eaten: 4 },
+      { type: 'fruit', planned: 3, eaten: 2 },
+      { type: 'veg', planned: 4, eaten: 1 },
+    ]);
+    expect(c.missing.map((g) => g.type)).toEqual(['veg', 'fruit', 'protein_poa']);
+  });
+
+  it('is 100 only when every group is covered; exact when nothing is over', () => {
+    const full = closing([
+      { type: 'carb_sg', planned: 7, eaten: 7 },
+      { type: 'veg', planned: 4, eaten: 4.25 },
+    ]);
+    expect(full).toMatchObject({ pct: 100, complete: true, exact: true });
+    const over = closing([
+      { type: 'carb_sg', planned: 7, eaten: 8 },
+      { type: 'veg', planned: 4, eaten: 4 },
+    ]);
+    expect(over).toMatchObject({ pct: 100, complete: true, exact: false });
+    // Almost there never rounds up to 100.
+    expect(closing([{ type: 'veg', planned: 4, eaten: 3.5 }]).pct).toBe(87);
   });
 });

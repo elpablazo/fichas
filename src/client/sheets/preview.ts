@@ -93,13 +93,14 @@ export function previewModel(
   return { tokens, status: 'mixed', line: fill(lines.mixedLine, { slot: slotLabel }), canFit: fitOk };
 }
 
-/** What a described meal does: a verdict against its meal, where it lands in the day's tanks, and what changes
- *  later ("La cena queda con 1 tortilla menos"). Same numbers as Today, computed with the meal added. */
+/** What a described meal does: a verdict against its meal (in words and as a plate of sockets), where it lands
+ *  in the day's tubes, and what changes later ("La cena queda con 1 tortilla menos"). Same numbers as Today,
+ *  computed with the meal added. */
 export interface Impact {
   status: PreviewModel['status'];
   line: string;
-  /** What a meal still has room for, when it's also over somewhere ("Le quedan 2 🥦."). */
-  sub: string | null;
+  /** The meal's plan against what it would bring (normalized with the plan's swaps). Null for extras. */
+  plate: { target: Units; eaten: Units } | null;
   later: string | null;
   meters: Meter[];
   adding: Units;
@@ -107,13 +108,13 @@ export interface Impact {
   fix: { items: LogItem[]; changed: Set<number>; hint: string } | null;
 }
 
-function gapText(deltas: Partial<Record<TypeKey, number>>, sign: 1 | -1): string {
-  return TYPE_KEYS.map((t) => ({ t, n: (deltas[t] ?? 0) * sign }))
+function gapText(deltas: Partial<Record<TypeKey, number>>, sign: 1 | -1, max = 2): string {
+  const parts = TYPE_KEYS.map((t) => ({ t, n: (deltas[t] ?? 0) * sign }))
     .filter((g) => g.n >= 0.5 - 1e-6)
     .sort((a, b) => b.n - a.n)
-    .slice(0, 2)
-    .map((g) => `${formatCount(g.n)} ${typeLabels[g.t].emoji}`)
-    .join(' y ');
+    .slice(0, max)
+    .map((g) => `${formatCount(g.n)} ${typeLabels[g.t].emoji}`);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} y ${parts.at(-1)}` : (parts[0] ?? '');
 }
 
 export function impact(
@@ -148,7 +149,13 @@ export function impact(
   // Meters for every type touched, so a food outside the plan (e.g. a sweet) still shows.
   const meters = after.meters.map(
     (m) =>
-      before.meters.find((b) => b.type === m.type) ?? { ...m, eaten: 0, expected: 0, remaining: m.planned, over: 0 },
+      before.meters.find((b) => b.type === m.type) ?? {
+        ...m,
+        eaten: 0,
+        expected: 0,
+        remaining: m.planned,
+        over: 0,
+      },
   );
   const had = new Set(before.advice.map((a) => `${a.slot}:${a.type}:${a.n}`));
   const usage = equivalentUsage(liveLogs.value);
@@ -165,12 +172,13 @@ export function impact(
         })
         .join(' ')
     : null;
-  const base = { later, meters, adding, fix: null, sub: null };
+  const base = { later, meters, adding, fix: null, plate: null };
   if (items.length && items.every((i) => i.free)) return { ...base, status: 'free', line: describeCopy.free };
   if (slot === 'extra') return { ...base, status: 'extra', line: describeCopy.extra };
   const r = computeStatus(raw, target, plan.swaps);
+  const plate = { target, eaten: r.normalized };
   const s = slotLabel.toLowerCase();
-  if (r.status === 'on') return { ...base, status: 'on', line: fill(describeCopy.on, { slot: s }) };
+  if (r.status === 'on') return { ...base, plate, status: 'on', line: fill(describeCopy.on, { slot: s }) };
   const fitted = fitTo(items, target, plan, slot);
   const fitOk =
     computeStatus(unitsOfItems(fitted.items, plan), target, plan.swaps).status === 'on' &&
@@ -188,7 +196,8 @@ export function impact(
   const line =
     r.status === 'under'
       ? fill(describeCopy.under, { slot: s, list: gapText(r.deltas, -1) })
-      : fill(describeCopy.over, { list: `+${gapText(r.deltas, 1)}`, slot: s });
-  const sub = r.status === 'mixed' ? fill(describeCopy.underSub, { list: gapText(r.deltas, -1) }) : null;
-  return { ...base, status: r.status, line, sub, fix };
+      : r.status === 'over'
+        ? fill(describeCopy.over, { list: gapText(r.deltas, 1), slot: s })
+        : fill(describeCopy.mixed, { over: gapText(r.deltas, 1, 1), under: gapText(r.deltas, -1, 1) });
+  return { ...base, plate, status: r.status, line, fix };
 }

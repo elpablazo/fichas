@@ -4,7 +4,7 @@ import seed from '../../seed/plan-2026-10-08.json';
 import type { AiMealData } from '../../src/shared/ai-schema';
 import { appDay } from '../../src/shared/domain/day';
 import { PlanV1 } from '../../src/shared/domain/plan-schema';
-import { mealItems } from '../../src/worker/lib/meal-ai';
+import { mealItems, mealTitle } from '../../src/worker/lib/meal-ai';
 import { api, pair } from './helpers';
 
 const plan = PlanV1.parse(seed);
@@ -14,6 +14,7 @@ const output: AiMealData = {
   confidence: 'medium',
   items: [
     {
+      dish: 'Tacos de pollo',
       food: 'tortilla de maíz',
       equivalent_id: 'carb_sg.tortilla_de_maiz',
       qty: 2,
@@ -23,6 +24,7 @@ const output: AiMealData = {
       estimated_units: [{ type: 'fat_sp', units: 20 }],
     },
     {
+      dish: 'tacos de pollo',
       food: 'pollo',
       equivalent_id: 'protein_poa.pollo',
       qty: 120,
@@ -62,6 +64,23 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('meal AI', () => {
+  it('keeps each ingredient with its dish and a one-line title', () => {
+    const items = mealItems(output, plan, false);
+    expect(items.map((i) => i.dish)).toEqual(['Tacos de pollo', 'Tacos de pollo']);
+    expect(mealTitle('Sándwich de pollo + ½ arepa + latte')).toBe('Sándwich de pollo + ½ arepa + latte');
+    // Generic titles say nothing: the client builds one from the dishes instead.
+    expect(mealTitle('Desayuno mixto')).toBe('');
+    expect(mealTitle('Comida')).toBe('');
+    expect(mealTitle('Huevos con jamón + café con leche + jugo de naranja natural')).toBe(
+      'Huevos con jamón + café con leche + jugo de…',
+    );
+  });
+
+  it('an empty dish name leaves the item on its own', () => {
+    const [first] = mealItems({ ...output, items: [{ ...output.items[0]!, dish: ' ' }] }, plan, false);
+    expect(first?.dish).toBeUndefined();
+  });
+
   it('deferred descriptions explicitly use the original confirmed plan after a season change', async () => {
     const archived = structuredClone(seed);
     archived.equivalents.find((e) => e.id === 'protein_poa.pollo')!.qty = 40;

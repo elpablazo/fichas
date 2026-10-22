@@ -97,6 +97,8 @@ export interface LogItem {
   estimated: boolean;
   assumed_qty: boolean;
   free: boolean;
+  /** The dish this ingredient belongs to ("Sándwich de pollo"); consecutive items share it. Absent = on its own. */
+  dish?: string;
 }
 
 export type LogKind = 'meal' | 'skip' | 'free';

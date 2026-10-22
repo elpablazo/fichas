@@ -1,39 +1,32 @@
-// "¿Qué comiste?" (log) and "¿Qué se te antoja?" (check). Understanding is live: foods the plan table knows appear
-// as they're typed, JEV names the food groups of the rest within a moment, and the meal AI fills their portions
-// after a short pause. Below, the same tanks as Today show where the meal lands. One button: Anotar.
-import {
-  Blocks,
-  Camera,
-  ChevronDown,
-  CircleAlert,
-  Clock3,
-  Mic,
-  Minus,
-  Plus,
-  SkipForward,
-  Square,
-  WandSparkles,
-  WifiOff,
-  X,
-} from 'lucide-preact';
+// "¿Qué comiste?" (log) and "¿Qué se te antoja?" (check). Pick the meal on the sun's path, write it one dish per
+// line (or dictate, or snap it); understanding is live: foods the plan table knows appear as they're typed, JEV
+// names the food groups of the rest within a moment, and the meal AI fills their portions and dishes after a short
+// pause. Below, the meal against its plan (a plate of sockets) and the same tubes as Today. One button: Anotar.
+import { Blocks, Camera, CircleAlert, Clock3, Mic, SkipForward, Square, WandSparkles, WifiOff } from 'lucide-preact';
 import type { ComponentChildren, VNode } from 'preact';
 import { useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { Classified } from '../../shared/ai-schema';
-import { dayLong } from '../../shared/domain/format';
-import { mainType, stepOf, withQty } from '../../shared/domain/items';
-import { knownText, localChips, type ParseResult, parseItems, unknownPhrases } from '../../shared/domain/matcher';
-import { autoTitle } from '../../shared/domain/recipes';
+import { addDays, appMinutes, appMinutesToHhmm, zonedTime } from '../../shared/domain/day';
+import { knownDishes, mealTitle, parseDescription } from '../../shared/domain/dishes';
+import { dayLong, fill, timeLabel } from '../../shared/domain/format';
+import { stepOf, withQty } from '../../shared/domain/items';
+import { localChips, type ParseResult } from '../../shared/domain/matcher';
+import { learnedTimes, slotTimings } from '../../shared/domain/slots';
 import { capitalize, norm } from '../../shared/domain/text';
 import type { LogItem, PlanData, RecipeRow, TypeKey } from '../../shared/domain/types';
-import { logMeal, logPendingDescription, planDish, skipSlot } from '../actions';
+import { logMeal, logPendingDescription, planDish, plannedTime, skipSlot } from '../actions';
 import { classifyRemote, parsePhoto, parseRemote } from '../ai';
 import { DayMeter } from '../components/DayMeter';
+import { DishList } from '../components/DishList';
+import { MealPlate } from '../components/MealPlate';
 import { Sheet, SheetLeaving } from '../components/Sheet';
+import { SkyTrack } from '../components/SkyTrack';
+import { Txt, TypeIcon } from '../components/Sprite';
 import { a11y, buttons, dates, describeCopy, labels, lines, pools, typeLabels } from '../copy/es-MX';
 import { preparePhoto } from '../media/photo';
 import { useDictation } from '../media/speech';
 import { balanceOn, dayVM, slotNames } from '../state/selectors';
-import { liveRecipes, planForDay, plans, today } from '../state/signals';
+import { liveLogs, liveRecipes, planForDay, plans, settings, today } from '../state/signals';
 import { closeSheet, openSheet, pushSlot } from '../state/ui';
 import { markUx, record } from '../telemetry';
 import { impact, slotRemaining } from './preview';
@@ -73,12 +66,11 @@ const GROUP_TYPE: Record<Classified['groups'][number], TypeKey> = {
   nuts: 'fat_cp',
   sugar: 'sugar_sg',
 };
-const keyOf = (i: LogItem) => i.equivalent_id ?? `x:${norm(i.label)}`;
 
-/** Items with the stepper changes applied (a null quantity removes the item). */
-function withEdits(items: LogItem[], edits: Record<string, number | null>, plan: PlanData): LogItem[] {
-  return items.flatMap((it) => {
-    const k = keyOf(it);
+/** Items with the portion changes applied; edits are keyed by the list they were made on (a null removes). */
+function withEdits(items: LogItem[], edits: Record<string, number | null>, base: string, plan: PlanData): LogItem[] {
+  return items.flatMap((it, i) => {
+    const k = `${base}#${i}`;
     if (!(k in edits)) return [it];
     const q = edits[k];
     return q === null || q === undefined ? [] : [withQty(it, q, plan)];
@@ -91,7 +83,6 @@ export default function Describe(props: Props) {
   const plan = planForDay(plans.value, day);
   const vm = dayVM.value?.day === day ? dayVM.value : null;
   const [slot, setSlot] = useState(props.slot ?? vm?.now?.key ?? 'extra');
-  const [picking, setPicking] = useState(false);
   const [text, setText] = useState(props.text ?? '');
   const [pinned, setPinned] = useState<Pinned | null>(
     props.items?.length
@@ -104,6 +95,8 @@ export default function Describe(props: Props) {
   const [edits, setEdits] = useState<Record<string, number | null>>({});
   const [photoState, setPhotoState] = useState<PhotoState>('idle');
   const [submitting, setSubmitting] = useState(false);
+  /** When it was eaten, if the owner said so (else now, or the planned time on a past day). */
+  const [eatenAt, setEatenAt] = useState<number | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const selectedPhoto = useRef<File | null>(null);
@@ -129,7 +122,6 @@ export default function Describe(props: Props) {
     if (pinned) setPinned(null);
     selectedPhoto.current = null;
     setPhotoState('idle');
-    setEdits({});
     setText(value);
   };
   const dictation = useDictation(editText, () => input.current?.focus({ preventScroll: true }));
@@ -146,31 +138,40 @@ export default function Describe(props: Props) {
   }, []);
 
   const names = slotNames.value;
-  const slotOptions = useMemo(
-    () =>
-      plan
-        ? [
-            ...plan.data.slots.map((s) => ({ key: s.key, label: names[s.key] ?? s.label })),
-            { key: 'extra', label: labels.extraSlot },
-          ]
-        : [],
-    [plan, names],
-  );
+  const { tz, day_start_hour: dayStart } = settings.value;
+  const stops = useMemo(() => {
+    if (!plan) return [];
+    const timings = slotTimings(
+      plan.data.slots,
+      learnedTimes(liveLogs.value, plan.data.slots, today.value, tz, dayStart),
+      dayStart,
+    );
+    return [
+      ...plan.data.slots.map((s, i) => ({
+        key: s.key,
+        label: s.label,
+        time: timeLabel(timings[i]?.time ?? 0, dayStart),
+        minutes: timings[i]?.time ?? 0,
+      })),
+      { key: 'extra', label: labels.extraSlot, time: '', minutes: null },
+    ];
+  }, [plan, tz, dayStart]);
 
   const data = plan?.data;
   const target = data ? slotRemaining(slot, day, data) : {};
+  const known = useMemo(() => knownDishes(liveLogs.value), [liveLogs.value]);
   // Only phrases the table fully knows become rows; a phrase with an unknown word waits for its portions whole
-  // ("3 tacos de pollo" is not "30 g pollo").
+  // ("3 tacos de pollo" is not "30 g pollo"). With several lines, each line is one dish.
   const local = useMemo(
-    () => (data && !pinned ? parseItems(knownText(text, data), data, target) : null),
-    [text, slot, pinned, data],
+    () => (data && !pinned ? parseDescription(text, data, target, known) : null),
+    [text, slot, pinned, data, known],
   );
-  const phrases = useMemo(() => (data && !pinned ? unknownPhrases(text, data) : []), [text, pinned, data]);
-  const remoteKey = `${slot}|${norm(text)}`;
+  const phrases = local?.phrases ?? [];
+  const remoteKey = `${slot}|${norm(text)}|${text.split('\n').filter((l) => l.trim()).length}`;
   const remoteNow = remote?.key === remoteKey ? remote.result : null;
   const dishes: RecipeRow[] = useMemo(
     () =>
-      data && !pinned && norm(text).length >= 2
+      data && !pinned && norm(text).length >= 2 && !text.includes('\n')
         ? localChips(text, data, liveRecipes.value, slot)
             .flatMap((c) => (c.kind === 'recipe' ? [c.recipe] : []))
             .filter((r) => norm(r.title) !== norm(text))
@@ -196,7 +197,7 @@ export default function Describe(props: Props) {
     };
   }, [phrases.join('|')]);
 
-  // Meal AI: portions for the unknown phrases, after a short pause (the whole text, so dishes decompose).
+  // Meal AI: portions and dishes for the unknown phrases, after a short pause (the whole text, so dishes decompose).
   useEffect(() => {
     if (!phrases.length || pinned || !data || text.trim().length < 3 || remote?.key === remoteKey) {
       if (!phrases.length && remoteState === 'waiting') setRemoteState('idle');
@@ -270,10 +271,11 @@ export default function Describe(props: Props) {
     }
   }
 
+  const baseId = pinned ? `p:${pinned.title}:${pinned.items.length}` : remoteNow ? `r:${remoteKey}` : `l:${norm(text)}`;
   // A photo's text mirrors its reviewed items, so what's logged is what's written.
   const photoText =
     pinned?.source === 'photo' && data
-      ? withEdits(pinned.items, edits, data)
+      ? withEdits(pinned.items, edits, baseId, data)
           .map((i) => i.label)
           .join(', ')
       : null;
@@ -285,13 +287,13 @@ export default function Describe(props: Props) {
   // and spend the first frames after the tap that belong to the logged moment on Hoy.
   if (leaving && frozen.current) return frozen.current;
   if (!plan || !data) return null;
-  const slotLabel = slotOptions.find((s) => s.key === slot)?.label ?? '';
-  /** The meal's plain name for sentences ("tu colación"); the chip keeps its time when the name repeats. */
-  const slotName = slot === 'extra' ? labels.extraSlot : (data.slots.find((s) => s.key === slot)?.label ?? slotLabel);
+  /** The meal's plain name for sentences ("tu colación"); the label keeps its time when the name repeats. */
+  const slotName = slot === 'extra' ? labels.extraSlot : (data.slots.find((s) => s.key === slot)?.label ?? '');
+  const slotLabel = slot === 'extra' ? labels.extraSlot : (names[slot] ?? slotName);
   const pastDay = day !== today.value ? day : undefined;
   const fromAi = !pinned && !!remoteNow;
   const base: LogItem[] = pinned?.items ?? (remoteNow ? remoteNow.items : (local?.items ?? []));
-  const items = withEdits(base, edits, data);
+  const items = withEdits(base, edits, baseId, data);
   // Phrases still waiting for portions (shown with JEV's groups while the meal AI works).
   const open = fromAi || pinned ? [] : phrases;
   // Pending phrases are about to be counted (or are): the preview is partial until then.
@@ -306,7 +308,7 @@ export default function Describe(props: Props) {
   const notFood = open.filter((p) => (groups[norm(p)]?.food ?? 1) < 0.3);
   const unresolved =
     remoteState !== 'idle' && remoteState !== 'waiting' ? open.filter((p) => !notFood.includes(p)) : [];
-  const resolved = slotOptions.length && vm?.rows.find((r) => r.key === slot);
+  const resolved = vm?.rows.find((r) => r.key === slot);
   const canSkip =
     mode === 'log' &&
     slot !== 'extra' &&
@@ -316,18 +318,39 @@ export default function Describe(props: Props) {
     resolved.state !== 'done' &&
     resolved.state !== 'skipped';
 
+  // When: now (or the meal's planned time on a past day) unless the owner set it.
+  const defaultAt = pastDay ? plannedTime(slot, day) : Date.now();
+  const at = eatenAt ?? defaultAt;
+  const atMinutes = appMinutes(at, tz, dayStart);
+  const setTime = (hhmm: string) => {
+    const [h = 0] = hhmm.split(':').map(Number);
+    // Before the day starts (e.g. 1 am) it's still this app day, on the next calendar date.
+    const date = h < dayStart ? addDays(day, 1) : day;
+    const ms = zonedTime(date, hhmm, tz);
+    setEatenAt(pastDay ? ms : Math.min(ms, Date.now()));
+  };
+
   const titleFor = (list: LogItem[]) =>
-    pinned?.title || remoteNow?.title || autoTitle(list, data) || capitalize(text.trim());
+    pinned?.title || remoteNow?.title || mealTitle(list, data) || capitalize(text.trim().split('\n')[0] ?? '');
 
   const step = (i: number, dir: 1 | -1) => {
     const it = items[i];
     if (!it) return;
     const q = it.qty + dir * stepOf(it, data);
-    setEdits({ ...edits, [keyOf(it)]: q > 1e-6 ? q : null });
+    setEdits({ ...edits, [editKey(i)]: q > 1e-6 ? q : null });
   };
   const remove = (i: number) => {
-    const it = items[i];
-    if (it) setEdits({ ...edits, [keyOf(it)]: null });
+    if (items[i]) setEdits({ ...edits, [editKey(i)]: null });
+  };
+  /** The edit key of the i-th shown item (indexes shift as items are removed). */
+  const editKey = (shown: number) => {
+    let seen = -1;
+    for (let j = 0; j < base.length; j++) {
+      if (edits[`${baseId}#${j}`] === null) continue;
+      seen++;
+      if (seen === shown) return `${baseId}#${j}`;
+    }
+    return `${baseId}#${shown}`;
   };
   const applyFix = () => {
     if (!model?.fix) return;
@@ -359,6 +382,7 @@ export default function Describe(props: Props) {
       items: list,
       source,
       recipe_id: pinned?.recipeId ?? null,
+      eatenAt: eatenAt ?? undefined,
       // The sheet's button is sliding away; the burst belongs where the logged moment shows (the now card).
       anchor: pastDay ? anchor : null,
       day: pastDay,
@@ -378,7 +402,7 @@ export default function Describe(props: Props) {
     // Portions still being counted: wait for them (or keep the description to count later when offline).
     if (open.length && !fromAi) {
       if (!navigator.onLine || remoteState === 'offline') {
-        void logPendingDescription(text, slot, day);
+        void logPendingDescription(text, slot, day, eatenAt ?? undefined);
         closeSheet();
         return;
       }
@@ -386,7 +410,7 @@ export default function Describe(props: Props) {
         setSubmitting(true);
         const r = await runRemote();
         setSubmitting(false);
-        if (r?.items.length) return finish(withEdits(r.items, edits, data), anchor);
+        if (r?.items.length) return finish(withEdits(r.items, edits, `r:${remoteKey}`, data), anchor);
         if (!items.length) return;
       }
     }
@@ -446,50 +470,30 @@ export default function Describe(props: Props) {
       header={header}
       footer={footer}
     >
-      <div class="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          class="chip"
-          aria-expanded={picking}
-          aria-label={`${a11y.pickSlot}: ${slotLabel}`}
-          data-testid="slot-pick"
-          onClick={() => setPicking(!picking)}
-        >
-          {slotLabel}
-          <ChevronDown size={16} aria-hidden="true" class={`transition-transform ${picking ? 'rotate-180' : ''}`} />
-        </button>
-        {pastDay && (
-          <span class="badge accent">
-            <Clock3 size={12} aria-hidden="true" />
-            {pastDay === today.value ? dates.today : dayLong(pastDay)}
-          </span>
-        )}
-      </div>
-      {picking && (
-        <div class="anim-rise -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
-          {slotOptions.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              class="chip"
-              aria-pressed={slot === s.key}
-              onClick={() => {
-                setSlot(s.key);
-                setPicking(false);
-              }}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+      {pastDay && (
+        <p class="badge accent mb-2">
+          <Clock3 size={12} aria-hidden="true" />
+          {pastDay === today.value ? dates.today : dayLong(pastDay)}
+        </p>
       )}
+      <SkyTrack
+        stops={stops}
+        value={slot}
+        onChange={setSlot}
+        dayStartHour={dayStart}
+        slotLabel={slotLabel}
+        timeLabel={eatenAt === null && !pastDay ? describeCopy.now : timeLabel(atMinutes, dayStart)}
+        timeValue={appMinutesToHhmm(atMinutes, dayStart)}
+        onTime={setTime}
+        showTime={mode === 'log'}
+      />
 
       <div class="relative">
         <textarea
           ref={input}
           class="textarea"
           rows={2}
-          enterkeyhint="done"
+          enterkeyhint="enter"
           autoComplete="off"
           maxLength={2000}
           placeholder={describeCopy.placeholder}
@@ -504,31 +508,32 @@ export default function Describe(props: Props) {
             el.style.height = `${el.scrollHeight}px`;
           }}
           onKeyDown={(e) => {
-            // "Listo" on the keyboard only hides it, so the preview is in view before anything is logged.
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Return starts the next dish; Return on an empty line hides the keyboard (never logs).
+            if (e.key !== 'Enter' || e.shiftKey) return;
+            const el = e.currentTarget;
+            const before = el.value.slice(0, el.selectionStart ?? el.value.length);
+            const line = before.slice(before.lastIndexOf('\n') + 1);
+            if (!line.trim()) {
               e.preventDefault();
-              e.currentTarget.blur();
+              if (el.value.endsWith('\n')) editText(el.value.replace(/\n+$/, ''));
+              el.blur();
             }
           }}
         />
-        <span class="absolute right-2 bottom-2 flex gap-1">
+        <span class="absolute right-2 bottom-2 flex gap-1.5">
           <button
             type="button"
-            class="icon-btn"
+            class={`icon-btn field-btn ${dictation.active ? 'is-live' : ''}`}
             data-testid="dictate"
             aria-label={dictation.active ? buttons.stopDictation : buttons.dictate}
             aria-pressed={dictation.active}
-            style={
-              dictation.active ? 'background: var(--accent); color: var(--on-accent)' : 'background: var(--surface)'
-            }
             onClick={() => dictation.toggle(text)}
           >
             {dictation.active ? <Square size={16} aria-hidden="true" /> : <Mic size={20} aria-hidden="true" />}
           </button>
           <button
             type="button"
-            class="icon-btn"
-            style="background: var(--surface)"
+            class="icon-btn field-btn"
             data-testid="compose"
             aria-label={a11y.compose}
             onClick={() => {
@@ -540,8 +545,7 @@ export default function Describe(props: Props) {
           </button>
           <button
             type="button"
-            class="icon-btn"
-            style="background: var(--surface)"
+            class="icon-btn field-btn"
             data-testid="take-photo"
             aria-label={buttons.photo}
             onClick={() => {
@@ -567,6 +571,7 @@ export default function Describe(props: Props) {
           }}
         />
       </div>
+      {!text.trim() && !pinned && photoState === 'idle' && <p class="caption mt-2 px-1">{describeCopy.tip}</p>}
       {dictation.active && (
         <p class="caption mt-2 flex items-center gap-2" role="status">
           <span class="h-2 w-2 animate-pulse rounded-full bg-accent" />
@@ -621,22 +626,22 @@ export default function Describe(props: Props) {
       {shown && (
         <div data-testid="preview" class="mt-3">
           {pinned?.source === 'photo' && <p class="secondary muted mb-2">{lines.photoReview}</p>}
-          <ul class="grid gap-1">
-            {items.map((it, i) => (
-              <ItemRow
-                key={`${keyOf(it)}-${i}`}
-                item={it}
-                type={mainType(it, data)}
-                highlight={!Object.keys(edits).length && !!pinned?.changed?.has(i)}
-                onMinus={() => step(i, -1)}
-                onPlus={() => step(i, 1)}
-                onRemove={() => remove(i)}
-              />
-            ))}
-            {open.map((p) => (
-              <PendingRow key={p} text={p} info={groups[norm(p)]} counting={counting} />
-            ))}
-          </ul>
+          {items.length > 0 && (
+            <DishList
+              items={items}
+              plan={data}
+              onStep={step}
+              onRemove={remove}
+              highlight={!Object.keys(edits).length ? pinned?.changed : undefined}
+            />
+          )}
+          {open.length > 0 && (
+            <ul class={`grid gap-1 ${items.length ? 'mt-2' : ''}`}>
+              {open.map((p) => (
+                <PendingRow key={p} text={p} info={groups[norm(p)]} counting={counting} />
+              ))}
+            </ul>
+          )}
           {unresolved.length > 0 && (
             <div class="mt-2">
               {message(
@@ -665,17 +670,22 @@ export default function Describe(props: Props) {
 
       {model && (
         <section
-          class="well anim-rise mt-4 p-4 transition-opacity"
+          class="impact anim-rise mt-4 transition-opacity"
           style={counting ? 'opacity:.5' : undefined}
           aria-busy={counting}
           data-testid="impact"
         >
+          {model.plate && <p class="kicker mb-1">{fill(describeCopy.yourMeal, { slot: slotName.toLowerCase() })}</p>}
           <p class="headline" data-testid="status-line">
-            {model.line}
+            <Txt>{model.line}</Txt>
           </p>
-          {model.sub && <p class="secondary muted mt-0.5">{model.sub}</p>}
+          {model.plate && (
+            <div class="mt-2.5">
+              <MealPlate target={model.plate.target} eaten={model.plate.eaten} />
+            </div>
+          )}
           {model.later && (
-            <p class="secondary mt-0.5 font-semibold text-accent-ink" data-testid="day-effect">
+            <p class="secondary mt-2.5 font-semibold text-accent-ink" data-testid="day-effect">
               {model.later}
             </p>
           )}
@@ -688,8 +698,10 @@ export default function Describe(props: Props) {
               </button>
             </div>
           )}
-          <p class="kicker mt-4 mb-2">{mode === 'check' ? describeCopy.impactCheck : describeCopy.impactLog}</p>
-          <DayMeter meters={model.meters} adding={model.adding} size="sm" />
+          <div class="impact-day mt-4 pt-3">
+            <p class="kicker mb-2">{mode === 'check' ? describeCopy.impactCheck : describeCopy.impactLog}</p>
+            <DayMeter meters={model.meters} adding={model.adding} size="sm" />
+          </div>
         </section>
       )}
     </Sheet>
@@ -701,82 +713,11 @@ function Thinking() {
   return (
     <span class="flex gap-1" aria-hidden="true">
       {(['carb_sg', 'protein_poa', 'veg'] as const).map((t, i) => (
-        <span key={t} class={`tok tok-1 t-${t} anim-think`} style={`--s:22px;animation-delay:${i * 120}ms`}>
-          <span class="e">{typeLabels[t].emoji}</span>
+        <span key={t} class="anim-think" style={`animation-delay:${i * 120}ms`}>
+          <TypeIcon type={t} size={22} />
         </span>
       ))}
     </span>
-  );
-}
-
-function ItemRow({
-  item,
-  type,
-  highlight,
-  onMinus,
-  onPlus,
-  onRemove,
-}: {
-  item: LogItem;
-  type: TypeKey | null;
-  highlight: boolean;
-  onMinus: () => void;
-  onPlus: () => void;
-  onRemove: () => void;
-}) {
-  return (
-    <li class="anim-rise flex min-h-12 items-center gap-2.5">
-      {item.free || !type ? (
-        <span
-          class="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-surface-2 text-[13px] font-black text-ink-3"
-          aria-hidden="true"
-        >
-          0
-        </span>
-      ) : (
-        <span class={`tok tok-1 t-${type}`} style="--s:30px" aria-hidden="true">
-          <span class="e">{typeLabels[type].emoji}</span>
-        </span>
-      )}
-      <span class={`min-w-0 flex-1 rounded-lg px-1 font-semibold ${highlight ? 'highlight' : ''}`}>
-        {item.label}
-        {item.free ? (
-          <span class="badge ml-2 align-middle">{describeCopy.free_tag}</span>
-        ) : item.assumed_qty || item.estimated ? (
-          <span class="badge ml-2 align-middle">{describeCopy.approx}</span>
-        ) : null}
-      </span>
-      {!item.free && (
-        <>
-          <button
-            type="button"
-            class="icon-btn"
-            style="width:38px;height:38px"
-            aria-label={`${a11y.stepDown}: ${item.label}`}
-            onClick={onMinus}
-          >
-            <Minus size={17} strokeWidth={2.6} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            class="icon-btn"
-            style="width:38px;height:38px"
-            aria-label={`${a11y.stepUp}: ${item.label}`}
-            onClick={onPlus}
-          >
-            <Plus size={17} strokeWidth={2.6} aria-hidden="true" />
-          </button>
-        </>
-      )}
-      <button
-        type="button"
-        class="icon-btn ghost -mr-2 text-ink-3"
-        aria-label={`${a11y.remove}: ${item.label}`}
-        onClick={onRemove}
-      >
-        <X size={18} aria-hidden="true" />
-      </button>
-    </li>
   );
 }
 
@@ -789,14 +730,12 @@ function PendingRow({ text, info, counting }: { text: string; info?: Classified;
       <span class="flex shrink-0 -space-x-2" aria-hidden="true">
         {types.length ? (
           types.slice(0, 3).map((t) => (
-            <span key={t} class={`tok tok-1 t-${t} anim-pop`} style="--s:30px">
-              <span class="e">{typeLabels[t].emoji}</span>
+            <span key={t} class="anim-pop">
+              <TypeIcon type={t} size={28} />
             </span>
           ))
         ) : (
-          <span class={`tok tok-0 t-carb_sg ${counting ? 'anim-think' : ''}`} style="--s:30px">
-            <span class="e">{info?.free ? '·' : '…'}</span>
-          </span>
+          <span class={`pending-dot ${counting ? 'anim-think' : ''}`}>{info?.free ? '·' : '…'}</span>
         )}
       </span>
       <span class="min-w-0 flex-1">

@@ -14,11 +14,7 @@ const TABS = [
 export function TabBar({ onAdd }: { onAdd: () => void }) {
   const current = route.value;
   return (
-    <nav
-      class="fixed inset-x-0 bottom-0 z-30 border-line border-t"
-      style="padding-bottom: var(--safe-bottom); background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px)"
-      aria-label="Fichas"
-    >
+    <nav class="tabbar fixed inset-x-0 bottom-0 z-30" aria-label="Fichas">
       <div class="mx-auto grid max-w-[560px] grid-cols-5" style="height: var(--tabbar-h)">
         {TABS.map((t) => {
           if (!t)
@@ -26,13 +22,12 @@ export function TabBar({ onAdd }: { onAdd: () => void }) {
               <div key="add" class="grid place-items-center">
                 <button
                   type="button"
-                  class="press -mt-5 grid h-[58px] w-[58px] place-items-center rounded-full text-[color:var(--on-accent)]"
-                  style="background: var(--accent); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 42%, transparent), 0 0 0 5px var(--bg)"
+                  class="tab-add -mt-6 grid h-[60px] w-[60px] place-items-center rounded-full"
                   aria-label={labels.tabs.add}
                   data-testid="describe-open"
                   onClick={onAdd}
                 >
-                  <Plus size={30} strokeWidth={2.6} aria-hidden="true" />
+                  <Plus size={32} strokeWidth={3} aria-hidden="true" />
                 </button>
               </div>
             );
@@ -42,18 +37,15 @@ export function TabBar({ onAdd }: { onAdd: () => void }) {
             <button
               key={path}
               type="button"
-              class={`press flex flex-col items-center justify-center gap-1 text-[11px] font-bold tracking-wide ${active ? 'text-accent-ink' : 'text-ink-2'}`}
+              class={`press flex flex-col items-center justify-center gap-1 text-[11px] font-extrabold tracking-wide ${active ? 'text-accent-ink' : 'text-ink-2'}`}
               aria-current={active ? 'page' : undefined}
               onClick={() => {
                 if (path === '/cocina') kitchenSlot.value = null;
                 navigate(path);
               }}
             >
-              <span
-                class="grid h-7 w-12 place-items-center rounded-full transition-colors"
-                style={active ? 'background: var(--accent-soft)' : ''}
-              >
-                <Icon size={22} aria-hidden="true" strokeWidth={active ? 2.4 : 2} />
+              <span class={`tab-pill grid h-8 w-14 place-items-center rounded-full ${active ? 'on' : ''}`}>
+                <Icon size={22} aria-hidden="true" strokeWidth={active ? 2.6 : 2.1} />
               </span>
               {label}
             </button>

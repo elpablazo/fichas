@@ -1,6 +1,7 @@
-// The day at a glance: one tank per food type. The fill is what's eaten, the number on top is what's left today,
-// the notch marks where the meals logged so far should have left it. A meal being described shows as a striped
-// layer on top, so "does this fit my day?" is answered by the same picture.
+// The day at a glance: one graduated tube per food type. The liquid is what's eaten, the number on top is what's
+// left today, the small ticks are fichas, the longer lines are where each meal's share ends, and the pointer marks
+// where the meals logged so far should have left it (above it = ahead, a dashed gap below it = behind).
+// A meal being described shows as a striped layer on top, so "does this fit my day?" reads the same way.
 import { Check } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Meter } from '../../shared/domain/daystatus';
@@ -8,6 +9,7 @@ import { fill } from '../../shared/domain/format';
 import type { TypeKey, Units } from '../../shared/domain/types';
 import { formatCount } from '../../shared/domain/units';
 import { meterCopy, typeLabels } from '../copy/es-MX';
+import { TypeIcon } from './Sprite';
 
 const EPS = 0.125;
 
@@ -15,25 +17,40 @@ interface Props {
   meters: Meter[];
   /** Units a meal being described would add. */
   adding?: Units;
-  /** Show the pace notch (meals resolved so far). */
+  /** Show the meal lines and the pace pointer (a day already under way). */
   pace?: boolean;
   size?: 'lg' | 'sm';
   onType?: (t: TypeKey) => void;
   class?: string;
 }
 
-function spoken(m: Meter, add: number): string {
+function spoken(m: Meter, add: number, pace: boolean): string {
   const meta = typeLabels[m.type];
   const eaten = m.eaten + add;
   const over = eaten - m.planned;
-  if (over >= EPS) return fill(meterCopy.a11yOver, { type: meta.group, n: formatCount(over) });
-  const left = m.planned - eaten;
-  if (left < EPS) return fill(meterCopy.a11yFull, { type: meta.group });
-  return fill(meterCopy.a11yLeft, { type: meta.group, n: formatCount(left), total: formatCount(m.planned) });
+  const base =
+    over >= EPS
+      ? fill(meterCopy.a11yOver, { type: meta.group, n: formatCount(over) })
+      : m.planned - eaten < EPS
+        ? fill(meterCopy.a11yFull, { type: meta.group })
+        : fill(meterCopy.a11yLeft, {
+            type: meta.group,
+            n: formatCount(m.planned - eaten),
+            total: formatCount(m.planned),
+          });
+  if (!pace || m.expected < EPS || add) return base;
+  const d = m.eaten - m.expected;
+  return `${base}. ${
+    d >= 0.5
+      ? fill(meterCopy.a11yAhead, { n: formatCount(d) })
+      : d <= -0.5
+        ? fill(meterCopy.a11yBehind, { n: formatCount(-d) })
+        : meterCopy.a11yOnPace
+  }`;
 }
 
 export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, class: cls = '' }: Props) {
-  // "+n" floats over a tank right after something lands in it.
+  // "+n" floats over a tube right after something lands in it.
   const prev = useRef<Map<TypeKey, number> | null>(null);
   const [bumps, setBumps] = useState<Partial<Record<TypeKey, number>>>({});
   useEffect(() => {
@@ -50,10 +67,11 @@ export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, cl
   }, [meters.map((m) => `${m.type}:${m.eaten}`).join('|')]);
 
   if (!meters.length) return null;
-  const tall = size === 'lg' ? 76 : 48;
+  const lg = size === 'lg';
+  const tall = lg ? 88 : 54;
   return (
     <div
-      class={`meter-row ${size === 'sm' ? 'sm' : ''} ${cls}`}
+      class={`meter-row ${lg ? '' : 'sm'} ${cls}`}
       style={`grid-template-columns: repeat(${meters.length}, minmax(0, 1fr))`}
       data-testid="day-meter"
     >
@@ -63,17 +81,20 @@ export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, cl
         const left = m.planned - after;
         const over = after - m.planned;
         const cap = m.planned > 0 ? m.planned : Math.max(after, 1);
-        const fillPct = Math.min(1, m.eaten / cap) * 100;
-        const addPct = Math.max(0, Math.min(1, after / cap) * 100 - fillPct);
-        const mark = pace && m.expected > EPS && m.expected < m.planned - EPS ? (m.expected / cap) * 100 : null;
-        const segments = m.planned >= 1 && m.planned <= 12 ? Math.round(m.planned) : 0;
+        const pct = (v: number) => Math.max(0, Math.min(1, v / cap)) * 100;
+        const fillPct = pct(m.eaten);
+        const addPct = Math.max(0, pct(after) - fillPct);
+        const showPace = pace && !add && m.expected > EPS && m.expected < m.planned - EPS;
+        const nowPct = showPace ? pct(m.expected) : null;
+        const behind = showPace && m.expected - m.eaten >= 0.5;
+        const segments = m.planned >= 1 && m.planned <= 14 ? Math.round(m.planned) : 0;
         const changed = add >= EPS;
         const bump = bumps[m.type];
         const top =
           over >= EPS ? (
             <span class="meter-over">+{formatCount(over)}</span>
           ) : left < EPS ? (
-            <Check size={size === 'lg' ? 20 : 16} strokeWidth={3.2} class="meter-done" aria-hidden="true" />
+            <Check size={lg ? 22 : 17} strokeWidth={3.4} class="meter-done" aria-hidden="true" />
           ) : (
             <span class={changed ? 'text-accent-ink' : ''}>{formatCount(left)}</span>
           );
@@ -92,14 +113,20 @@ export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, cl
               style={`height:${tall}px;--seg:${segments ? `${tall / segments}px` : '0px'}`}
               aria-hidden="true"
             >
-              <span class="meter-fill" style={`height:${fillPct}%`} />
-              {addPct > 0 && <span class="meter-add" style={`bottom:${fillPct}%;height:${addPct}%`} />}
-              {segments > 1 && <span class="meter-segs" />}
-              {mark !== null && <span class="meter-mark" style={`bottom:${mark}%`} />}
+              <span class="meter-glass">
+                <span class="meter-fill" style={`height:${fillPct}%`} />
+                {behind && nowPct !== null && (
+                  <span class="meter-gap" style={`bottom:${fillPct}%;height:${nowPct - fillPct}%`} />
+                )}
+                {addPct > 0 && <span class="meter-add" style={`bottom:${fillPct}%;height:${addPct}%`} />}
+                {segments > 1 && <span class="meter-ticks" />}
+                {pace &&
+                  lg &&
+                  m.marks.map((k) => <span key={k.slot} class="meter-meal" style={`bottom:${pct(k.at)}%`} />)}
+              </span>
+              {nowPct !== null && <span class="meter-now" style={`bottom:${nowPct}%`} />}
             </span>
-            <span class="meter-emoji" aria-hidden="true">
-              {typeLabels[m.type].emoji}
-            </span>
+            <TypeIcon type={m.type} size={lg ? 28 : 20} class="meter-icon" />
           </>
         );
         return onType ? (
@@ -107,13 +134,13 @@ export function DayMeter({ meters, adding, pace = false, size = 'lg', onType, cl
             key={m.type}
             type="button"
             class={`meter press t-${m.type}`}
-            aria-label={spoken(m, add)}
+            aria-label={spoken(m, add, pace)}
             onClick={() => onType(m.type)}
           >
             {body}
           </button>
         ) : (
-          <span key={m.type} class={`meter t-${m.type}`} role="img" aria-label={spoken(m, add)}>
+          <span key={m.type} class={`meter t-${m.type}`} role="img" aria-label={spoken(m, add, pace)}>
             {body}
           </span>
         );

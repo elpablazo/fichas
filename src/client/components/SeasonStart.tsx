@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { addDays } from '../../shared/domain/day';
 import { buttons, lines } from '../copy/es-MX';
-import { pick } from '../copy/pick';
+import { pickGame } from '../copy/game';
 import { today } from '../state/signals';
 import { navigate, showToast } from '../state/ui';
 import { Plant } from './Plant';
 
 /** A two-second season welcome. Tap or Escape skips; no data changes depend on this animation. */
 export function SeasonStart({ n, startsOn }: { n: number; startsOn: string }) {
-  const [line] = useState(() => pick('season.start', { n }));
+  const [line] = useState(() => pickGame('season.start', { n }));
   const button = useRef<HTMLButtonElement>(null);
   const finish = useCallback(() => {
     if (startsOn === addDays(today.value, 1)) showToast(lines.planTomorrow);

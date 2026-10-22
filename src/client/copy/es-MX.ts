@@ -73,65 +73,9 @@ export const pools = {
   ],
   'log.edited': ['Ajustado.', 'Listo, cambiado.', 'Va, actualizado.', 'Cambio guardado.', 'Hecho.'],
   'log.removed': ['Quitado.', 'Listo, fuera.', 'Ya no está.', 'Va, fuera.', 'Hecho, quitado.'],
-  comeback: [
-    '¡Volviste! Justo a tiempo para la que sigue.',
-    'Aquí sigue tu día. ¿Qué comiste?',
-    '¡Qué bueno verte de vuelta!',
-    'De vuelta. Esto es lo que cuenta.',
-    'Se retoma sin pendientes.',
-  ],
-  'dayClose.round': [
-    'Día redondo.',
-    'Redondito.',
-    'Día perfecto de fichas.',
-    'Todo en su lugar.',
-    'Ni una fuera de lugar.',
-  ],
-  'dayClose.full': [
-    'Día completo. Tu jardín lo nota.',
-    'Listo por hoy.',
-    'Día completo. A descansar.',
-    'Día cerrado. Mañana, más fácil.',
-    'Hoy ya quedó.',
-  ],
-  'dayClose.partial': [
-    'Día cerrado. Cada comida anotada cuenta.',
-    'Listo por hoy. Mañana sigue.',
-    'Buen día de registro.',
-    'Cerrado. Lo anotado, anotado.',
-    'Lo anotado ya está en tu jardín.',
-  ],
-  'tomorrow.accepted': ['Mañana resuelto.', 'Menú listo.', 'Ya no hay que pensarle.'],
   'week.recap.strong': ['Semana sólida: {n} días anotados.', '{n} días anotados. Eso es constancia.'],
   'week.recap.ok': ['{n} días anotados. Buena base.', 'Ya hay ritmo.'],
   'week.recap.low': ['Semana nueva, hoja limpia.', 'Esta semana va por la primera.'],
-  'season.start': ['Temporada {n}. Plan nuevo, hoja en blanco.', 'Arranca la temporada {n}.'],
-  'season.end': ['Temporada {n} completa.', 'Cerraste la temporada {n}.'],
-  'stamp.earned': ['Estampa nueva: {name}.', '¡{name}!'],
-  'level.up': ['Nivel {n}. Desbloqueaste {unlock}.', '¡Nivel {n}! Ganaste {unlock}.'],
-  'species.new': [
-    'Floreció una {name}.',
-    '¡Una {name} en tu jardín!',
-    'Nueva en tu herbario: {name}.',
-    'Tu jardín estrena {name}.',
-    'Descubriste la {name}.',
-  ],
-  'species.rare': ['¡Flor rara! Una {name}.', 'Qué suerte: {name}.', 'Rarísima: {name}.'],
-  'species.bloom': [
-    'Hoy floreció: {name}.',
-    'Tu flor de hoy: {name}.',
-    'Abrió tu {name}.',
-    'Ya floreció tu {name}.',
-    'Una {name} para hoy.',
-  ],
-  surprise: [
-    'Esa combinación se ve rica.',
-    'Vas como relojito.',
-    'Tus fichas te saludan.',
-    'Llevas {total} comidas anotadas.',
-    'Chef, ¿eh?',
-    'Así se arma un hábito.',
-  ],
   'describe.placeholder': ['¿Qué comiste?'],
   'describe.thinking': ['Contando fichas…', 'Revisando tu plan…', 'Ya casi…'],
   'describe.fits': ['Cabe exacto en tu plan.', 'Justo en tu plan.'],
@@ -453,6 +397,9 @@ export const paceCopy = {
   onSub: 'Todo cuadra con lo que llevas.',
   roundTitle: 'Día redondo',
   roundSub: 'Todo en su lugar.',
+  fullTitle: 'Día al 100',
+  fullSub: 'Con {list} de más.',
+  closeSub: 'Para cerrar al 100: {list}.',
   aheadTitle: 'Llevas {list} de más',
   behindTitle: 'Llevas {list} de menos',
   mixedTitle: '{over} de más, {under} de menos',
@@ -469,6 +416,10 @@ export const meterCopy = {
   a11yLeft: '{type}: quedan {n} de {total}',
   a11yFull: '{type}: completo',
   a11yOver: '{type}: {n} de más',
+  a11yAhead: '{n} arriba de lo planeado hasta ahora',
+  a11yBehind: '{n} abajo de lo planeado hasta ahora',
+  a11yOnPace: 'en plan hasta ahora',
+  legendNow: 'lo planeado hasta ahora',
 } as const;
 
 /** The now card: decide before a meal, write it down after. */
@@ -487,6 +438,13 @@ export const nowCopy = {
   unliked: 'Plan quitado.',
 } as const;
 
+/** A meal against its plan, per food type (Describe and the meal sheet). */
+export const plateCopy = {
+  on: 'Justo',
+  over: '{n} de más',
+  missing: 'Falta {n}',
+} as const;
+
 /** Verdict chips on logged meals. */
 export const verdictCopy = {
   on: 'En plan',
@@ -495,16 +453,21 @@ export const verdictCopy = {
 
 /** "¿Qué comiste?" / "¿Qué se te antoja?" */
 export const describeCopy = {
+  whichMeal: '¿Cuál comida?',
+  whenLabel: 'Hora en que comiste',
+  now: 'Ahora',
   titleLog: '¿Qué comiste?',
   titleCheck: '¿Qué se te antoja?',
-  placeholder: 'Ej. 3 tacos de pollo y un agua natural',
+  placeholder: 'Tacos de pollo con salsa\nMedia arepa y un latte',
+  tip: 'Un platillo por renglón: así se separan solos.',
   counting: 'Calculando porciones…',
   impactLog: 'Así queda tu día',
   impactCheck: 'Así quedaría tu día',
+  yourMeal: 'Tu {slot}',
   on: 'Justo lo de tu {slot}',
-  over: '{list} sobre tu {slot}',
-  under: 'A tu {slot} le quedan {list}',
-  underSub: 'Le quedan {list}.',
+  over: '{list} de más en tu {slot}',
+  under: 'A tu {slot} le falta {list}',
+  mixed: '{over} de más, falta {under}',
   extra: 'Fuera de tus comidas: suma a tu día.',
   free: 'Libre: no suma fichas.',
   later: '{slot} queda con {food} menos.',
@@ -540,6 +503,7 @@ export const gameCopy = {
   token: 'Fichas',
   celebration: 'Celebración',
   rosa: 'Rosa mexicano',
+  greenhouse: 'Invernadero',
   classicTokens: 'Clásicas',
   confetti: 'Confeti',
   color: 'Color {n}',

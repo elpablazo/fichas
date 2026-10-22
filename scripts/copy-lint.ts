@@ -1,9 +1,10 @@
 // Copy lint (§14.5): length limits, banned words, tone rules, pool sizes. Exit 1 on any violation.
 import * as core from '../src/client/copy/es-MX';
+import { gamePools } from '../src/client/copy/game';
 import * as more from '../src/client/copy/more';
 import { pushPools } from '../src/client/copy/push';
 
-const copy = { ...core, ...more, pools: { ...core.pools, ...pushPools } };
+const copy = { ...core, ...more, pools: { ...core.pools, ...gamePools, ...pushPools } };
 
 const BANNED = [
   'trampa',

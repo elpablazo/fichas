@@ -284,6 +284,11 @@
   transform-origin: 50% 100%;
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @keyframes meter-pulse {
   0%,
   100% {
@@ -324,7 +329,11 @@
   .sway,
   .anim-shimmer,
   .anim-flutter,
-  .anim-wings {
+  .anim-wings,
+  .is-sun .sky-rays {
     animation: none;
+  }
+  .sky-sun {
+    transition: none;
   }
 }

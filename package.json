@@ -36,6 +36,7 @@
     "backup:restore": "node --import tsx scripts/restore-backup.ts",
     "backup:verify": "node --import tsx scripts/verify-backup.ts",
     "gen:icons": "tsx scripts/gen-icons.ts",
+    "gen:sprites": "tsx scripts/gen-sprites.ts",
     "size": "tsx scripts/check-size.ts"
   },
   "dependencies": {

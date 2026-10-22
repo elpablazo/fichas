@@ -65,4 +65,5 @@ export const LogItem = z.object({
   estimated: z.boolean(),
   assumed_qty: z.boolean(),
   free: z.boolean(),
+  dish: z.string().trim().min(1).max(80).optional(),
 });

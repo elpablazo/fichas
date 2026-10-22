@@ -3,6 +3,7 @@ import { addDays } from '../../src/shared/domain/day';
 import { flowerModel } from '../../src/shared/game/garden';
 import { nextUnlock, UNLOCKS } from '../../src/shared/game/levels';
 import { plantStage, RARE_CHANCE, SPECIES, speciesFor, speciesPool } from '../../src/shared/game/species';
+import { SPECIES_TEXT, speciesText } from '../../src/shared/game/species-text';
 import { log, plan } from './helpers';
 
 function hsl(hex: string): [number, number, number] {
@@ -25,8 +26,10 @@ describe('species', () => {
     expect(SPECIES.length).toBeGreaterThanOrEqual(20);
     expect(new Set(SPECIES.map((s) => s.id)).size).toBe(SPECIES.length);
     expect(new Set(SPECIES.map((s) => s.shape)).size).toBeGreaterThanOrEqual(8);
+    expect(Object.keys(SPECIES_TEXT).sort()).toEqual(SPECIES.map((s) => s.id).sort());
     for (const s of SPECIES) {
-      expect(s.fact.length).toBeLessThanOrEqual(72);
+      expect(speciesText(s.id).fact.length).toBeLessThanOrEqual(72);
+      expect(speciesText(s.id).name).not.toBe(s.id);
       for (const c of [s.colors.petal, s.colors.shade]) {
         const [h, sat, l] = hsl(c);
         const red = (h >= 345 || h <= 12) && sat > 0.55 && l > 0.25 && l < 0.65;

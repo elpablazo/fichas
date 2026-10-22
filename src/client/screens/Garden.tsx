@@ -5,6 +5,7 @@ import { fill } from '../../shared/domain/format';
 import { bloomed } from '../../shared/game/garden';
 import { nextUnlock } from '../../shared/game/levels';
 import { SPECIES } from '../../shared/game/species';
+import { speciesText } from '../../shared/game/species-text';
 import { STAMPS } from '../../shared/game/stamps';
 import { GardenScene } from '../components/GardenScene';
 import { Plant } from '../components/Plant';
@@ -151,7 +152,7 @@ export default function Garden() {
                 </span>
               )}
               <span class={`text-[13px] font-bold leading-4 ${got ? '' : 'text-ink-2'}`}>
-                {got ? sp.name : gardenCopy.locked}
+                {got ? speciesText(sp.id).name : gardenCopy.locked}
               </span>
               {!got && (
                 <span class="caption text-[11px] leading-4">

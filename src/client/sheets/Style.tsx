@@ -9,19 +9,21 @@ import { settings } from '../state/signals';
 import { closeSheet } from '../state/ui';
 
 const SWATCH: Record<string, string> = {
-  rosa: '#e4007c',
+  invernadero: 'linear-gradient(135deg, #157a46 50%, #f2b01e 50%)',
+  rosa: '#d6006f',
   talavera: '#1f4fd1',
   noche: 'linear-gradient(135deg, #1c1930 50%, #e4007c 50%)',
   cobalto: '#1f4fd1',
-  bosque: '#187749',
+  mandarina: '#c2410c',
   uva: '#7046ac',
   oceano: '#096b87',
   clasico: 'radial-gradient(circle at 35% 30%, #fff 0 25%, #f5c56b 70%)',
   gema: 'linear-gradient(135deg, #7c5cff, #3ba3f5)',
-  confeti: 'conic-gradient(#f5a524 0 25%, #7c5cff 0 50%, #22b573 0 75%, #e4007c 0)',
-  papel: 'repeating-linear-gradient(90deg, #e4007c 0 8px, #f5a524 8px 16px, #22b573 16px 24px)',
+  confeti: 'conic-gradient(#f5a524 0 25%, #7c5cff 0 50%, #22b573 0 75%, #157a46 0)',
+  papel: 'repeating-linear-gradient(90deg, #d6006f 0 8px, #f5a524 8px 16px, #22b573 16px 24px)',
 };
 const NAMES: Record<string, string> = {
+  invernadero: gameCopy.greenhouse,
   rosa: gameCopy.rosa,
   talavera: 'Talavera',
   noche: 'Noche',
@@ -35,7 +37,7 @@ export default function Style() {
   const style = settings.value.style;
   const n = progress.value.level;
   const groups = [
-    { key: 'theme', name: gameCopy.theme, base: ['rosa'], extra: accents(n) },
+    { key: 'theme', name: gameCopy.theme, base: ['invernadero', 'rosa'], extra: accents(n) },
     { key: 'token', name: gameCopy.token, base: ['clasico'], extra: [] as string[] },
     { key: 'celebration', name: gameCopy.celebration, base: ['confeti'], extra: [] as string[] },
   ] as const;

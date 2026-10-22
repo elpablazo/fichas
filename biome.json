@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/worker-configuration.d.ts", "!docs", "!seed", "!evals", "!private"]
+    "includes": [
+      "**",
+      "!**/worker-configuration.d.ts",
+      "!docs",
+      "!seed",
+      "!evals",
+      "!private",
+      "!src/client/sprites/*.svg"
+    ]
   },
   "formatter": {
     "enabled": true,

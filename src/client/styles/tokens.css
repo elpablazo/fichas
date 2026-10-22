@@ -1,38 +1,54 @@
-/* Design tokens — Fichas 1.0 (docs/03-redesign.md §4). Calm paper surfaces; rosa mexicano leads; food colors
-   live only on coins and gauges. */
+/* Design tokens — Fichas 2.0 "Invernadero" (docs/05-fichas-2.md §2). Parchment paper, greenhouse green, marigold
+   rewards; crisp outlines and solid lips instead of soft shadows. Food colors live only on coins, tubes and sprites. */
+@font-face {
+  font-family: "Fraunces Display";
+  src: url("/fonts/fraunces-display.woff2") format("woff2");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light dark;
-  --bg: #f7f3f1;
-  --surface: #ffffff;
-  --surface-2: #f1ebe9;
-  --surface-3: #e7dfdc;
-  --ink: #1f1720;
-  --ink-2: #5f5562;
-  --ink-3: #8d838f;
-  --line: #e9e1e3;
-  --line-2: #d9cfd2;
-  --accent: #e4007c;
-  --accent-press: #c8006d;
-  --accent-ink: #b8005f;
-  --accent-soft: #fde8f2;
-  --on-accent: #ffffff;
-  --gold: #f2b705;
-  --gold-ink: #8a6500;
-  --gold-soft: #fff4cc;
+  --bg: #f3eee1;
+  --bg-glow: #e3eed6;
+  --surface: #fffdf6;
+  --surface-2: #f0eadb;
+  --surface-3: #e4dcc8;
+  --ink: #18271d;
+  --ink-2: #4b584d;
+  --ink-3: #87907f;
+  --line: #e6decb;
+  --line-2: #d3c8af;
+  /* Outlines and the solid lip under cards and buttons. */
+  --edge: #ddd2ba;
+  --edge-lip: #d6caae;
+  --accent: #157a46;
+  --accent-press: #106b3d;
+  --accent-lip: #0c5230;
+  --accent-ink: #11683b;
+  --accent-soft: #ddefd8;
+  --accent-soft-lip: #bfdcb9;
+  --on-accent: #fffdf6;
+  --gold: #f2b01e;
+  --gold-ink: #7f5600;
+  --gold-soft: #fcedc4;
+  --gold-lip: #c98a06;
+  --clay: #c8653d;
+  --clay-ink: #9c4421;
+  --clay-soft: #f7e2d6;
   --leaf: #2f9e5b;
   --leaf-2: #46b46f;
   --leaf-ink: #1e7a43;
   --soil: #a0714f;
   --soil-2: #82573a;
   --soil-3: #c49a74;
-  --sky-1: #fdf1e8;
-  --sky-2: #fbe3ec;
-  --scrim: rgb(24 14 24 / 38%);
+  --sky-1: #fbf3df;
+  --sky-2: #e4f0e0;
+  --scrim: rgb(16 28 20 / 44%);
   --destructive: #b42318;
-  --e1: 0 1px 2px rgb(31 23 32 / 5%), 0 6px 20px rgb(31 23 32 / 6%);
-  --e2: 0 2px 6px rgb(31 23 32 / 8%), 0 12px 32px rgb(31 23 32 / 14%);
-  --e3: 0 -10px 40px rgb(31 23 32 / 16%);
-  --card-edge: transparent;
+  --e2: 0 2px 6px rgb(24 39 29 / 10%), 0 14px 34px rgb(24 39 29 / 16%);
+  --e3: 0 -10px 40px rgb(24 39 29 / 18%);
 
   --t-carb: #f5a524;
   --t-prot: #7c5cff;
@@ -60,52 +76,73 @@
   --d4: 420ms;
 
   --font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display: "Fraunces Display", ui-serif, Georgia, serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --tabbar-h: 64px;
+  --tabbar-h: 66px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121013;
-    --surface: #1d191f;
-    --surface-2: #28222a;
-    --surface-3: #342d36;
-    --ink: #f6f0f5;
-    --ink-2: #bbb0bc;
-    --ink-3: #8e8490;
-    --line: #322a34;
-    --line-2: #463c48;
-    --accent-ink: #ff7ab8;
-    --accent-soft: #3a1a2c;
-    --gold-ink: #ffd259;
-    --gold-soft: #3b3010;
+    --bg: #0e1611;
+    --bg-glow: #15281b;
+    --surface: #16211a;
+    --surface-2: #1e2b22;
+    --surface-3: #29382d;
+    --ink: #eef2e6;
+    --ink-2: #afbba9;
+    --ink-3: #7e8b79;
+    --line: #243329;
+    --line-2: #35483b;
+    --edge: #2a3b30;
+    --edge-lip: #080d0a;
+    --accent: #34b26c;
+    --accent-press: #2c9c5e;
+    --accent-lip: #1a6a3d;
+    --accent-ink: #7edda5;
+    --accent-soft: #1b3a27;
+    --accent-soft-lip: #0f2417;
+    --on-accent: #07120b;
+    --gold-ink: #ffd46b;
+    --gold-soft: #3a3011;
+    --gold-lip: #9a6a00;
+    --clay-ink: #f0a07c;
+    --clay-soft: #3a2117;
     --leaf-ink: #6fd69a;
-    --sky-1: #1b1a2b;
-    --sky-2: #2a1d2c;
+    --sky-1: #121d2b;
+    --sky-2: #1a2a22;
     --soil: #6b4a33;
     --soil-2: #533826;
     --soil-3: #876247;
-    --scrim: rgb(0 0 0 / 55%);
+    --scrim: rgb(0 0 0 / 58%);
     --destructive: #f97066;
-    --e1: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 22%);
-    --e2: 0 2px 6px rgb(0 0 0 / 35%), 0 12px 32px rgb(0 0 0 / 40%);
-    --e3: 0 -10px 40px rgb(0 0 0 / 45%);
-    --card-edge: rgb(255 255 255 / 5%);
+    --e2: 0 2px 6px rgb(0 0 0 / 35%), 0 12px 32px rgb(0 0 0 / 45%);
+    --e3: 0 -10px 40px rgb(0 0 0 / 50%);
   }
 }
 
-/* Unlockable themes (levels 3 and 7, then accent colors after level 10). */
+/* Unlockable themes. Each one only swaps the accent family (and, for Noche, the surfaces). */
+:root[data-theme="rosa"] {
+  --accent: #d6006f;
+  --accent-press: #bb0061;
+  --accent-lip: #8c0049;
+  --accent-ink: #b0005b;
+  --accent-soft: #fde6f1;
+  --accent-soft-lip: #f6c3dc;
+}
 :root[data-theme="talavera"],
 :root[data-theme="cobalto"] {
   --accent: #1f4fd1;
   --accent-press: #1a43b3;
+  --accent-lip: #14348c;
   --accent-ink: #1a44b8;
   --accent-soft: #e6edff;
+  --accent-soft-lip: #c6d4fb;
 }
 :root[data-theme="noche"] {
   color-scheme: dark;
   --bg: #12101c;
+  --bg-glow: #1e1a36;
   --surface: #1c1930;
   --surface-2: #26223d;
   --surface-3: #312c4d;
@@ -114,58 +151,95 @@
   --ink-3: #8d87ad;
   --line: #34305a;
   --line-2: #474170;
-  --accent-ink: #ff7ab8;
-  --accent-soft: #3a1a3c;
+  --edge: #3a3561;
+  --edge-lip: #0b0914;
+  --accent: #8f7bff;
+  --accent-press: #7d68f0;
+  --accent-lip: #4e3cb8;
+  --accent-ink: #c2b6ff;
+  --accent-soft: #2e2852;
+  --accent-soft-lip: #1d1938;
+  --on-accent: #0f0c1f;
   --sky-1: #191733;
   --sky-2: #241a3a;
   --soil: #5d4234;
   --soil-2: #4a3326;
   --soil-3: #7a5a45;
-  --card-edge: rgb(255 255 255 / 5%);
-  --e1: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 25%);
-  --e2: 0 2px 6px rgb(0 0 0 / 35%), 0 12px 32px rgb(0 0 0 / 40%);
-}
-:root[data-theme="bosque"] {
-  --accent: #187749;
-  --accent-press: #12633b;
-  --accent-ink: #12633b;
-  --accent-soft: #e3f4ea;
 }
 :root[data-theme="uva"] {
   --accent: #7046ac;
   --accent-press: #5f3a94;
+  --accent-lip: #47296f;
   --accent-ink: #63339c;
   --accent-soft: #efe7fb;
+  --accent-soft-lip: #d9c8f3;
 }
 :root[data-theme="oceano"] {
   --accent: #096b87;
   --accent-press: #075a72;
+  --accent-lip: #054356;
   --accent-ink: #09627a;
   --accent-soft: #e2f3f8;
+  --accent-soft-lip: #bfe2ec;
+}
+:root[data-theme="mandarina"] {
+  --accent: #c2410c;
+  --accent-press: #a8380a;
+  --accent-lip: #7c2a08;
+  --accent-ink: #a8380a;
+  --accent-soft: #fde9dc;
+  --accent-soft-lip: #f6cdb2;
 }
 :root[data-theme^="color_"] {
+  --on-accent: #ffffff;
   --accent: var(--accent-custom);
   --accent-press: var(--accent-custom);
+  --accent-lip: color-mix(in srgb, var(--accent-custom) 70%, #000);
   --accent-ink: var(--accent-custom-light);
   --accent-soft: color-mix(in srgb, var(--accent-custom) 12%, var(--surface));
+  --accent-soft-lip: color-mix(in srgb, var(--accent-custom) 26%, var(--surface));
 }
 @media (prefers-color-scheme: dark) {
+  :root[data-theme="rosa"] {
+    --accent: #ff4fa3;
+    --accent-lip: #a3245f;
+    --accent-ink: #ff8cc4;
+    --accent-soft: #3a1a2c;
+    --accent-soft-lip: #24101c;
+    --on-accent: #1d0712;
+  }
   :root[data-theme="talavera"],
   :root[data-theme="cobalto"] {
+    --accent: #5b86ff;
+    --accent-lip: #2d4fb3;
     --accent-ink: #8fb2ff;
     --accent-soft: #1c2440;
-  }
-  :root[data-theme="bosque"] {
-    --accent-ink: #75db9e;
-    --accent-soft: #15301f;
+    --accent-soft-lip: #11172b;
+    --on-accent: #060b1d;
   }
   :root[data-theme="uva"] {
+    --accent: #a77cf0;
+    --accent-lip: #5f3a94;
     --accent-ink: #d2adff;
     --accent-soft: #2b2140;
+    --accent-soft-lip: #1b142a;
+    --on-accent: #12081f;
   }
   :root[data-theme="oceano"] {
+    --accent: #2fb5d8;
+    --accent-lip: #0f6d85;
     --accent-ink: #80d7ed;
     --accent-soft: #10303a;
+    --accent-soft-lip: #0a1f26;
+    --on-accent: #041318;
+  }
+  :root[data-theme="mandarina"] {
+    --accent: #fb8a4c;
+    --accent-lip: #a8501f;
+    --accent-ink: #ffb48a;
+    --accent-soft: #3a2117;
+    --accent-soft-lip: #26150e;
+    --on-accent: #1f0b03;
   }
   :root[data-theme^="color_"] {
     --accent-ink: var(--accent-custom-dark);
