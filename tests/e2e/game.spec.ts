@@ -146,7 +146,7 @@ test('automatic day close after 21:30 preserves undo and opens once per app day'
   await openToday(page);
   await page.getByTestId('now-describe').click();
   await describeAndLog(page, '3 tortillas, 90 g pollo, ½ tz verdura y 2 cdta aceite');
-  await page.getByRole('dialog', { name: 'Cerrar el día', exact: true }).waitFor();
+  await page.getByRole('dialog', { name: 'Cierre del día', exact: true }).waitFor();
   await expect(page.getByRole('button', { name: 'Deshacer', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Deshacer', exact: true }).click();
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
@@ -173,7 +173,7 @@ test('resolving the last planned slot automatically opens the flower even before
   });
   expect(response.status()).toBe(200);
   await page.reload();
-  await page.getByRole('dialog', { name: 'Cerrar el día', exact: true }).waitFor();
+  await page.getByRole('dialog', { name: 'Cierre del día', exact: true }).waitFor();
   // The day's own plant comes first; the week of plants follows it.
   await expect(page.getByRole('dialog').locator('[data-flower=bud]').first()).toBeVisible();
 });

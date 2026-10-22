@@ -113,7 +113,7 @@ export function dayStatus(plan: PlanData, dayLogs: LogRow[], balancing: boolean)
 }
 
 /** Groups worth catching up late in the day (more is welcome); the rest stay with their meals. */
-const CATCH_UP: readonly TypeKey[] = ['veg', 'fruit'];
+export const CATCH_UP: readonly TypeKey[] = ['veg', 'fruit'];
 
 export interface Closing {
   /** 0–100: each planned group counts the same, filled up to its plan (overs never add or subtract). */

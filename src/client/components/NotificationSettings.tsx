@@ -1,4 +1,4 @@
-import { Bell, BellRing, ChevronDown, Moon, Pause, Play, Send } from 'lucide-preact';
+import { Bell, BellRing, ChevronDown, Moon, Pause, Play, Send, Sunset } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { appDay } from '../../shared/domain/day';
 import { fill, shortDate, timeLabel } from '../../shared/domain/format';
@@ -84,6 +84,13 @@ export function NotificationSettings() {
               />
             ))}
           </div>
+          <SwitchRow
+            label={notificationCopy.recap}
+            help={notificationCopy.recapHelp}
+            on={preferences.recap !== false}
+            icon={<Sunset size={18} aria-hidden="true" />}
+            onChange={(v) => update({ recap: v })}
+          />
           <button type="button" class="row press" aria-expanded={slots} onClick={() => setSlots(!slots)}>
             <span class="row-icon">
               <BellRing size={18} aria-hidden="true" />

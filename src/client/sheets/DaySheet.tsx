@@ -5,7 +5,7 @@ import { ChevronRight, Moon, Scale } from 'lucide-preact';
 import { balanceDay } from '../../shared/domain/balance';
 import { closing } from '../../shared/domain/daystatus';
 import { fill } from '../../shared/domain/format';
-import { contributorName, dayContributors } from '../../shared/domain/insights';
+import { contributorName, dayContributors, overCauses } from '../../shared/domain/insights';
 import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount } from '../../shared/domain/units';
 import { setSetting } from '../actions';
@@ -33,10 +33,10 @@ export default function DaySheet({ day }: { day: string }) {
   const c = closing(vm.status.meters);
   const slotName = (key: string) =>
     key === 'extra' ? labels.extraSlot : (data.slots.find((s) => s.key === key)?.label ?? key);
-  const moved = vm.status.ahead.slice(0, 2).map((g) => ({
-    gap: g,
-    from: dayContributors(g.type, dayLogs, data).slice(0, 3),
-  }));
+  const moved = vm.status.ahead.slice(0, 2).map((g) => {
+    const causes = overCauses(g.type, dayLogs, data);
+    return { gap: g, from: (causes.length ? causes : dayContributors(g.type, dayLogs, data)).slice(0, 3) };
+  });
   return (
     <Sheet label={dayCopy.title} onClose={closeSheet} header={<h2 class="title">{dayCopy.title}</h2>}>
       <section class="impact mb-5 flex items-center gap-4" data-testid="day-hero">

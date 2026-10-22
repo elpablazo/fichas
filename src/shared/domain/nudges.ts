@@ -1,5 +1,5 @@
-import { appDay, appMinutes, daysBetween, localParts } from './day';
-import { learnedTimes, slotTimings } from './slots';
+import { appDay, appMinutes, daysBetween, hhmmToAppMinutes, localParts } from './day';
+import { learnedTimes, type SlotTiming, slotTimings } from './slots';
 import type { LogRow, PlanRow } from './types';
 
 export interface NotificationSettings {
@@ -7,6 +7,8 @@ export interface NotificationSettings {
   paused_until: number | null;
   quiet: [string, string];
   slots: Record<string, boolean>;
+  /** The evening recap of the day (on unless turned off). */
+  recap?: boolean;
 }
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,
@@ -16,7 +18,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
 };
 export interface NotificationRecord {
   id: string;
-  kind: 'slot' | 'plan' | 'test';
+  kind: 'slot' | 'plan' | 'test' | 'recap';
   day: string;
   slot: string | null;
   plan_id: string | null;
@@ -33,10 +35,12 @@ export interface NudgeState {
   dayStart: number;
   lastSeen: number | null;
   hasSubscription: boolean;
+  /** The day the owner last closed with the day-close ritual (no recap needed after it). */
+  closedDay?: string | null;
 }
 export interface Nudge {
   id: string;
-  kind: 'slot' | 'plan' | 'test';
+  kind: 'slot' | 'plan' | 'test' | 'recap';
   day: string;
   slot: string | null;
   plan_id: string | null;
@@ -92,6 +96,19 @@ export function backedOff(slot: string, notifications: NotificationRecord[], log
   }
   return now < until;
 }
+/**
+ * When the day's recap goes out (app minutes): about 75 min after the last meal's (learned) time and never
+ * before 7:30 pm, but early enough to land 45 min before quiet hours start. Aligned to the 15-minute cron.
+ */
+export function recapTime(timings: SlotTiming[], quiet: [string, string], dayStart: number): number {
+  const last = timings.at(-1)?.time ?? hhmmToAppMinutes('20:00', dayStart);
+  let t = Math.max(last + 75, hhmmToAppMinutes('19:30', dayStart));
+  const [from, to] = quiet;
+  const quietStart = hhmmToAppMinutes(from, dayStart);
+  if (from !== to && t > quietStart - 30) t = Math.max(last + 30, quietStart - 45);
+  return Math.round(t / 15) * 15;
+}
+
 export function decideNudges(state: NudgeState, now: number): Nudge[] {
   const plan = state.plan;
   if (!plan || !deliveryAllowed(state, now)) return [];
@@ -125,6 +142,29 @@ export function decideNudges(state: NudgeState, now: number): Nudge[] {
     state.dayStart,
   );
   const time = appMinutes(now, state.tz, state.dayStart);
+  // The recap: once a day, if something was eaten and the day wasn't closed yet. It keeps one place in the
+  // daily cap for itself, so meal reminders never crowd it out.
+  const ate = state.logs.some((l) => !l.deleted_at && l.day === day && l.kind === 'meal');
+  const recapPending =
+    state.preferences.recap !== false &&
+    ate &&
+    state.closedDay !== day &&
+    !state.notifications.some((n) => n.day === day && n.kind === 'recap');
+  const at = recapTime(timings, state.preferences.quiet, state.dayStart);
+  if (recapPending && time >= at && time < at + 60) {
+    const id = `recap:${day}`;
+    const recap: Nudge = {
+      id,
+      kind: 'recap',
+      day,
+      slot: null,
+      plan_id: plan.id,
+      url: `/?recap=${day}&src=push`,
+      tag: id,
+    };
+    return [recap, ...out].slice(0, capacity);
+  }
+  const slotCapacity = capacity - out.length - (recapPending && time < at ? 1 : 0);
   for (const s of timings) {
     if (time < s.time + 45 || time >= s.time + 135 || state.preferences.slots[s.key] === false) continue;
     if (
@@ -136,6 +176,7 @@ export function decideNudges(state: NudgeState, now: number): Nudge[] {
     if (state.notifications.some((n) => n.day === day && n.kind === 'slot' && n.slot === s.key)) continue;
     if (backedOff(s.key, state.notifications, state.logs, now)) continue;
     const tag = `slot:${day}:${s.key}`;
+    if (out.filter((n) => n.kind === 'slot').length >= slotCapacity) break;
     out.push({
       id: tag,
       kind: 'slot',

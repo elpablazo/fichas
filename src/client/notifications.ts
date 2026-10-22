@@ -3,7 +3,7 @@ import { isOccasion } from '../shared/domain/status';
 import { setSetting } from './actions';
 import { notificationCopy } from './copy/es-MX';
 import { api, syncNow } from './db/sync';
-import { gardenLogs } from './game';
+import { gardenLogs, openRecap } from './game';
 import { now } from './state/clock';
 import { settings } from './state/signals';
 import { canonical, celebrate, closeSheet, isStandalone, navigate, pushSlot, selectDay, showToast } from './state/ui';
@@ -109,9 +109,11 @@ export function followPushLink(value: string) {
   const path = canonical(url.pathname);
   if (url.origin !== location.origin || !['/', '/progreso/plan/nuevo'].includes(path)) return;
   pushSlot.value = path === '/' ? url.searchParams.get('slot') : null;
+  const recap = path === '/' ? url.searchParams.get('recap') : null;
   celebrate.value = null;
   selectDay(null);
   closeSheet();
   navigate(path);
   history.replaceState(null, '', path);
+  if (recap && /^\d{4}-\d{2}-\d{2}$/.test(recap)) openRecap(recap);
 }

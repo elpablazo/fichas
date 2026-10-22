@@ -514,4 +514,6 @@ export const notificationCopy = {
   testSent: 'Prueba enviada.',
   later: 'Prueba fuera del silencio o la pausa.',
   paused: 'En pausa hasta {date}',
+  recap: 'Resumen del día',
+  recapHelp: 'En la noche: qué faltó y qué sobró.',
 } as const;

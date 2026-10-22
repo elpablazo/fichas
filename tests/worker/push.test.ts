@@ -374,3 +374,27 @@ it('sync marks only timely nondeleted nonfree slot logs as acting on a reminder'
   expect(records.find((n) => n.id === 'late')!.acted_at).toBeNull();
   expect(records.find((n) => n.id === 'before')!.acted_at).toBeNull();
 });
+
+it('sends the evening recap once, with a line from how the day went', async () => {
+  const now = Date.parse('2026-10-15T22:15:00-06:00');
+  vi.spyOn(Date, 'now').mockReturnValue(now);
+  const prepared = await mealReminder();
+  // Dinner logged with less than the plan: the recap says what closes the day.
+  await env.DB.prepare(
+    `INSERT INTO logs (id,plan_id,day,slot,kind,title,items,raw_units,units,target,status,source,recipe_id,eaten_at,created_at,updated_at,deleted_at,rev)
+     VALUES ('dinner','push-plan',?,'cena','meal','Tacos','[]','{"carb_sg":3}','{}','{}','under','describe',NULL,?,1,1,NULL,1)`,
+  )
+    .bind(prepared.day, now - 3_600_000)
+    .run();
+  const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 201 }));
+  for (let i = 0; i < 2; i++) {
+    const ctx = createExecutionContext();
+    await worker.scheduled({ scheduledTime: now, cron: '*/15 * * * *', noRetry() {} }, env, ctx);
+    await waitOnExecutionContext(ctx);
+  }
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const saved = await env.DB.prepare('SELECT id,kind,copy_key,delivery_status FROM notifications').all();
+  expect(saved.results).toEqual([
+    { id: `recap:${prepared.day}`, kind: 'recap', copy_key: 'push.body.recap.close', delivery_status: 'sent' },
+  ]);
+});

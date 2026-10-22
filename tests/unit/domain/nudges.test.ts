@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays } from '../../../src/shared/domain/day';
+import { addDays, hhmmToAppMinutes } from '../../../src/shared/domain/day';
 import {
   backedOff,
   DEFAULT_NOTIFICATIONS,
@@ -7,6 +7,7 @@ import {
   inQuietHours,
   type NotificationRecord,
   type NudgeState,
+  recapTime,
 } from '../../../src/shared/domain/nudges';
 import type { PlanRow } from '../../../src/shared/domain/types';
 import { log, plan } from '../helpers';
@@ -318,5 +319,54 @@ describe('M6 scheduler scenario table', () => {
         at('15:30'),
       ),
     ).toBe(false);
+  });
+});
+
+describe('day recap', () => {
+  const full: PlanRow = { ...p, data: plan };
+  const recapState = (): NudgeState => ({
+    ...state(),
+    plan: full,
+    logs: [log(day, 'desayuno', [], { kind: 'meal', raw_units: { carb_sg: 2 } })],
+  });
+  const kinds = (s: NudgeState, time: string) => decideNudges(s, at(time)).map((n) => n.kind);
+
+  it('goes out once, about 75 min after the last meal, before quiet hours', () => {
+    const timings = [{ key: 'cena', time: hhmmToAppMinutes('21:00'), start: 0, end: 1440 }];
+    // Dinner at 9 pm and quiet from 10:30 pm: 9:45 pm (45 min before quiet hours).
+    expect(recapTime(timings, ['22:30', '09:00'], 4)).toBe(hhmmToAppMinutes('21:45'));
+    // An early dinner: 75 min after it, never before 7:30 pm.
+    expect(recapTime([{ ...timings[0]!, time: hhmmToAppMinutes('18:00') }], ['23:30', '09:00'], 4)).toBe(
+      hhmmToAppMinutes('19:30'),
+    );
+    expect(kinds(recapState(), '21:44')).not.toContain('recap');
+    expect(kinds(recapState(), '21:45')).toContain('recap');
+    // The link names its day, so a late tap (after midnight) still opens the right day's close.
+    expect(decideNudges(recapState(), at('21:45')).find((n) => n.kind === 'recap')?.url).toBe(
+      `/?recap=${day}&src=push`,
+    );
+    const sent = recapState();
+    sent.notifications = [notification(day, { id: `recap:${day}`, kind: 'recap', slot: null })];
+    expect(kinds(sent, '22:00')).not.toContain('recap');
+  });
+
+  it('needs something eaten, an open day and the switch on', () => {
+    const empty = recapState();
+    empty.logs = [];
+    expect(kinds(empty, '21:45')).not.toContain('recap');
+    const closed = recapState();
+    closed.closedDay = day;
+    expect(kinds(closed, '21:45')).not.toContain('recap');
+    const off = recapState();
+    off.preferences.recap = false;
+    expect(kinds(off, '21:45')).not.toContain('recap');
+  });
+
+  it('keeps one place in the daily cap for itself', () => {
+    const s = recapState();
+    s.notifications = [notification(day, { id: 'slot:x', slot: 'desayuno' })];
+    // Comida's reminder window (5:45 pm) would take the last place: it waits for the recap instead.
+    expect(kinds(s, '17:50')).toEqual([]);
+    expect(kinds(s, '21:45')).toEqual(['recap']);
   });
 });

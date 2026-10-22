@@ -37,6 +37,8 @@ export interface Settings {
     paused_until: number | null;
     quiet: [string, string];
     slots: Record<string, boolean>;
+    /** The evening recap (on unless turned off). */
+    recap?: boolean;
   };
   rebalance: 'unknown' | 'allowed' | 'not_allowed';
   style: { petal: string; theme: string; token: string; celebration: string };

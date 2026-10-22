@@ -46,7 +46,9 @@ export function dismissMoment() {
 
 export async function openDayClose(day = today.value) {
   await setLocal(`close:${day}`, true);
-  await setSetting('last_closed_day', day);
+  // Reopening an earlier day (a late tap on last night's recap) never un-closes a later one.
+  const last = settings.value.last_closed_day;
+  if (!last || day > last) await setSetting('last_closed_day', day);
   openSheet({ kind: 'day-close', day });
 }
 
@@ -56,6 +58,19 @@ export const recapDay = signal<string | null>(null);
 const gardenHistoryReady = signal(false);
 const presentationDay = signal<string | null>(null);
 export const gamePresentationReady = computed(() => gardenHistoryReady.value && presentationDay.value === today.value);
+
+/** A tap on the evening recap: that day's close (today or last night), once the garden history is in. */
+export function openRecap(day: string) {
+  let done = false;
+  const stop = effect(() => {
+    if (done || !dataReady.value || !gardenHistoryReady.value || (!firstPullDone.value && navigator.onLine)) return;
+    done = true;
+    queueMicrotask(() => stop());
+    if (day > today.value || day < addDays(today.value, -1) || !planForDay(plans.value, day)) return;
+    void openDayClose(day);
+  });
+}
+
 export const hasGameCard = computed(() => {
   const day = backfillDay.value;
   const plan = day ? planForDay(plans.value, day) : null;

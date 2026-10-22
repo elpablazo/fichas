@@ -36,6 +36,8 @@ export const CHANGELOG: Release[] = [
       { icon: 'list', text: 'Un platillo por renglón: cada ingrediente queda en su platillo.' },
       { icon: 'plate', text: 'Al anotar ves tu comida contra su plan, lugar por lugar.' },
       { icon: 'search', text: 'Toca un tubo: qué lo llenó y cuánto es una ficha.' },
+      { icon: 'bell', text: 'De noche, el cierre de tu día: qué faltó y qué sobró.' },
+      { icon: 'link', text: 'Un enlace para tu nutri: qué comiste y a qué hora.' },
       { icon: 'refresh', text: 'Cuando hay versión nueva, un toque y se actualiza.' },
     ],
   },

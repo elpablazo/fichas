@@ -43,24 +43,39 @@ export function FoodIcon({ id, type, ...p }: IconProps & { id: string | null; ty
 const EMOJI = new Map(Object.entries(typeLabels).map(([t, m]) => [m.emoji as string, t as TypeKey]));
 const SPLIT = new RegExp(`(${[...EMOJI.keys()].join('|')})`, 'u');
 
+/** The amount before an emoji ("1 ", "½ ", "+2 ") and the punctuation after it stay on its line. */
+const AMOUNT = /[\d½¼¾⅓⅔+−][\d½¼¾⅓⅔.,/]*\s?$/u;
+const PUNCT = /^[.,;:!?)]+/;
+
 /** Copy with type emoji ("Llevas 1 🫓 de más") rendered with the type icons, inline with the text. */
 export function Txt({ children, size = '1.2em' }: { children: string; size?: string }): ComponentChildren {
   const parts = children.split(SPLIT);
   if (parts.length === 1) return children;
-  return parts.map((part, i) => {
-    const t = EMOJI.get(part);
-    if (!t) return part;
-    return (
-      <svg
-        key={i}
-        class="sprite inline-sprite"
-        viewBox="0 0 32 32"
-        style={`width:${size};height:${size}`}
-        role="img"
-        aria-label={typeLabels[t].short}
-      >
-        <use href={`#g-${t}`} />
-      </svg>
+  const out: ComponentChildren[] = [];
+  let text = parts[0] ?? '';
+  for (let i = 1; i < parts.length; i += 2) {
+    const t = EMOJI.get(parts[i] ?? '') as TypeKey;
+    const next = parts[i + 1] ?? '';
+    const amount = AMOUNT.exec(text)?.[0] ?? '';
+    const punct = PUNCT.exec(next)?.[0] ?? '';
+    if (text.length > amount.length) out.push(text.slice(0, text.length - amount.length));
+    out.push(
+      <span key={i} class="whitespace-nowrap">
+        {amount}
+        <svg
+          class="sprite inline-sprite"
+          viewBox="0 0 32 32"
+          style={`width:${size};height:${size}`}
+          role="img"
+          aria-label={typeLabels[t].short}
+        >
+          <use href={`#g-${t}`} />
+        </svg>
+        {punct}
+      </span>,
     );
-  });
+    text = next.slice(punct.length);
+  }
+  if (text) out.push(text);
+  return out;
 }

@@ -1,7 +1,9 @@
 import { generateRequestDetails } from 'web-push-neo';
+import { typeLabels } from '../../client/copy/es-MX';
 import { pushPools as pools } from '../../client/copy/push';
 import { NotificationPreferences } from '../../shared/api';
 import { addDays, appDay } from '../../shared/domain/day';
+import { closing, dayStatus } from '../../shared/domain/daystatus';
 import { fill } from '../../shared/domain/format';
 import {
   DEFAULT_NOTIFICATIONS,
@@ -12,6 +14,7 @@ import {
   type NudgeState,
 } from '../../shared/domain/nudges';
 import type { LogRow, PlanRow } from '../../shared/domain/types';
+import { formatCount } from '../../shared/domain/units';
 
 export interface SubscriptionRow {
   id: string;
@@ -45,7 +48,7 @@ export async function loadNudgeState(
   const db = env.DB;
   const settings = (
     await db
-      .prepare("SELECT key,value FROM settings WHERE key IN ('notifications','tz','day_start_hour')")
+      .prepare("SELECT key,value FROM settings WHERE key IN ('notifications','tz','day_start_hour','last_closed_day')")
       .all<{ key: string; value: string }>()
   ).results;
   const stored = Object.fromEntries(settings.map((r) => [r.key, JSON.parse(r.value)]));
@@ -94,6 +97,7 @@ export async function loadNudgeState(
       dayStart,
       lastSeen: (results[3]!.results[0]?.last as number | null) ?? null,
       hasSubscription: subscriptions.length > 0,
+      closedDay: (stored.last_closed_day as string | null | undefined) ?? null,
     },
   };
 }
@@ -114,6 +118,27 @@ function eligible(state: NudgeState, nudge: Nudge, now: number, claimed = false)
   );
 }
 
+type RecapKey = 'push.body.recap.round' | 'push.body.recap.full' | 'push.body.recap.close';
+
+/** The recap's line from the day as it stands: round, complete, or what's still missing (two groups at most). */
+export function recapBody(state: NudgeState, day: string): { key: RecapKey; vars: Record<string, string> } {
+  const plan = state.plan;
+  if (!plan) return { key: 'push.body.recap.full', vars: {} };
+  const status = dayStatus(
+    plan.data,
+    state.logs.filter((l) => l.day === day),
+    false,
+  );
+  const c = closing(status.meters);
+  if (c.exact) return { key: 'push.body.recap.round', vars: {} };
+  if (c.complete) return { key: 'push.body.recap.full', vars: {} };
+  const list = c.missing
+    .slice(0, 2)
+    .map((g) => `${formatCount(g.n)} ${typeLabels[g.type].emoji}`)
+    .join(' y ');
+  return { key: 'push.body.recap.close', vars: { list } };
+}
+
 export async function sendNudge(env: Env, nudge: Nudge, subscriptions: SubscriptionRow[], slotLabel = '') {
   if (!env.VAPID_PRIVATE_KEY || !env.VAPID_PUBLIC_KEY || !env.VAPID_SUBJECT || !subscriptions.length) return false;
   const current = await loadNudgeState(env);
@@ -123,7 +148,13 @@ export async function sendNudge(env: Env, nudge: Nudge, subscriptions: Subscript
   if (!active.length || !eligible(current.state, nudge, Date.now())) return false;
   const db = env.DB,
     now = Date.now();
-  const key = `push.body.${nudge.kind}` as 'push.body.slot' | 'push.body.plan' | 'push.body.test';
+  const vars: Record<string, string> = { slot: '' };
+  let key: 'push.body.slot' | 'push.body.plan' | 'push.body.test' | RecapKey;
+  if (nudge.kind === 'recap') {
+    const recap = recapBody(current.state, nudge.day);
+    key = recap.key;
+    Object.assign(vars, recap.vars);
+  } else key = `push.body.${nudge.kind}` as 'push.body.slot' | 'push.body.plan' | 'push.body.test';
   const previous = (
     await db
       .prepare('SELECT copy_index FROM notifications WHERE copy_key=? ORDER BY sent_at DESC LIMIT 3')
@@ -140,10 +171,15 @@ export async function sendNudge(env: Env, nudge: Nudge, subscriptions: Subscript
     .run();
   if (!claim.meta.changes) return false;
   const label = slotLabel.trim().split(/\s+/).slice(0, 2).join(' ');
-  const titleKey = `push.title.${nudge.kind}` as 'push.title.slot' | 'push.title.plan' | 'push.title.test';
+  vars.slot = label;
+  const titleKey = `push.title.${nudge.kind}` as
+    | 'push.title.slot'
+    | 'push.title.plan'
+    | 'push.title.test'
+    | 'push.title.recap';
   const payload = {
-    title: fill(pools[titleKey][0], { slot: label }),
-    body: fill(pools[key][copyIndex]!, { slot: label }),
+    title: fill(pools[titleKey][0], vars),
+    body: fill(pools[key][copyIndex]!, vars),
     url: nudge.url,
     tag: nudge.tag,
   };

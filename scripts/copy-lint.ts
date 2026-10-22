@@ -66,7 +66,13 @@ const FIRST_PERSON = [
   ' toco ',
 ];
 /** Keys that are fixed strings for a single, rare moment (not pools that repeat). */
-const NOT_POOLS = new Set(['push.title.slot', 'push.title.plan', 'push.title.test', 'push.body.test']);
+const NOT_POOLS = new Set([
+  'push.title.slot',
+  'push.title.plan',
+  'push.title.test',
+  'push.title.recap',
+  'push.body.test',
+]);
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -107,6 +113,7 @@ for (const r of CHANGELOG) {
 }
 flat('line.describe', copy.describeCopy);
 flat('line.day', copy.dayCopy);
+flat('line.dayClose', copy.dayCloseCopy);
 flat('line.garden', copy.gardenCopy);
 flat('line.stage', copy.stageLabels);
 flat('line.unlock', copy.unlockNames);

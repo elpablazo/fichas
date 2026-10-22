@@ -16,6 +16,7 @@ export const NotificationPreferences = z.object({
   paused_until: nullableMs,
   quiet: z.tuple([clockTime, clockTime]),
   slots: z.record(z.string().max(60), z.boolean()),
+  recap: z.boolean().optional(),
 });
 
 export const RowSchemas = {

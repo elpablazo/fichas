@@ -399,3 +399,24 @@ export const groupCopy = {
   onPace: 'Justo lo planeado hasta ahora',
   from: 'Lo que sumó',
 } as const;
+
+/** Cierre del día: the day's minute of learning (also where the evening recap lands). */
+export const dayCloseCopy = {
+  title: 'Cierre del día',
+  exact: 'Plan completo y justo',
+  complete: 'Plan completo',
+  covered: 'Cubriste {pct}% de tu plan',
+  good: 'Justos',
+  missing: 'Faltó',
+  over: 'De más',
+  and: 'y',
+  tomorrow: 'Mañana:',
+  today: 'Hoy:',
+  todayMenu: 'Menú de hoy',
+  tipRepeat: 'repite lo de hoy.',
+  tipRepeatPast: 'repite lo de ayer.',
+  tipPlan: 'en {slot} tu plan pide {n} {emoji}.',
+  tipNone: 'en {slot} tu plan no lleva {emoji}.',
+  tipStart: 'empieza {slot} con {n} {emoji}.',
+  tipExtra: 'si se te antoja {food}, checa antes dónde cabe.',
+} as const;
