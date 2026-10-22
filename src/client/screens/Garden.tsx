@@ -1,14 +1,15 @@
-import { Award, ChevronRight, Lock, Palette, Sprout } from 'lucide-preact';
+import { Award, Bird, ChevronRight, Palette, Sparkles, Sprout, TreeDeciduous, Waves } from 'lucide-preact';
 import { useEffect } from 'preact/hooks';
 import { daysBetween } from '../../shared/domain/day';
 import { fill } from '../../shared/domain/format';
+import { type EcoKey, ecosystem } from '../../shared/game/ecosystem';
 import { bloomed } from '../../shared/game/garden';
 import { nextUnlock } from '../../shared/game/levels';
 import { SPECIES } from '../../shared/game/species';
 import { speciesText } from '../../shared/game/species-text';
 import { STAMPS } from '../../shared/game/stamps';
 import { GardenScene } from '../components/GardenScene';
-import { Plant } from '../components/Plant';
+import { Bee, Butterfly, Plant } from '../components/Plant';
 import { ProgressBar, ScreenHeader, SectionTitle } from '../components/ui';
 import { gameCopy } from '../copy/es-MX';
 import { gardenCopy, unlockFallback, unlockNames } from '../copy/more';
@@ -18,10 +19,26 @@ import { discovered, gardenDays } from '../garden-state';
 import { achievements, activePlan, livePlans, today } from '../state/signals';
 import { openSheet } from '../state/ui';
 
+/** The next visitor's icon, drawn like the scene. */
+function EcoIcon({ k }: { k: EcoKey }) {
+  if (k === 'butterflies' || k === 'bees')
+    return (
+      <svg width="22" height="22" viewBox="-11 -11 22 22" aria-hidden="true">
+        {k === 'bees' ? <Bee x={0} y={1} size={13} /> : <Butterfly x={0} y={0} size={17} />}
+      </svg>
+    );
+  const Icon = k === 'tree' ? TreeDeciduous : k === 'birds' ? Bird : k === 'pond' ? Waves : Sparkles;
+  return <Icon size={20} aria-hidden="true" />;
+}
+
 export default function Garden() {
   const p = activePlan.value;
   const level = progress.value;
-  const flowers = [...gardenDays.value.values()].filter((f) => f.n > 0).length;
+  // This season's plants (days with a meal), like the season's stamps.
+  const flowers = [...gardenDays.value.values()].filter(
+    (f) => f.n > 0 && (!p?.starts_on || f.day >= p.starts_on) && (!p?.ends_on || f.day <= p.ends_on),
+  ).length;
+  const eco = ecosystem(flowers);
   const found = discovered.value;
   const stamps = achievements.value.filter((a) => a.kind === 'stamp' && a.season === p?.season).length;
   const next = nextUnlock(level.level);
@@ -75,8 +92,30 @@ export default function Garden() {
 
       {p && (
         <section class="card mb-4 p-2">
-          <GardenScene key={p.id} plan={p} today={today.value} />
-          {flowers === 0 && <p class="secondary muted px-3 pt-3 pb-1 text-center">{gardenCopy.empty}</p>}
+          <GardenScene key={p.id} plan={p} today={today.value} flowers={flowers} />
+          {flowers === 0 ? (
+            <p class="secondary muted px-3 pt-3 pb-1 text-center">{gardenCopy.empty}</p>
+          ) : (
+            <p class="secondary flex items-center gap-2.5 px-3 pt-2.5 pb-1 font-semibold" data-testid="eco-next">
+              {eco.next ? (
+                <>
+                  <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-accent-ink">
+                    <EcoIcon k={eco.next.key} />
+                  </span>
+                  <span>
+                    {fill(gardenCopy.eco[eco.next.key], { n: eco.next.at })}{' '}
+                    <span class="muted">
+                      {eco.next.at - flowers === 1
+                        ? gardenCopy.ecoLeftOne
+                        : fill(gardenCopy.ecoLeft, { n: eco.next.at - flowers })}
+                    </span>
+                  </span>
+                </>
+              ) : (
+                gardenCopy.ecoDone
+              )}
+            </p>
+          )}
         </section>
       )}
 
@@ -142,15 +181,7 @@ export default function Garden() {
               class="card press flex flex-col items-center px-1 pt-1 pb-2.5 text-center disabled:cursor-default"
               onClick={() => openSheet({ kind: 'species', id: sp.id })}
             >
-              {got ? (
-                <Plant stage="bloom" species={sp.id} size={72} ground={false} />
-              ) : (
-                <span class="grid h-[72px] w-[72px] place-items-center text-ink-3" aria-hidden="true">
-                  <span class="grid h-11 w-11 place-items-center rounded-full bg-surface-2">
-                    <Lock size={18} />
-                  </span>
-                </span>
-              )}
+              <Plant stage="bloom" species={sp.id} size={72} ground={false} class={got ? undefined : 'silhouette'} />
               <span class={`text-[13px] font-bold leading-4 ${got ? '' : 'text-ink-2'}`}>
                 {got ? speciesText(sp.id).name : gardenCopy.locked}
               </span>

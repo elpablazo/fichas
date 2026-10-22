@@ -1,0 +1,283 @@
+/* Jardín (docs/05-fichas-2.md §9): the landscape, its visitors and the herbarium's silhouettes. Loaded with the
+   garden, not on first paint. */
+@layer components {
+  /* ---------- Garden landscape ---------- */
+  .garden {
+    position: relative;
+    overflow: hidden;
+    container-type: inline-size;
+    border-radius: 22px;
+    /* The near hill runs into the meadow the planters stand on; the far hill fades into the sky. */
+    --meadow: color-mix(in srgb, var(--leaf) 30%, var(--sky-1));
+    --hill-far: color-mix(in srgb, var(--leaf) 20%, var(--sky-bot));
+    --hill-near: var(--meadow);
+    background: linear-gradient(180deg, var(--sky-top) 0, var(--sky-bot) 92px, var(--meadow) 126px, var(--meadow));
+  }
+  /* The frame sits above the drawing so it stays one continuous line. */
+  .garden::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+    pointer-events: none;
+  }
+  .garden-day {
+    --sky-top: #b9def0;
+    --sky-bot: #eef5e4;
+  }
+  .garden-dawn {
+    --sky-top: #f5c9ad;
+    --sky-bot: #fbeedb;
+  }
+  .garden-dusk {
+    --sky-top: #eea184;
+    --sky-bot: #f8dbc2;
+  }
+  .garden-night {
+    --sky-top: #121836;
+    --sky-bot: #252f58;
+    --meadow: color-mix(in srgb, var(--leaf) 26%, #141c19);
+  }
+  .garden-night .cloud {
+    opacity: 0.18;
+  }
+  .garden-backdrop {
+    position: absolute;
+    inset: 0 0 auto;
+    width: 100%;
+    height: 132px;
+  }
+  .garden-backdrop .hill-far {
+    fill: var(--hill-far);
+  }
+  .garden-backdrop .hill-near,
+  .garden-front .hill-near {
+    fill: var(--hill-near);
+  }
+  .garden-beds {
+    position: relative;
+    padding: 116px 6px 0;
+  }
+  .garden-week-head {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    margin-bottom: 2px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 16px;
+    color: var(--ink-2);
+  }
+  .planter {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .planter-box {
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    bottom: 0;
+    height: 21px;
+    border-radius: 5px 5px 7px 7px;
+    background:
+      linear-gradient(180deg, var(--soil-2) 0 5px, transparent 5px),
+      linear-gradient(
+        180deg,
+        transparent 12px,
+        color-mix(in srgb, var(--wood-2) 80%, transparent) 12px 13.5px,
+        transparent 13.5px
+      ),
+      linear-gradient(180deg, var(--wood), var(--wood-2));
+    box-shadow:
+      0 0 0 1.5px var(--wood-line),
+      0 3px 0 rgb(0 0 0 / 12%);
+  }
+  .stake {
+    position: relative;
+    z-index: 1;
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 15px;
+    margin: -1px 0 3px;
+    padding: 0 4px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    background: var(--surface);
+    color: var(--ink-2);
+    box-shadow: 0 0 0 1px var(--wood-line);
+  }
+  .stake.is-today {
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: 0 0 0 1px var(--accent-lip);
+  }
+  .garden-today-glow {
+    position: absolute;
+    top: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--gold) 45%, transparent), transparent 70%);
+  }
+  .garden-front {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 34px;
+    margin-top: -6px;
+  }
+  .garden-life {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .eco-cloud {
+    animation: eco-cloud var(--d, 90s) linear infinite;
+    animation-delay: var(--o, 0s);
+  }
+  @keyframes eco-cloud {
+    from {
+      transform: translateX(-60px);
+    }
+    to {
+      transform: translateX(420px);
+    }
+  }
+  .eco-sun-rays {
+    animation: spin 48s linear infinite;
+  }
+  .eco-wander {
+    position: absolute;
+    animation: eco-wander var(--d, 18s) ease-in-out infinite;
+    animation-delay: var(--o, 0s);
+  }
+  @keyframes eco-wander {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    25% {
+      transform: translate(18cqw, -14px);
+    }
+    50% {
+      transform: translate(30cqw, 12px);
+    }
+    75% {
+      transform: translate(10cqw, 24px);
+    }
+  }
+  .eco-wander.is-small {
+    animation-name: eco-buzz;
+  }
+  @keyframes eco-buzz {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    30% {
+      transform: translate(-30px, 10px);
+    }
+    60% {
+      transform: translate(-12px, -8px);
+    }
+  }
+  .eco-bird {
+    position: absolute;
+    top: var(--y, 20px);
+    left: 0;
+    animation: eco-bird var(--d, 26s) linear infinite;
+    animation-delay: var(--o, 0s);
+  }
+  @keyframes eco-bird {
+    from {
+      transform: translateX(-24px);
+    }
+    to {
+      transform: translateX(104cqw);
+    }
+  }
+  .eco-flap {
+    animation: eco-flap 420ms ease-in-out infinite alternate;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes eco-flap {
+    to {
+      transform: scaleY(-0.5);
+    }
+  }
+  .eco-firefly {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: #ffe98a;
+    box-shadow: 0 0 8px 3px rgb(255 226 120 / 55%);
+    animation: eco-firefly var(--d, 6s) ease-in-out infinite;
+    animation-delay: var(--o, 0s);
+  }
+  @keyframes eco-firefly {
+    0%,
+    100% {
+      opacity: 0.15;
+      transform: translate(0, 0);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(14px, -10px);
+    }
+  }
+  .eco-grass {
+    animation: eco-grass 3.6s ease-in-out infinite alternate;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+  @keyframes eco-grass {
+    to {
+      transform: skewX(-6deg);
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    .garden-day {
+      --sky-top: #1c3a4e;
+      --sky-bot: #1b302d;
+    }
+    .garden-dawn {
+      --sky-top: #3b2b3c;
+      --sky-bot: #26282c;
+    }
+    .garden-dusk {
+      --sky-top: #45293a;
+      --sky-bot: #2b262e;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .eco-cloud,
+    .eco-sun-rays,
+    .eco-wander,
+    .eco-bird,
+    .eco-flap,
+    .eco-firefly,
+    .eco-grass {
+      animation: none;
+    }
+  }
+  /* Undiscovered species: a silhouette to look forward to. */
+  .silhouette {
+    filter: brightness(0);
+    opacity: 0.14;
+  }
+  @media (prefers-color-scheme: dark) {
+    .silhouette {
+      filter: brightness(0) invert(1);
+      opacity: 0.16;
+    }
+  }
+}

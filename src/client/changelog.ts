@@ -38,6 +38,8 @@ export const CHANGELOG: Release[] = [
       { icon: 'search', text: 'Toca un tubo: qué lo llenó y cuánto es una ficha.' },
       { icon: 'bell', text: 'De noche, el cierre de tu día: qué faltó y qué sobró.' },
       { icon: 'chart', text: 'Tu alimentación: tus días al 100, tu día promedio y tus hábitos.' },
+      { icon: 'flower', text: 'Un jardín vivo: con tus flores llegan mariposas, abejas y pájaros.' },
+      { icon: 'spark', text: 'Flores con más detalle y un herbario con siluetas por descubrir.' },
       { icon: 'link', text: 'Un enlace para tu nutri: qué comiste y a qué hora.' },
       { icon: 'refresh', text: 'Cuando hay versión nueva, un toque y se actualiza.' },
     ],

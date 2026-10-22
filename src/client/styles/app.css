@@ -1662,7 +1662,7 @@
     line-height: 1;
     color: var(--ink-2);
   }
-  .day-ring.is-empty .day-ring-n,
+  .is-empty .day-ring-n,
   .day-ring-future .day-ring-n {
     color: var(--ink-3);
   }

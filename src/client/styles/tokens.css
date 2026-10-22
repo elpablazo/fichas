@@ -43,6 +43,11 @@
   --soil: #a0714f;
   --soil-2: #82573a;
   --soil-3: #c49a74;
+  --soil-line: #6e4a30;
+  --plant-line: #1f4a31;
+  --wood: #c0915f;
+  --wood-2: #a07246;
+  --wood-line: #6e4a30;
   --sky-1: #fbf3df;
   --sky-2: #e4f0e0;
   --scrim: rgb(16 28 20 / 44%);
@@ -114,6 +119,11 @@
     --soil: #6b4a33;
     --soil-2: #533826;
     --soil-3: #876247;
+    --soil-line: #3b2819;
+    --plant-line: #0d2618;
+    --wood: #80603f;
+    --wood-2: #634a30;
+    --wood-line: #2e2016;
     --scrim: rgb(0 0 0 / 58%);
     --destructive: #f97066;
     --e2: 0 2px 6px rgb(0 0 0 / 35%), 0 12px 32px rgb(0 0 0 / 45%);

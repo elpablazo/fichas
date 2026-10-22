@@ -186,6 +186,17 @@ export const gardenCopy = {
   butterfly: 'Una mariposa: día redondo.',
   monarch: 'Monarcas: semana con 5 días de flor.',
   empty: 'Anota tu primera comida y nace tu primera planta.',
+  eco: {
+    butterflies: 'Con {n} flores llegan las mariposas.',
+    tree: 'Con {n} flores brota un árbol.',
+    bees: 'Con {n} flores llegan las abejas.',
+    birds: 'Con {n} flores llegan los pájaros.',
+    pond: 'Con {n} flores aparece un estanque.',
+    fireflies: 'Con {n} flores llegan las luciérnagas.',
+  },
+  ecoLeft: 'Faltan {n}.',
+  ecoLeftOne: 'Falta 1.',
+  ecoDone: 'Tu jardín ya tiene todo su ecosistema.',
 } as const;
 
 export const dayCopy = {
