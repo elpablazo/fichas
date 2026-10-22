@@ -1,4 +1,6 @@
 // Copy lint (§14.5): length limits, banned words, tone rules, pool sizes. Exit 1 on any violation.
+
+import { CHANGELOG } from '../src/client/changelog';
 import * as core from '../src/client/copy/es-MX';
 import { gamePools } from '../src/client/copy/game';
 import * as more from '../src/client/copy/more';
@@ -95,6 +97,14 @@ flat('line.pace', copy.paceCopy);
 flat('line.meter', copy.meterCopy);
 flat('line.now', copy.nowCopy);
 flat('line.verdict', copy.verdictCopy);
+flat('line.plate', copy.plateCopy);
+flat('line.meal', copy.mealCopy);
+flat('line.group', copy.groupCopy);
+flat('line.update', copy.updateCopy);
+for (const r of CHANGELOG) {
+  entries.push([`title.changelog.${r.version}`, r.title]);
+  for (const [i, it] of r.items.entries()) entries.push([`line.changelog.${r.version}.${i}`, it.text]);
+}
 flat('line.describe', copy.describeCopy);
 flat('line.day', copy.dayCopy);
 flat('line.garden', copy.gardenCopy);
@@ -103,6 +113,7 @@ flat('line.unlock', copy.unlockNames);
 flat('line.weight', copy.weightCopy);
 flat('line.settings', copy.settingsCopy);
 flat('line.export', copy.exportCopy);
+flat('line.journal', copy.journalCopy);
 
 const LIMITS: [RegExp, number][] = [
   [/^(toast\.|log\.|comeback$|surprise$)/, 60],

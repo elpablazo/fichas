@@ -5,7 +5,8 @@ import { fill } from '../../shared/domain/format';
 import type { TypeKey, Units } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount } from '../../shared/domain/units';
-import { plateCopy, typeLabels } from '../copy/es-MX';
+import { typeLabels } from '../copy/es-MX';
+import { plateCopy } from '../copy/more';
 import { TypeIcon } from './Sprite';
 
 const EPS = 0.125;
@@ -23,7 +24,16 @@ function coins(n: number): number[] {
   return out;
 }
 
-export function MealPlate({ target, eaten }: { target: Units; eaten: Units }) {
+export function MealPlate({
+  target,
+  eaten,
+  causes,
+}: {
+  target: Units;
+  eaten: Units;
+  /** What brought a type, shown under its row ("pan de caja · arepa"). */
+  causes?: Partial<Record<TypeKey, string>>;
+}) {
   const types = TYPE_KEYS.filter((t: TypeKey) => (target[t] ?? 0) >= EPS || (eaten[t] ?? 0) >= EPS);
   if (!types.length) return null;
   return (
@@ -47,6 +57,7 @@ export function MealPlate({ target, eaten }: { target: Units; eaten: Units }) {
         return (
           <li key={t} class={`plate-row t-${t}`}>
             <TypeIcon type={t} size={22} label={meta.label} />
+            {causes?.[t] && <span class="plate-cause">{causes[t]}</span>}
             <span class="plate-coins" aria-hidden="true">
               {filled.slice(0, MAX_COINS).map((c, i) => (
                 <span key={`f${i}`} class={`coin ${c < 1 ? 'half' : ''}`} />

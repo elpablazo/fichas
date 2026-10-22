@@ -5,8 +5,12 @@ import { expect, it, vi } from 'vitest';
 
 // Execute the real install handler with browser API doubles, including HTTP failures and retries.
 const script = stripTypeScriptTypes(readFileSync('src/client/sw.ts', 'utf8')).replace('export {};', '');
-function installer(cache: Map<string, Response>, fetch: (url: string) => Promise<Response>) {
-  const handlers = new Map<string, (event: { waitUntil: (promise: Promise<void>) => void }) => void>();
+function installer(
+  cache: Map<string, Response>,
+  fetch: (url: string) => Promise<Response>,
+  registration?: { active: object | null },
+) {
+  const handlers = new Map<string, (event: { waitUntil: (promise: Promise<void>) => void; data?: unknown }) => void>();
   const skipWaiting = vi.fn();
   runInNewContext(script, {
     URL,
@@ -27,13 +31,17 @@ function installer(cache: Map<string, Response>, fetch: (url: string) => Promise
         { url: '/', revision: 'new-shell' },
         { url: '/required.js', revision: null },
       ],
-      addEventListener: (name: string, handler: (event: { waitUntil: (promise: Promise<void>) => void }) => void) =>
-        handlers.set(name, handler),
+      addEventListener: (
+        name: string,
+        handler: (event: { waitUntil: (promise: Promise<void>) => void; data?: unknown }) => void,
+      ) => handlers.set(name, handler),
       skipWaiting,
+      registration,
     },
   });
   return {
     skipWaiting,
+    message: (data: unknown) => handlers.get('message')!({ waitUntil: () => {}, data }),
     install: () =>
       new Promise<void>((resolve, reject) => {
         handlers.get('install')!({ waitUntil: (promise) => void promise.then(resolve, reject) });
@@ -103,4 +111,22 @@ it('repairs invalid assets left in the cache by an earlier version', async () =>
   await worker.install();
   expect(worker.skipWaiting).toHaveBeenCalledOnce();
   expect(await cache.get(key)!.text()).toBe('recovered');
+});
+
+it('an update waits for the app to ask, when the running version can ask', async () => {
+  const ok = async () => new Response('asset', { headers: { 'Content-Type': 'text/javascript' } });
+  // The running version (2.0+) marked that it shows the "Actualizar" toast.
+  const cache = new Map([['https://fichas.test/__asks-to-update', new Response('1')]]);
+  const worker = installer(cache, ok, { active: {} });
+  await worker.install();
+  expect(worker.skipWaiting).not.toHaveBeenCalled();
+  worker.message({ type: 'SKIP_WAITING' });
+  expect(worker.skipWaiting).toHaveBeenCalledOnce();
+});
+
+it('an update over a version without the toast takes over at once', async () => {
+  const ok = async () => new Response('asset', { headers: { 'Content-Type': 'text/javascript' } });
+  const worker = installer(new Map(), ok, { active: {} });
+  await worker.install();
+  expect(worker.skipWaiting).toHaveBeenCalledOnce();
 });

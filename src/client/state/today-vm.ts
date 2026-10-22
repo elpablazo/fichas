@@ -23,9 +23,10 @@ import type {
   Units,
 } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
+import { formatCount } from '../../shared/domain/units';
 import { flowerModel } from '../../shared/game/garden';
 import type { Stage } from '../../shared/game/species';
-import { labels } from '../copy/es-MX';
+import { labels, typeLabels } from '../copy/es-MX';
 
 export interface SuggestionVM {
   title: string;
@@ -57,6 +58,10 @@ export interface SlotVM {
   provisional: boolean;
   /** Cuadrar el día trims this open meal. */
   adjusted: boolean;
+  /** What cuadrar el día takes from this open meal, as food: "1 tortilla". */
+  cut: string | null;
+  /** When it was actually eaten ("11:40 am"), once logged. */
+  at: string | null;
 }
 
 /** The one meal that matters right now: decide what to eat (plan) or write down what was eaten (log). */
@@ -289,6 +294,8 @@ export function buildDayVM(input: DayInput): DayVM {
       verdict = { status: r.status, over: gaps(r.deltas, 1), under: gaps(r.deltas, -1) };
     }
     const menu = menuFor(s.key);
+    const cuts = st.resolved ? [] : base.status.advice.filter((a) => a.slot === s.key);
+    const first = meals[0] ?? st.logs.find((l) => l.kind === 'skip');
     base.rows.push({
       key: s.key,
       label: s.label,
@@ -307,7 +314,14 @@ export function buildDayVM(input: DayInput): DayVM {
       dish: meals.length ? meals.map((l) => l.title).join(' + ') : (menu?.title ?? null),
       verdict,
       provisional,
-      adjusted: !st.resolved && balance.adjustments.some((a) => a.slot === s.key),
+      adjusted: cuts.length > 0,
+      cut: cuts.length
+        ? cuts.map((a) => a.food || `${formatCount(a.n)} ${typeLabels[a.type].emoji}`).join(' y ')
+        : null,
+      at:
+        first && meals.length && first.source !== 'backfill'
+          ? timeLabel(appMinutes(first.eaten_at, input.tz, input.dayStartHour), input.dayStartHour)
+          : null,
     });
     if (i !== nowIndex) return;
     const isCelebrating = i === celebrating;

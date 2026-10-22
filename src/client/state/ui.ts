@@ -57,7 +57,7 @@ export type SheetState =
       mode?: 'log' | 'check';
     }
   | { kind: 'compose'; slot: string; day?: string; items?: LogItem[]; title?: string; logId?: string }
-  | { kind: 'token'; type: TypeKey }
+  | { kind: 'token'; type: TypeKey; day?: string }
   | { kind: 'install' }
   | { kind: 'day-close'; day: string }
   | { kind: 'day'; day: string }
@@ -66,7 +66,7 @@ export type SheetState =
   | { kind: 'species'; id: string }
   | { kind: 'stamps' }
   | { kind: 'style' }
-  | { kind: 'whats-new' }
+  | { kind: 'whats-new'; since?: string | null }
   | { kind: 'export-meals' }
   | null;
 

@@ -34,9 +34,16 @@ self.addEventListener('install', (event) => {
           await cache.put(keyOf(e), res.redirected ? new Response(await res.blob(), { headers: res.headers }) : res);
         }),
       );
-      await self.skipWaiting();
+      // The first install takes over at once. An update waits until the app asks for it (its "Actualizar"
+      // toast), unless the running version predates that toast and could never ask.
+      const asks = await (await caches.open(META)).match('/__asks-to-update');
+      if (!self.registration?.active || !asks) await self.skipWaiting();
     })(),
   );
+});
+
+self.addEventListener('message', (event) => {
+  if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -48,6 +55,7 @@ self.addEventListener('activate', (event) => {
       const cache = await caches.open(CACHE);
       for (const req of await cache.keys()) if (!current.has(req.url) && !prev.has(req.url)) await cache.delete(req);
       await meta.put('/__previous', new Response(JSON.stringify([...current])));
+      await meta.put('/__asks-to-update', new Response('1'));
       await self.clients.claim();
     })(),
   );

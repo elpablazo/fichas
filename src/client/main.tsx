@@ -16,16 +16,21 @@ import { persistSnapshots, readSnapshot, snapshot } from './state/selectors';
 import { activePlan, dataReady, planReadingEnabled, settings, startLiveQueries } from './state/signals';
 import { isStandalone, openSheet, sheet } from './state/ui';
 import { record, reportError, startTelemetry } from './telemetry';
+import { watchUpdates } from './update';
 
 performance.mark('app:js-start');
 
-// A Today snapshot from before 1.2 (v2 or v3) means this device used the app before the "¿cómo voy?" redesign.
-const upgrading = (() => {
+// "Novedades" after an update: the last version this device saw (a device with a Today snapshot but no record
+// used the app before versions were recorded; a brand-new device has nothing to compare).
+const seenVersion = (() => {
   try {
-    const v = (JSON.parse(localStorage.getItem('today:snapshot') ?? 'null') as { v?: number } | null)?.v;
-    return v === 2 || v === 3;
+    const v = localStorage.getItem('version:seen');
+    if (v) return v;
+    if (localStorage.getItem('today:snapshot')) return '';
+    localStorage.setItem('version:seen', __APP_VERSION__);
+    return __APP_VERSION__;
   } catch {
-    return false;
+    return __APP_VERSION__;
   }
 })();
 
@@ -114,14 +119,12 @@ effect(() => {
   });
 });
 
-// One "what's new" card for installed apps upgrading; a newly paired device has nothing to compare.
+// One "Novedades" sheet per update, once the data is in and nothing else is open.
 let newsDecided = false;
 effect(() => {
-  if (newsDecided || !upgrading || !dataReady.value || !activePlan.value || !isStandalone.value) return;
+  if (newsDecided || seenVersion === __APP_VERSION__ || !dataReady.value || !activePlan.value || sheet.value) return;
   newsDecided = true;
-  void getLocal('whatsnew:1.2', false).then((seen) => {
-    if (!seen && !sheet.value) openSheet({ kind: 'whats-new' });
-  });
+  openSheet({ kind: 'whats-new', since: seenVersion || null });
 });
 
 // Deep links from notifications: /?slot=<key>&src=push
@@ -144,5 +147,12 @@ idle(() => {
   if (settings.value.sound) prepareAudio();
 });
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => void navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  window.addEventListener(
+    'load',
+    () =>
+      void navigator.serviceWorker
+        .register('/sw.js')
+        .then(watchUpdates)
+        .catch(() => {}),
+  );
 }

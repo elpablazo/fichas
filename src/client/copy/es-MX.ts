@@ -228,6 +228,7 @@ export const lines = {
   skipped: 'Te la saltaste',
   notLogged: 'Sin anotar',
   adjusted: 'Ajustado para cuadrar tu día',
+  cutRow: '{food} menos para cuadrar',
   dayAfter: 'De otro día',
 } as const;
 
@@ -438,44 +439,18 @@ export const nowCopy = {
   unliked: 'Plan quitado.',
 } as const;
 
-/** A meal against its plan, per food type (Describe and the meal sheet). */
-export const plateCopy = {
-  on: 'Justo',
-  over: '{n} de más',
-  missing: 'Falta {n}',
+/** A new version is ready (service worker update). */
+export const updateCopy = {
+  ready: 'Hay una versión nueva de Fichas.',
+  apply: 'Actualizar',
 } as const;
 
 /** Verdict chips on logged meals. */
 export const verdictCopy = {
   on: 'En plan',
   pending: 'Por contar',
-} as const;
-
-/** "¿Qué comiste?" / "¿Qué se te antoja?" */
-export const describeCopy = {
-  whichMeal: '¿Cuál comida?',
-  whenLabel: 'Hora en que comiste',
-  now: 'Ahora',
-  titleLog: '¿Qué comiste?',
-  titleCheck: '¿Qué se te antoja?',
-  placeholder: 'Tacos de pollo con salsa\nMedia arepa y un latte',
-  tip: 'Un platillo por renglón: así se separan solos.',
-  counting: 'Calculando porciones…',
-  impactLog: 'Así queda tu día',
-  impactCheck: 'Así quedaría tu día',
-  yourMeal: 'Tu {slot}',
-  on: 'Justo lo de tu {slot}',
-  over: '{list} de más en tu {slot}',
-  under: 'A tu {slot} le falta {list}',
-  mixed: '{over} de más, falta {under}',
-  extra: 'Fuera de tus comidas: suma a tu día.',
-  free: 'Libre: no suma fichas.',
-  later: '{slot} queda con {food} menos.',
-  fitHint: 'Con {fix} queda justo.',
-  notFood: 'Eso no parece comida.',
-  partial: 'Sin porciones para: {text}.',
-  approx: 'aprox.',
-  free_tag: 'libre',
+  over: '{n} {emoji} de más',
+  under: 'Falta {n} {emoji}',
 } as const;
 
 export const gameCopy = {

@@ -5,7 +5,7 @@
   "compatibility_date": "2026-10-09",
   "assets": {
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/n/*"]
   },
   "d1_databases": [
     {
@@ -22,7 +22,7 @@
   "triggers": { "crons": ["*/15 * * * *"] },
   "observability": { "enabled": true },
   "vars": {
-    "APP_VERSION": "1.2.0",
+    "APP_VERSION": "2.0.0",
     "TZ_DEFAULT": "America/Mexico_City",
     "BACKUPS_ENABLED": "true",
     "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",

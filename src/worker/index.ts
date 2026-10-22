@@ -9,6 +9,7 @@ import { auth } from './routes/auth';
 import { misc } from './routes/misc';
 import { plans } from './routes/plans';
 import { push } from './routes/push';
+import { journalResponse, shares } from './routes/shares';
 import { sync } from './routes/sync';
 
 export { PlanReadJob } from './lib/plan-job';
@@ -28,6 +29,9 @@ app.use('/plans/*', requireSession);
 app.route('/plans', plans);
 app.use('/push/*', requireSession);
 app.route('/push', push);
+app.use('/shares', requireSession);
+app.use('/shares/*', requireSession);
+app.route('/shares', shares);
 
 app.use('/sync', requireSession);
 app.use('/sync/*', requireSession);
@@ -46,7 +50,11 @@ app.onError((err, c) => {
 });
 
 export default {
-  fetch: app.fetch,
+  fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    // The nutritionist's journal links live outside /api (no session, a page of their own).
+    if (new URL(request.url).pathname.startsWith('/n/')) return journalResponse(request, env, ctx);
+    return app.fetch(request, env, ctx);
+  },
   async scheduled(controller, env, ctx) {
     // A delayed cron must respect the owner's policy at actual execution time.
     ctx.waitUntil(runScheduler(env));

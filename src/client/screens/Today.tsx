@@ -126,7 +126,7 @@ export function Today() {
           <DayCard
             vm={vm}
             onOpen={() => openSheet({ kind: 'day', day })}
-            onType={(type) => openSheet({ kind: 'token', type })}
+            onType={(type) => openSheet({ kind: 'token', type, day })}
           />
           {isToday && nowVM ? (
             <NowCard

@@ -1,9 +1,12 @@
-// The day's meals in order, one line each: what was eaten and a verdict you can read without counting
-// ("En plan", "+1 🫓"). Open meals say so and log in one tap; a logged meal opens to edit.
-import { Check, ChevronRight, Plus, Scale, SkipForward } from 'lucide-preact';
+// The day's meals in order, one line each: what was eaten, when, and a verdict in words ("En plan",
+// "1 🫓 de más", "Falta 1 🍗"). Open meals say so and log in one tap; a logged meal opens to edit.
+// A meal that cuadrar el día trims says what changes ("1 tortilla menos para cuadrar").
+import { Check, ChevronRight, Plus, SkipForward } from 'lucide-preact';
+import { fill } from '../../shared/domain/format';
 import { formatCount } from '../../shared/domain/units';
 import { a11y, buttons, labels, lines, titles, typeLabels, verdictCopy } from '../copy/es-MX';
 import type { DayVM, SlotVM, VerdictVM } from '../state/today-vm';
+import { Txt } from './Sprite';
 
 function Indicator({ state }: { state: SlotVM['state'] }) {
   if (state === 'done')
@@ -35,7 +38,19 @@ function Indicator({ state }: { state: SlotVM['state'] }) {
   );
 }
 
-/** "En plan", or the differences as facts: "+1 🫓", "−1 🍗". */
+/** "En plan", or the biggest difference in words: "1 🫓 de más", "Falta 1 🍗" (the meal sheet has the rest). */
+export function verdictText(verdict: VerdictVM): string {
+  const over = verdict.over[0];
+  const under = verdict.under[0];
+  const pickOver = over && (!under || over.n >= under.n);
+  const g = pickOver ? over : under;
+  if (!g) return verdictCopy.on;
+  return fill(pickOver ? verdictCopy.over : verdictCopy.under, {
+    n: formatCount(g.n),
+    emoji: typeLabels[g.type].emoji,
+  });
+}
+
 export function VerdictChip({ verdict, big = false }: { verdict: VerdictVM; big?: boolean }) {
   const style = big ? 'height:32px;font-size:15px;padding:0 12px' : undefined;
   if (verdict.status === 'on')
@@ -45,13 +60,9 @@ export function VerdictChip({ verdict, big = false }: { verdict: VerdictVM; big?
         {verdictCopy.on}
       </span>
     );
-  const parts = [
-    ...verdict.over.slice(0, 2).map((g) => `+${formatCount(g.n)} ${typeLabels[g.type].emoji}`),
-    ...verdict.under.slice(0, 2).map((g) => `−${formatCount(g.n)} ${typeLabels[g.type].emoji}`),
-  ].slice(0, 2);
   return (
     <span class="verdict num" style={style}>
-      {parts.join(' ')}
+      <Txt size="1.15em">{verdictText(verdict)}</Txt>
     </span>
   );
 }
@@ -98,15 +109,14 @@ export function SlotRow({ slot, onOpen, onLog }: RowProps) {
         <span class="min-w-0 flex-1">
           <span class="flex items-baseline gap-2">
             <span class="font-bold">{slot.label}</span>
-            <span class="caption num">{slot.time}</span>
-            {slot.adjusted && (
-              <span class="text-accent-ink" title={lines.adjusted}>
-                <Scale size={13} aria-hidden="true" />
-                <span class="sr-only">{lines.adjusted}</span>
-              </span>
-            )}
+            <span class="caption num">{slot.at ?? slot.time}</span>
           </span>
           {sub && <span class="secondary muted block truncate">{sub}</span>}
+          {slot.cut && slot.state !== 'done' && slot.state !== 'skipped' && (
+            <span class="secondary block truncate font-semibold text-accent-ink" data-testid="row-cut">
+              {fill(lines.cutRow, { food: slot.cut })}
+            </span>
+          )}
         </span>
       </button>
       {right}

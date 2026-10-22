@@ -236,6 +236,13 @@ export async function updateLog(prev: LogRow, items: LogItem[]): Promise<void> {
   showToast(pick('log.edited'), () => void writeLog({ ...prev, updated_at: Date.now() }));
 }
 
+/** When a logged meal was eaten (plan time vs real time). Undoable. */
+export async function retimeLog(prev: LogRow, eatenAt: number): Promise<void> {
+  if (Math.abs(prev.eaten_at - eatenAt) < 60_000) return;
+  await writeLog({ ...prev, eaten_at: eatenAt, updated_at: Date.now() });
+  showToast(pick('log.edited'), () => void writeLog({ ...prev, updated_at: Date.now() }));
+}
+
 export async function deleteLog(prev: LogRow): Promise<void> {
   const now = Date.now();
   await writeLog({ ...prev, deleted_at: now, updated_at: now });

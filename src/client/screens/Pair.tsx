@@ -14,7 +14,7 @@ function deviceLabel(): string {
   return 'Web';
 }
 
-export function Pair() {
+export default function Pair() {
   const [code, setCode] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

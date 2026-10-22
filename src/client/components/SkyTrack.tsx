@@ -3,7 +3,7 @@
 // (Extra). The time it was eaten is a separate pill: plan time and real time are different facts.
 import { Clock3 } from 'lucide-preact';
 import { useRef } from 'preact/hooks';
-import { describeCopy } from '../copy/es-MX';
+import { describeCopy } from '../copy/more';
 import { tick } from '../feedback/haptics';
 
 export interface SkyStop {
@@ -58,7 +58,7 @@ export function SkyTrack({
     0,
     stops.findIndex((s) => s.key === value),
   );
-  const x = (i: number) => (n <= 1 ? 50 : 7 + (i * 86) / (n - 1));
+  const x = (i: number) => (n <= 1 ? 50 : 10 + (i * 80) / (n - 1));
   // Stops sit on a gentle arc: the sun is highest at midday.
   const y = (i: number) => 58 - Math.sin((Math.PI * x(i)) / 100) * 14;
   const selected = stops[index];

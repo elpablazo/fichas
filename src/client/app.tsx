@@ -2,15 +2,16 @@ import { useEffect, useState } from 'preact/hooks';
 import { TabBar } from './components/Chrome';
 import { SheetLeaving } from './components/Sheet';
 import { Toast } from './components/Toast';
+import { UpdateToast } from './components/UpdateToast';
 import { paired } from './db/sync';
 import { moment } from './game';
 import { lazyView } from './lazy';
-import { Pair } from './screens/Pair';
 import { Today } from './screens/Today';
 import { dayVM, shownDay } from './state/selectors';
 import { today } from './state/signals';
 import { openDescribe, route, type SheetState, sheet } from './state/ui';
 
+const Pair = lazyView(() => import('./screens/Pair'));
 const Progress = lazyView(() => import('./screens/Progress'));
 const Garden = lazyView(() => import('./screens/Garden'));
 const Kitchen = lazyView(() => import('./screens/Kitchen'));
@@ -83,7 +84,7 @@ function renderSheet(s: NonNullable<SheetState>) {
         <Composer key={`compose-${s.slot}`} slot={s.slot} day={s.day} items={s.items} title={s.title} logId={s.logId} />
       );
     case 'token':
-      return <TokenInfo key={`token-${s.type}`} type={s.type} />;
+      return <TokenInfo key={`token-${s.type}`} type={s.type} day={s.day} />;
     case 'install':
       return <InstallSheet />;
     case 'day-close':
@@ -101,7 +102,7 @@ function renderSheet(s: NonNullable<SheetState>) {
     case 'style':
       return <Style />;
     case 'whats-new':
-      return <WhatsNew />;
+      return <WhatsNew since={s.since} />;
     case 'export-meals':
       return <ExportMeals />;
     default:
@@ -179,6 +180,7 @@ export function App() {
       {screen}
       <SheetHost />
       <Toast />
+      <UpdateToast />
       {moment.value && <GameMoment />}
       <TabBar onAdd={addMeal} />
     </>

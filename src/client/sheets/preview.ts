@@ -13,7 +13,8 @@ import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount, unitsOfItems } from '../../shared/domain/units';
 import { targetFor } from '../actions';
 import { withArticle } from '../components/DayCard';
-import { describeCopy, lines, pools, typeLabels } from '../copy/es-MX';
+import { lines, pools, typeLabels } from '../copy/es-MX';
+import { describeCopy } from '../copy/more';
 import { liveLogs } from '../state/signals';
 
 export function slotRemaining(slot: string, day: string, plan: PlanData, excludeLogId?: string): Units {

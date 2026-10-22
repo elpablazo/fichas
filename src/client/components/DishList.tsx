@@ -7,7 +7,8 @@ import { mainType } from '../../shared/domain/items';
 import type { LogItem, PlanData, TypeKey, Units } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount, sumUnits, unitsOfItem } from '../../shared/domain/units';
-import { a11y, buttons, describeCopy, labels, typeLabels } from '../copy/es-MX';
+import { a11y, buttons, labels, typeLabels } from '../copy/es-MX';
+import { describeCopy } from '../copy/more';
 import { foodSprite } from '../sprites/food-map';
 import { FoodIcon, TypeIcon } from './Sprite';
 
@@ -58,9 +59,9 @@ export function DishList({ items, plan, onStep, onRemove, highlight }: Props) {
         <span class={`min-w-0 flex-1 ${highlight?.has(i) ? 'highlight' : ''}`}>
           <span class="font-semibold">{it.label}</span>
           {it.free ? (
-            <span class="badge ml-2 align-middle">{describeCopy.free_tag}</span>
+            <span class="badge sm ml-1.5 align-middle">{describeCopy.free_tag}</span>
           ) : it.assumed_qty || it.estimated ? (
-            <span class="badge ml-2 align-middle">{describeCopy.approx}</span>
+            <span class="badge sm ml-1.5 align-middle">{describeCopy.approx}</span>
           ) : null}
         </span>
         <Fichas units={units} max={2} />
@@ -149,9 +150,13 @@ export function DishList({ items, plan, onStep, onRemove, highlight }: Props) {
         ) : (
           <li key={`d-${g.items[0]}`} class="dish" data-testid="dish">
             <div class="dish-head">
-              <FoodIcon id={foodSprite(g.name ?? '')} type={dishType(g.items, items, plan)} size={30} />
-              <span class="min-w-0 flex-1 font-extrabold leading-5">{g.name ?? labels.others}</span>
-              <Fichas units={sumUnits(g.items.map((i) => unitsOfItem(items[i] as LogItem, plan)))} />
+              <FoodIcon id={foodSprite(g.name ?? '')} type={dishType(g.items, items, plan)} size={34} />
+              <span class="min-w-0 flex-1">
+                <span class="block font-extrabold leading-5">{g.name ?? labels.others}</span>
+                <span class="mt-1 block">
+                  <Fichas units={sumUnits(g.items.map((i) => unitsOfItem(items[i] as LogItem, plan)))} />
+                </span>
+              </span>
             </div>
             <ul class="dish-items">{g.items.map((i) => row(i, true))}</ul>
           </li>

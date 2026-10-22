@@ -8,8 +8,8 @@ import { formatCount } from '../../shared/domain/units';
 import { articles, meterCopy, paceCopy, typeLabels } from '../copy/es-MX';
 import type { AdviceVM, DayVM } from '../state/today-vm';
 import { DayMeter } from './DayMeter';
+import { Ring } from './Ring';
 import { Txt } from './Sprite';
-import { Ring } from './ui';
 
 /** "la cena", "el desayuno". */
 export function withArticle(label: string): string {

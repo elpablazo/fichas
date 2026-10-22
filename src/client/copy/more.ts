@@ -87,6 +87,25 @@ export const settingsCopy = {
 } as const;
 
 export const exportCopy = {
+  nutriTitle: 'Para tu nutri',
+  linkIntro: 'Un link con lo que comiste y a qué hora. Sin fichas.',
+  create: 'Crear link',
+  creating: 'Creando…',
+  linkReady: 'Link listo para tu nutri.',
+  copyLink: 'Copiar',
+  shareLink: 'Compartir',
+  openLink: 'Ver',
+  revoke: 'Quitar',
+  revoked: 'Link quitado.',
+  active: 'Links activos',
+  expires: 'Vence el {date}',
+  views: '{n} vistas',
+  viewsOne: '1 vista',
+  viewsNone: 'Sin abrir',
+  offline: 'Conéctate para crear el link.',
+  failed: 'No salió. Intenta otra vez.',
+  asText: 'Como texto',
+  shareTitle: 'Mis comidas',
   title: 'Exportar comidas',
   row: 'Mis comidas para mi nutrióloga',
   rowHelp: 'Elige las fechas y compártelas.',
@@ -108,6 +127,29 @@ export const exportCopy = {
   save: 'Guardar archivo',
   copied: 'Copiado',
   fileName: 'mis-comidas-{from}-a-{to}.txt',
+} as const;
+
+/** The nutritionist's journal page (served by the Worker) and the sheet that makes its link. */
+export const journalCopy = {
+  kicker: 'Diario de comidas',
+  sub: 'Lo que se anotó en Fichas: alimentos y horarios.',
+  glance: 'De un vistazo',
+  daysLogged: '{n} de {total} días con comidas anotadas',
+  avgTime: '{time} en promedio',
+  planTime: 'plan {time}',
+  onTime: 'a tiempo',
+  late: '{n} min después',
+  early: '{n} min antes',
+  skippedN: '{n} saltadas',
+  missingN: '{n} sin anotar',
+  skipped: 'Se la saltó',
+  missing: 'Sin anotar',
+  approx: 'aprox.',
+  noDays: 'Sin comidas en estas fechas.',
+  swipe: 'Desliza para ver más días',
+  footer: 'Compartido desde Fichas. Quien lo compartió puede quitar el link.',
+  gone: 'Este link ya no está disponible.',
+  goneSub: 'Pide uno nuevo a quien te lo compartió.',
 } as const;
 
 export const diagnosticsCopy = {
@@ -153,6 +195,9 @@ export const dayCopy = {
   legendMark: 'La rayita marca lo planeado en las comidas ya anotadas.',
   leftOf: 'quedan {n}',
   meals: 'Por comida',
+  moved: 'Qué movió tu día',
+  overBy: '{n} {emoji} de más',
+  cameFrom: 'Vino de {list}',
   eatenOf: '{eaten} de {planned}',
   over: '+{n} hoy',
   balanceTitle: 'Cuadrar el día',
@@ -298,10 +343,59 @@ export const planLines = {
 } as const;
 
 export const whatsNew = {
-  title: 'Fichas, más simple',
-  day: 'Arriba, cómo va tu día: lo que te queda de cada grupo.',
-  now: 'Antes de comer, una idea. Después, anotas en segundos.',
-  live: 'Escribe como hablas: se entiende mientras escribes.',
-  balance: 'Si te pasas, ves qué ajustar después.',
-  ok: 'Entendido',
+  title: 'Novedades',
+  ok: 'Va',
+} as const;
+
+/** "¿Qué comiste?" / "¿Qué se te antoja?" */
+export const describeCopy = {
+  whichMeal: '¿Cuál comida?',
+  whenLabel: 'Hora en que comiste',
+  now: 'Ahora',
+  titleLog: '¿Qué comiste?',
+  titleCheck: '¿Qué se te antoja?',
+  placeholder: 'Tacos de pollo con salsa\nMedia arepa y un latte',
+  tip: 'Un platillo por renglón: así se separan solos.',
+  counting: 'Calculando porciones…',
+  impactLog: 'Así queda tu día',
+  impactCheck: 'Así quedaría tu día',
+  yourMeal: 'Tu {slot}',
+  on: 'Justo lo de tu {slot}',
+  over: '{list} de más en tu {slot}',
+  under: 'A tu {slot} le falta {list}',
+  mixed: '{over} de más, falta {under}',
+  extra: 'Fuera de tus comidas: suma a tu día.',
+  free: 'Libre: no suma fichas.',
+  later: '{slot} queda con {food} menos.',
+  fitHint: 'Con {fix} queda justo.',
+  notFood: 'Eso no parece comida.',
+  partial: 'Sin porciones para: {text}.',
+  approx: 'aprox.',
+  free_tag: 'libre',
+} as const;
+
+/** A meal against its plan, per food type (Describe and the meal sheet). */
+export const plateCopy = {
+  on: 'Justo',
+  over: '{n} de más',
+  missing: 'Falta {n}',
+} as const;
+
+/** The meal sheet. */
+export const mealCopy = {
+  vsPlan: 'Contra tu plan',
+  planTime: 'Plan: {time}',
+  noneOfType: 'Nada de este grupo',
+} as const;
+
+/** A food group's sheet (tap a tube). */
+export const groupCopy = {
+  eatenOf: '{eaten} de {planned}',
+  left: 'Quedan {n} hoy',
+  full: 'Completo',
+  over: '{n} de más hoy',
+  ahead: '{n} arriba de lo planeado hasta ahora',
+  behind: '{n} abajo de lo planeado hasta ahora',
+  onPace: 'Justo lo planeado hasta ahora',
+  from: 'Lo que sumó',
 } as const;
