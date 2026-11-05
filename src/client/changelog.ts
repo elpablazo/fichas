@@ -25,6 +25,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.0.1',
+    date: '2026-11-05',
+    title: 'Fichas a mano',
+    items: [
+      { icon: 'list', text: 'Ahora se pueden ajustar las fichas por grupo sin subir un archivo.' },
+    ],
+  },
+  {
     version: '2.0.0',
     date: '2026-10-22',
     title: 'Fichas 2.0',
