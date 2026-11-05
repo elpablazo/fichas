@@ -300,6 +300,7 @@ export const planLines = {
   planManualRemoveMeal: 'Quitar este tiempo',
   planManualNeedsTarget: 'Agrega al menos una ficha para continuar.',
   planManualNeedsName: 'Pon nombre a cada tiempo.',
+  planManualSaveError: 'No se pudo guardar. Revisa las fichas e inténtalo otra vez.',
   planManualReview: 'Revisar mi plan',
   planManualReady: 'Capturado a mano. Revisa los números antes de activarlo.',
   planChoose: 'Elige un PDF o hasta cinco fotos.',
