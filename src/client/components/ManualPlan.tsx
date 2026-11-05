@@ -85,7 +85,9 @@ export function ManualPlan({
           ? [
               ...previous.equivalents,
               ...reference.equivalents.filter(
-                (food) => !previous.equivalents.some((known) => known.type === food.type),
+                (food) =>
+                  slots.some((slot) => (slot.target[food.type] ?? 0) > 0) &&
+                  !previous.equivalents.some((known) => known.type === food.type),
               ),
             ]
           : reference.equivalents,
