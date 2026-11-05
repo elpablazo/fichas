@@ -24,6 +24,61 @@ const FilesBody = z.object({
     .min(1)
     .max(5),
 });
+// Manual targets use the same immutable draft -> review -> confirm lifecycle as uploads.
+plans.post('/drafts/manual', async (c) => {
+  const parsed = z.object({ plan: PlanV1 }).safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return apiError(c, 400, 'bad_plan', 'Invalid manual plan.');
+  const plan = parsed.data.plan;
+  const slotKeys = plan.slots.map((slot) => slot.key);
+  const equivalentIds = plan.equivalents.map((e) => e.id);
+  const hasTargets = plan.slots.some((slot) => Object.values(slot.target).some((n) => n > 0));
+  const validTargets = plan.slots.every((slot) =>
+    Object.entries(slot.target).every(([type, n]) =>
+      n <= 12 &&
+      Math.abs(n * 2 - Math.round(n * 2)) < 1e-6 &&
+      (!n || plan.equivalents.some((e) => e.type === type)),
+    ),
+  );
+  if (
+    plan.slots.length > 10 ||
+    plan.equivalents.length > 500 ||
+    !hasTargets ||
+    !validTargets ||
+    plan.slots.some((slot) => !slot.label.trim() || slot.label.length > 60 || slot.key.length > 60) ||
+    new Set(slotKeys).size !== slotKeys.length ||
+    new Set(equivalentIds).size !== equivalentIds.length ||
+    plan.slots.some((s) =>
+      s.example?.items.some((i) => i.options.some((o) => !equivalentIds.includes(o.equivalent_id))),
+    )
+  )
+    return apiError(c, 400, 'bad_plan', 'Invalid manual targets.');
+  if (!(await allow(c.env.DB, `plan-manual:${c.get('session').id}`, 12)))
+    return apiError(c, 429, 'rate_limited', 'Try later.');
+  const id = crypto.randomUUID();
+  const now = Date.now();
+  const report: PlanReport = {
+    state: 'ready',
+    files: [],
+    disagreements: [],
+    warnings: [],
+    single_read: false,
+    models: [],
+  };
+  await c.env.DB.batch([
+    c.env.DB.prepare(REV_BUMP),
+    c.env.DB.prepare(`INSERT INTO plans
+      (id,status,data,source_keys,source_sha256,parse_report,created_at,updated_at,rev)
+      VALUES (?,'draft',?,'[]',NULL,?,?,?,${REV_NOW})`).bind(
+      id,
+      JSON.stringify(plan),
+      JSON.stringify(report),
+      now,
+      now,
+    ),
+  ]);
+  return c.json(await view(c.env.DB, (await getPlan(c.env.DB, id))!), 201);
+});
+
 plans.post('/drafts', async (c) => {
   const parsed = FilesBody.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success || parsed.data.files.reduce((s, f) => s + f.size, 0) > 12_000_000)
