@@ -59,7 +59,7 @@ export default function PlanView({ planId }: { planId?: string }) {
             type="button"
             class="btn btn-soft w-full"
             data-testid="edit-plan-manual"
-            onClick={() => navigate('/progreso/plan/nuevo')}
+            onClick={() => navigate('/progreso/plan/manual')}
           >
             <NotebookPen size={19} aria-hidden="true" />
             {planLines.planManualStart}
