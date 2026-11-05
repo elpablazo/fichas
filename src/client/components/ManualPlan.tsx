@@ -5,7 +5,7 @@ import type { PlanData, Slot, TypeKey, Units } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount } from '../../shared/domain/units';
 import { Stepper } from './Stepper';
-import { buttons, lines, typeLabels } from '../copy/es-MX';
+import { buttons, typeLabels } from '../copy/es-MX';
 import { planLines } from '../copy/more';
 import { api } from '../db/sync';
 import { activePlan } from '../state/signals';
@@ -81,7 +81,14 @@ export function ManualPlan({
         exercise: previous?.exercise ?? null,
         notes: previous?.notes ?? [],
         free_foods: previous?.free_foods ?? [],
-        equivalents: previous?.equivalents ?? reference.equivalents,
+        equivalents: previous
+          ? [
+              ...previous.equivalents,
+              ...reference.equivalents.filter(
+                (food) => !previous.equivalents.some((known) => known.type === food.type),
+              ),
+            ]
+          : reference.equivalents,
         swaps: previous?.swaps ?? [],
         rules: previous?.rules ?? { rebalance_within_day: 'unknown' },
         slots: slots.map((slot) => ({
@@ -102,7 +109,7 @@ export function ManualPlan({
       if (!res.ok) throw new Error('manual');
       onSaved((await res.json()) as PlanDraftView);
     } catch {
-      setError(lines.planOffline);
+      setError(planLines.planManualSaveError);
     } finally {
       setSaving(false);
     }
