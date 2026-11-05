@@ -40,6 +40,18 @@ async function mockPlans(
       return route.fulfill({
         json: discarded ? { draft_id: null } : done ? result : started ? reading : { draft_id: null },
       });
+    if (path.endsWith('/drafts/manual')) {
+      done = true;
+      const manualPlan = (route.request().postDataJSON() as { plan: typeof seedPlan }).plan;
+      return route.fulfill({
+        status: 201,
+        json: {
+          ...result,
+          plan: manualPlan,
+          report: { ...result.report!, files: [], models: [], warnings: [] },
+        },
+      });
+    }
     if (path.endsWith('/drafts'))
       return options.duplicate
         ? route.fulfill({ status: 409, json: { duplicate_id: 'plan-2026-10-08' } })
@@ -72,6 +84,19 @@ async function mockPlans(
   });
   return () => confirmed;
 }
+
+test('manual setup edits fichas without uploading a file', async ({ context }, info) => {
+  const page = await newPage(context, dayFor(info, 94, 0), '16:52');
+  await mockPlans(page);
+  await openToday(page);
+  await page.goto('/historia/plan');
+  await page.getByTestId('new-plan').click();
+  await page.getByTestId('manual-plan').click();
+  await expect(page.getByTestId('manual-plan-editor')).toBeVisible();
+  await page.getByRole('button', { name: /Más: .*Carbohidratos/ }).first().click();
+  await page.getByTestId('save-manual-plan').click();
+  await expect(page.getByTestId('plan-review')).toBeVisible();
+});
 
 test('A17 · upload → review → confirm (≤ 6 taps + review)', async ({ context }, info) => {
   const times: number[] = [];
