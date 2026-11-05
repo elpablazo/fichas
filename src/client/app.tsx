@@ -186,6 +186,8 @@ export function App() {
       <Garden />
     ) : r === '/progreso' ? (
       <Progress />
+    ) : r === '/progreso/plan/manual' ? (
+      <PlanReview manual />
     ) : r === '/progreso/plan/nuevo' ? (
       <PlanReview />
     ) : r === '/progreso/plan' ? (

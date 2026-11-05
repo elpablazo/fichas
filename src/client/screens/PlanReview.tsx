@@ -15,6 +15,7 @@ import { tokensFor } from '../../shared/domain/tokens';
 import type { Equivalent, PlanData, TypeKey } from '../../shared/domain/types';
 import { TYPE_KEYS } from '../../shared/domain/types';
 import { formatCount, formatQty } from '../../shared/domain/units';
+import { ManualPlan } from '../components/ManualPlan';
 import { PlanDiffCard } from '../components/PlanDiff';
 import { SeasonStart } from '../components/SeasonStart';
 import { TypeIcon } from '../components/Sprite';
@@ -27,10 +28,10 @@ import { downloadPlanFile, latestDraft, PlanError, parseDraft, uploadPlan } from
 import { activePlan, liveLogs, today } from '../state/signals';
 import { navigate } from '../state/ui';
 
-type Stage = 'choose' | 'preparing' | 'uploading' | 'reading' | 'error' | 'duplicate';
-export default function PlanReview() {
+type Stage = 'choose' | 'manual' | 'preparing' | 'uploading' | 'reading' | 'error' | 'duplicate';
+export default function PlanReview({ manual = false }: { manual?: boolean }) {
   const [draft, setDraft] = useState<PlanDraftView | null>(null);
-  const [stage, setStage] = useState<Stage>('choose');
+  const [stage, setStage] = useState<Stage>(manual ? 'manual' : 'choose');
   const [n, setN] = useState(0);
   const [error, setError] = useState(planLines.planReadError as string);
   const [duplicate, setDuplicate] = useState<string | null>(null);
@@ -44,9 +45,11 @@ export default function PlanReview() {
     void latestDraft()
       .then((d) => {
         if (!disposed.current && token === activity.current && d.draft_id) {
-          setDraft(d);
-          if (d.report?.state === 'reading') setStage('reading');
-          else if (d.report?.state === 'error' || d.report?.state === 'uploading') setStage('error');
+          setDraft(manual ? { draft_id: d.draft_id } : d);
+          if (!manual) {
+            if (d.report?.state === 'reading') setStage('reading');
+            else if (d.report?.state === 'error' || d.report?.state === 'uploading') setStage('error');
+          }
         }
       })
       .catch(() => {});
@@ -123,6 +126,16 @@ export default function PlanReview() {
       </header>
       {draft?.plan && draft.report?.state === 'ready' ? (
         <Review key={draft.draft_id} draft={draft} onConfirmed={(n, startsOn) => setSeason({ n, startsOn })} />
+      ) : stage === 'manual' ? (
+        <ManualPlan
+          previousDraftId={draft?.draft_id}
+          onCancel={() => setStage('choose')}
+          onSaved={(result) => {
+            activity.current++;
+            setDraft(result);
+            setStage('choose');
+          }}
+        />
       ) : (
         <section class="card p-5">
           <input
@@ -160,6 +173,16 @@ export default function PlanReview() {
               onClick={() => input.current?.click()}
             >
               {buttons.uploadPlan}
+            </button>
+          )}
+          {!busy && (
+            <button
+              type="button"
+              class="btn btn-soft mt-3 w-full"
+              data-testid="manual-plan"
+              onClick={() => setStage('manual')}
+            >
+              {planLines.planManualStart}
             </button>
           )}
           {stage === 'error' && (
@@ -452,7 +475,11 @@ function Review({ draft, onConfirmed }: { draft: PlanDraftView; onConfirmed: (n:
           {fill(planLines.planSummary, { slots: plan.slots.length, foods: plan.equivalents.length })}
         </p>
         <p class="secondary muted mt-1">
-          {report.single_read ? planLines.planSingleRead : report.disagreements.length === 0 && planLines.planAgree}
+          {report.files.length === 0
+            ? planLines.planManualReady
+            : report.single_read
+              ? planLines.planSingleRead
+              : report.disagreements.length === 0 && planLines.planAgree}
         </p>
         {(plan.issued_on || plan.next_appointment) && (
           <p class="caption mt-2">

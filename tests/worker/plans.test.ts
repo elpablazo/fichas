@@ -87,6 +87,54 @@ describe('plan ingestion and immutable seasons', () => {
     read.equivalent_rows[0]!.qty = 0;
     expect(PlanParseV1.safeParse(read).success).toBe(false);
   });
+  it('creates and confirms a manual plan without files or AI providers', async () => {
+    const cookie = await pair();
+    const manual = structuredClone(seedPlan);
+    manual.slots[0]!.target.carb_sg = 2.5;
+    const res = await api('/api/plans/drafts/manual', {
+      method: 'POST',
+      cookie,
+      body: JSON.stringify({ plan: manual }),
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { draft_id: string; plan: typeof manual; report: PlanReport };
+    expect(body.plan.slots[0]!.target.carb_sg).toBe(2.5);
+    expect(body.report.state).toBe('ready');
+    expect(body.report.files).toEqual([]);
+    expect(body.report.models).toEqual([]);
+    const row = await env.DB.prepare('SELECT source_keys, source_sha256 FROM plans WHERE id=?')
+      .bind(body.draft_id)
+      .first<{ source_keys: string; source_sha256: string | null }>();
+    expect(row?.source_keys).toBe('[]');
+    expect(row?.source_sha256).toBeNull();
+    expect((await confirm(cookie, body.draft_id, manual)).status).toBe(200);
+    const active = await env.DB.prepare("SELECT data FROM plans WHERE status='active'").first<{ data: string }>();
+    expect(JSON.parse(active!.data).slots[0].target.carb_sg).toBe(2.5);
+  });
+  it('validates manual targets and requires an authenticated session', async () => {
+    const manual = structuredClone(seedPlan);
+    expect(
+      (await api('/api/plans/drafts/manual', { method: 'POST', body: JSON.stringify({ plan: manual }) })).status,
+    ).toBe(401);
+    const cookie = await pair();
+    manual.slots.forEach((slot) => {
+      slot.target = {};
+    });
+    expect(
+      (await api('/api/plans/drafts/manual', { method: 'POST', cookie, body: JSON.stringify({ plan: manual }) }))
+        .status,
+    ).toBe(400);
+    manual.slots[0]!.target.carb_sg = 0.25;
+    expect(
+      (await api('/api/plans/drafts/manual', { method: 'POST', cookie, body: JSON.stringify({ plan: manual }) }))
+        .status,
+    ).toBe(400);
+    manual.slots[0]!.target.carb_sg = 12.5;
+    expect(
+      (await api('/api/plans/drafts/manual', { method: 'POST', cookie, body: JSON.stringify({ plan: manual }) }))
+        .status,
+    ).toBe(400);
+  });
   it('requires auth and CSRF; rejects unsafe uploads and missing files', async () => {
     expect((await api('/api/plans/drafts/latest')).status).toBe(401);
     expect((await api('/api/plans/old/files/0')).status).toBe(401);

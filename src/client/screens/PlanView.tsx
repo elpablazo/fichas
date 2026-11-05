@@ -10,7 +10,7 @@ import { Txt, TypeIcon } from '../components/Sprite';
 import { TokenRow, tokensA11y } from '../components/Token';
 import { ScreenHeader } from '../components/ui';
 import { buttons, labels, lines, titles, typeLabels } from '../copy/es-MX';
-import { swapLabels } from '../copy/more';
+import { planLines, swapLabels } from '../copy/more';
 import { downloadPlanFile } from '../plans';
 import { visibleNote } from '../sheets/TokenInfo';
 import { balanceOn } from '../state/selectors';
@@ -52,6 +52,17 @@ export default function PlanView({ planId }: { planId?: string }) {
           >
             <Upload size={19} aria-hidden="true" />
             {buttons.uploadPlan}
+          </button>
+        )}
+        {!planId && (
+          <button
+            type="button"
+            class="btn btn-soft w-full"
+            data-testid="edit-plan-manual"
+            onClick={() => navigate('/progreso/plan/manual')}
+          >
+            <NotebookPen size={19} aria-hidden="true" />
+            {planLines.planManualStart}
           </button>
         )}
         {plan.source_keys.map((key, n) => (
