@@ -29,9 +29,9 @@ import { activePlan, liveLogs, today } from '../state/signals';
 import { navigate } from '../state/ui';
 
 type Stage = 'choose' | 'manual' | 'preparing' | 'uploading' | 'reading' | 'error' | 'duplicate';
-export default function PlanReview() {
+export default function PlanReview({ manual = false }: { manual?: boolean }) {
   const [draft, setDraft] = useState<PlanDraftView | null>(null);
-  const [stage, setStage] = useState<Stage>('choose');
+  const [stage, setStage] = useState<Stage>(manual ? 'manual' : 'choose');
   const [n, setN] = useState(0);
   const [error, setError] = useState(planLines.planReadError as string);
   const [duplicate, setDuplicate] = useState<string | null>(null);
@@ -45,9 +45,11 @@ export default function PlanReview() {
     void latestDraft()
       .then((d) => {
         if (!disposed.current && token === activity.current && d.draft_id) {
-          setDraft(d);
-          if (d.report?.state === 'reading') setStage('reading');
-          else if (d.report?.state === 'error' || d.report?.state === 'uploading') setStage('error');
+          setDraft(manual ? { draft_id: d.draft_id } : d);
+          if (!manual) {
+            if (d.report?.state === 'reading') setStage('reading');
+            else if (d.report?.state === 'error' || d.report?.state === 'uploading') setStage('error');
+          }
         }
       })
       .catch(() => {});
