@@ -1,5 +1,7 @@
 // Units math (§3.3): conversions, unitsOf, sums and display rounding.
 import type { Equivalent, LogItem, PlanData, TypeKey, Units } from './types';
+import { catalogEquivalents } from './reference-foods';
+import { norm } from './text';
 import { TYPE_KEYS } from './types';
 
 const ML: Record<string, number> = { tza: 240, cda: 15, cdta: 5, ml: 1 };
@@ -14,11 +16,23 @@ export function convert(qty: number, from: string, to: string): number | null {
   return null;
 }
 
+/** Food-specific household measure bridge. Never turn grams into milliliters generically.
+ * USDA lists ~34g fat/100g cream cheese; a level tablespoon is ~15g.
+ * The nutritionist's 1-cda exchange remains authoritative; the bridge is estimated.
+ */
+export function convertForEquivalent(qty: number, from: string, e: Equivalent): number | null {
+  const direct = convert(qty, from, e.unit);
+  if (direct !== null) return direct;
+  if (norm(e.food) === 'queso crema' && e.unit === 'cda' && from === 'g') return qty / 15;
+  if (norm(e.food) === 'queso crema' && e.unit === 'cda' && from === 'ml') return qty / 15;
+  return null;
+}
+
 const indexCache = new WeakMap<PlanData, Map<string, Equivalent>>();
 export function equivalentIndex(plan: PlanData): Map<string, Equivalent> {
   let idx = indexCache.get(plan);
   if (!idx) {
-    idx = new Map(plan.equivalents.map((e) => [e.id, e]));
+    idx = new Map(catalogEquivalents(plan).map((e) => [e.id, e]));
     indexCache.set(plan, idx);
   }
   return idx;
@@ -33,7 +47,7 @@ export function unitsOfItem(item: LogItem, plan: PlanData | null): Units {
   if (plan && item.equivalent_id) {
     const e = equivalentById(plan, item.equivalent_id);
     if (e) {
-      const q = convert(item.qty, item.unit, e.unit);
+      const q = convertForEquivalent(item.qty, item.unit, e);
       if (q !== null) return { [e.type]: q / e.qty };
     }
   }
