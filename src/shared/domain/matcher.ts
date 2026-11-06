@@ -1,11 +1,12 @@
 // matchText (§11.5): local, offline food-text parser. Complete matches never touch the network.
 import { ALIASES, DESCRIPTORS, ZERO_CONDIMENTS } from './aliases';
+import { catalogEquivalents } from './reference-foods';
 import { itemLabel } from './format';
 import { freeItem, naturalStep } from './items';
 import { autoTitle } from './recipes';
 import { capitalize, norm, singularCandidates } from './text';
 import type { Equivalent, LogItem, PlanData, RecipeRow, UnitName, Units } from './types';
-import { convert, roundTo } from './units';
+import { convertForEquivalent, roundTo } from './units';
 
 export interface ParseResult {
   title: string;
@@ -98,7 +99,7 @@ function phrases(plan: PlanData): Phrase[] {
   let list = phraseCache.get(plan);
   if (list) return list;
   list = [];
-  for (const e of plan.equivalents) {
+  for (const e of catalogEquivalents(plan)) {
     const names = new Set([e.food, ...e.aliases, ...(ALIASES[e.food] ?? [])].map(norm));
     for (const name of names) list.push({ tokens: name.split(' '), eq: e });
   }
@@ -212,7 +213,7 @@ export function parseItems(text: string, plan: PlanData, remaining: Units = {}):
       let itemUnit: string = e.unit;
       let assumed = false;
       if (qty !== null && unit !== null) {
-        if (convert(qty, unit, e.unit) === null) {
+        if (convertForEquivalent(qty, unit, e) === null) {
           unknown.push(...tokens.slice(start, i));
           continue;
         }
@@ -230,14 +231,14 @@ export function parseItems(text: string, plan: PlanData, remaining: Units = {}):
         itemQty = Math.max(s, roundTo(need * e.qty, s));
         assumed = true;
       }
-      const conv = convert(itemQty, itemUnit, e.unit) as number;
+      const conv = convertForEquivalent(itemQty, itemUnit, e) as number;
       items.push({
         label: itemLabel(e.food, itemQty, itemUnit),
         qty: itemQty,
         unit: itemUnit,
         equivalent_id: e.id,
         units: { [e.type]: conv / e.qty },
-        estimated: false,
+        estimated: e.source === 'reference' || itemUnit !== e.unit,
         assumed_qty: assumed,
         free: false,
       });
