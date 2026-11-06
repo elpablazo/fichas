@@ -2,7 +2,7 @@
 import { labelFor, relabel } from './format';
 import type { Equivalent, LogItem, PlanData, TypeKey, Units } from './types';
 import { TYPE_KEYS } from './types';
-import { convert, equivalentById, unitsOfItem } from './units';
+import { convertForEquivalent, equivalentById, unitsOfItem } from './units';
 
 export function makeItem(e: Equivalent, qty: number, assumed = false): LogItem {
   return {
@@ -60,7 +60,7 @@ export function withQty(item: LogItem, qty: number, plan: PlanData | null): LogI
   const q = Math.max(0, Math.round(qty * 10000) / 10000);
   const e = plan ? equivalentById(plan, item.equivalent_id) : undefined;
   if (e && !item.free) {
-    const conv = convert(q, item.unit, e.unit);
+    const conv = convertForEquivalent(q, item.unit, e);
     if (conv !== null) {
       const sameUnit = item.unit === e.unit;
       return {
