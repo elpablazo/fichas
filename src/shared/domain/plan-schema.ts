@@ -14,7 +14,7 @@ export const Equivalent = z.object({
   unit: Unit,
   aliases: z.array(z.string()).default([]),
   note: z.string().nullable().default(null),
-  source: z.enum(['table', 'example', 'owner']).default('table'),
+  source: z.enum(['table', 'example', 'owner', 'reference']).default('table'),
   flag: z.enum(['check_portion']).nullable().default(null),
 });
 

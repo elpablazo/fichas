@@ -212,6 +212,10 @@ export default function Describe(props: Props) {
     if (inflight.current?.key === remoteKey) return inflight.current.promise;
     const promise = fetchRemote();
     inflight.current = { key: remoteKey, promise };
+    // Failed requests must not poison subsequent attempts with the same text.
+    void promise.finally(() => {
+      if (inflight.current?.promise === promise) inflight.current = null;
+    });
     return promise;
   }
 
@@ -412,7 +416,18 @@ export default function Describe(props: Props) {
         const r = await runRemote();
         setSubmitting(false);
         if (r?.items.length) return finish(withEdits(r.items, edits, `r:${remoteKey}`, data), anchor);
-        if (!items.length) return;
+        if (!r?.items.length) {
+          // Do not silently drop unknown ingredients when the provider fails.
+          void logPendingDescription(text, slot, day, eatenAt ?? undefined);
+          closeSheet();
+          return;
+        }
+      }
+      // Provider may have failed before the tap: persist the full text for retry.
+      if (remoteState === 'error' || remoteState === 'unavailable') {
+        void logPendingDescription(text, slot, day, eatenAt ?? undefined);
+        closeSheet();
+        return;
       }
     }
     if (items.length) finish(items, anchor);

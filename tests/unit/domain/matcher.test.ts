@@ -127,3 +127,28 @@ describe('unknownPhrases', () => {
     expect(knownText('2 tortillas, huevo con chilaquiles', plan)).toBe('2 tortillas, huevo');
   });
 });
+
+
+describe('USDA reference foods and error-regression examples', () => {
+  it('adds 100+ references without overwriting the nutritionist plan', async () => {
+    const { catalogEquivalents, referenceEquivalents } = await import('../../../src/shared/domain/reference-foods');
+    expect(referenceEquivalents.length).toBeGreaterThanOrEqual(100);
+    expect(catalogEquivalents(plan).length).toBeGreaterThan(plan.equivalents.length + 100);
+    expect(plan.equivalents.length).toBe(192);
+  });
+
+  it('understands baked tostadas and tuna even when the plan has no matching alias', () => {
+    const r = matchText('2 tostadas horneadas, 150g atun, 60g queso crema', plan, []);
+    expect(r?.items).toHaveLength(3);
+    expect(r?.items.find(i => i.equivalent_id === 'reference.tostada_horneada')?.units.carb_sg).toBeCloseTo(2/1.8);
+    expect(r?.items.find(i => i.equivalent_id === 'reference.atun_en_agua_escurrido')?.units.protein_poa).toBeCloseTo(150/35);
+    expect(r?.items.find(i => i.equivalent_id === 'fat_sp.queso_crema')?.units.fat_sp).toBeCloseTo(4);
+    expect(r?.items.every(i => i.estimated)).toBe(true);
+  });
+
+  it('does not change original exact plan equivalents', () => {
+    const r = matchText('una tostada', plan, []);
+    expect(r?.items[0]?.equivalent_id).toBe('carb_cg.tostada');
+    expect(r?.items[0]?.estimated).toBe(false);
+  });
+});

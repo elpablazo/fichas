@@ -10,6 +10,7 @@ import { type AppEnv, apiError } from '../lib/http';
 import { classifyFood, JEV_VERSION } from '../lib/jev';
 import { KITCHEN_PROMPT_VERSION, runIdeasAi, runPantryAi } from '../lib/kitchen-ai';
 import { AiFailure, runMealAi } from '../lib/meal-ai';
+import { tryClairicMealParse } from '../lib/clairic';
 import { PROMPT_VERSION } from '../lib/prompts/meal';
 import { allow } from '../lib/ratelimit';
 import { sha256Hex } from '../lib/session';
@@ -182,6 +183,10 @@ ai.post('/parse', async (c) => {
     );
     return c.json(result);
   } catch (error) {
+    // When OpenRouter is unavailable, Clairic may recover *fully extractable*
+    // food mentions; never accept a partial meal or generated nutrition amounts.
+    const rescued = await tryClairicMealParse(c.env, plan.data, text);
+    if (rescued) return c.json(rescued);
     return fail(c, error);
   }
 });

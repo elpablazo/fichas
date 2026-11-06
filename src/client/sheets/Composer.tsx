@@ -1,6 +1,8 @@
-import { Plus } from 'lucide-preact';
+import { Plus, Search } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
 import { makeItem, naturalStep, stepOf, withQty } from '../../shared/domain/items';
+import { catalogEquivalents } from '../../shared/domain/reference-foods';
+import { norm } from '../../shared/domain/text';
 import { autoTitle, equivalentUsage, fingerprint } from '../../shared/domain/recipes';
 import { normalize } from '../../shared/domain/swaps';
 import type { Equivalent, LogItem, TypeKey } from '../../shared/domain/types';
@@ -37,17 +39,19 @@ export default function Composer({ slot, day: dayProp, items: init = [], title: 
   const targetTypes = typesOf(target);
   const [tab, setTab] = useState<TypeKey | 'others'>(targetTypes[0] ?? 'others');
   const [otherType, setOtherType] = useState<TypeKey | null>(null);
+  const [search, setSearch] = useState('');
   if (!plan || !data) return null;
 
   const slotDef = data.slots.find((s) => s.key === slot);
   const slotLabel = slot === 'extra' ? labels.extraSlot : (slotDef?.label ?? '');
   const exampleIds = new Set((slotDef?.example?.items ?? []).flatMap((i) => i.options.map((o) => o.equivalent_id)));
-  const foodsFor = (t: TypeKey): Equivalent[] =>
-    data.equivalents
-      .filter((e) => e.type === t)
+  const foodsFor = (t: TypeKey | null): Equivalent[] =>
+    catalogEquivalents(data)
+      .filter((e) => (search.trim() ? true : e.type === t))
+      .filter((e) => !search.trim() || [e.food, ...e.aliases].some((name) => norm(name).includes(norm(search))))
       .map((e, i) => ({ e, score: (usage.get(e.id) ?? 0) * 10 + (exampleIds.has(e.id) ? 5 : 0) - i / 1000 }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
+      .slice(0, search.trim() ? 24 : 8)
       .map((x) => x.e);
 
   const model = previewModel(items, slot, slotLabel, target, data);
@@ -162,8 +166,19 @@ export default function Composer({ slot, day: dayProp, items: init = [], title: 
           ))}
         </div>
       )}
+      <label class="flex items-center gap-2 border border-line rounded-xl px-3 py-2 mb-3">
+        <Search size={17} aria-hidden="true" />
+        <input
+          type="search"
+          class="w-full bg-transparent outline-none"
+          value={search}
+          placeholder="Buscar alimentos o equivalencias"
+          aria-label="Buscar alimentos"
+          onInput={(e) => setSearch(e.currentTarget.value)}
+        />
+      </label>
       <p class="caption mb-2 px-1">{lines.composeHelp}</p>
-      {shownType && (
+      {(shownType || search.trim()) && (
         <div class="mb-4 flex flex-wrap gap-2" role="tabpanel">
           {foodsFor(shownType).map((e) => (
             <button key={e.id} type="button" class="chip" data-testid="food" onClick={() => add(e)}>
