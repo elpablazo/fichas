@@ -40,7 +40,7 @@ export interface Equivalent {
   unit: UnitName;
   aliases: string[];
   note: string | null;
-  source: 'table' | 'example' | 'owner';
+  source: 'table' | 'example' | 'owner' | 'reference';
   flag: 'check_portion' | null;
 }
 
